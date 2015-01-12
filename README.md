@@ -1,4 +1,4 @@
-# About CLUES
+# CLUES
 
 CLUES is an **energy management system for High Performance Computing (HPC) Clusters and Cloud infrastructures**. The main function of the system is to **power off internal cluster nodes when they are not being used**, and conversely to power them on when they are needed. CLUES system **integrates with the cluster management middleware**, such as a batch-queuing system or a cloud infrastructure management system, by means of different connectors.
 
