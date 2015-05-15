@@ -1,0 +1,65 @@
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings to consult the state of the nodes of a ONE deployment in which CLUES is automating power (is powering on or off the internal nodes). These
+# settings are only to check the state of the nodes. Please refer to the powermanager settings to specify how to power on or off the nodes.
+# 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[ONE LRMS]
+# The address of the ONE XML-RPC server
+ONE_XMLRPC=http://localhost:2633/RPC2
+
+# The credentials for the ONE user that will be used to access to ONE
+ONE_AUTH=clues:cluespass
+
+# Timeout for contacting the ONE XML-RPC server
+ONE_XMLRPC_TIMEOUT=180
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings for creating and managing a Virtual Cluster using ONE. The settings refer to use ONE as a power manager. So by making use of this power manager, 
+# the working nodes of the cluster are supposed to be VMs that are dynamically created using CLUES. These settings refer only to powering on or off the nodes. Please refer
+# to the LRMS settings to specify how to check the state of the nodes to decide wich one to power on or off.
+# 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[ONE VIRTUAL CLUSTER]
+
+# The XMLRPC of the ONE server that will launch the virtual working nodes
+ONE_VIRTUAL_CLUSTER_XMLRPC=http://localhost:2633/RPC2
+
+# The credentials to launch the virtual working nodes
+ONE_VIRTUAL_CLUSTER_AUTH=clues:cluespass
+
+# Timeout for the XMLRPC to respond to connections (to avoid CLUES to be hang on a XMLRPC query)
+ONE_VIRTUAL_CLUSTER_XMLRPC_TIMEOUT=60
+
+# The file in /etc/hosts format that contains the correspondence of the ONE IP addresses to the host names in the LRMS (it may be interchangeable by the standard /etc/hosts file of the front-end)
+ONE_VIRTUAL_CLUSTER_HOSTS_FILE=virtualonecluster.hosts
+
+# The template ID that will be used to instantiate VMs that will act as working nodes
+ONE_VIRTUAL_CLUSTER_TEMPLATE_ID=1
+
+# The ONE template for the VM, following the ONE syntax. Please beware of the indentation to define the multiline template. Otherwise it will fail.
+# * You can use
+#   %%a as a substitution for the address
+#   %%h as a substitution for the hostname
+ONE_VIRTUAL_CLUSTER_TEMPLATE=
+    NAME="%%h"
+    CPU="1"
+    DISK=[IMAGE_ID="1"]
+    FEATURES=[ACPI="yes"]
+    GRAPHICS=[LISTEN="0.0.0.0",TYPE="VNC",KEYMAP="es"]
+    MEMORY="512"
+    NIC=[IP="%%a",NETWORK_ID="14"]
+    OS=[ARCH="x86_64"]
+    VCPU="1"
+
+# When a VM is not detected by the monitoring system of CLUES but the ONE connector thinks that it has been powered on by him, it will be powered off once passed this time
+ONE_VIRTUAL_CLUSTER_DROP_FAILING_VMS=-1
+
+# If a VM is not detected by the monitoring system of CLUES nor it is detected by ONE, it will be discarded after this time. It is introduced to avoid discarding VM info before fully powering off the VM
+# * this is an advanced setting
+ONE_VIRTUAL_CLUSTER_FORGET_MISSING_VMS=30
+
+# The ONE connector tries to periodically guess which of the running VMs in ONE are part of the Virtual Cluster. This is made by checking the IP addresses of the VMs. Tries to capture hand-deployed VMs.
+# This setting is the period of time that the ONE connector will try to guess if the VMs are part from the Virtual Cluster.
+ONE_VIRTUAL_CLUSTER_GUESS_VMS_TIME=30

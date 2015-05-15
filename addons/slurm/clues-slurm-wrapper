@@ -1,0 +1,252 @@
+#!/usr/bin/env python
+#
+# CLUES - Cluster Energy Saving System
+# Copyright (C) 2015 - GRyCAP - Universitat Politecnica de Valencia
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import configcli
+import sys, os, os.path, stat, pwd, grp, time, string, tempfile
+import re, logging, xmlrpclib
+import subprocess
+import cpyutils
+
+SBATCH_COMMAND= "/usr/local/bin/sbatch.o"
+
+#metodo para ejecutar comandos en bash
+def run_command(command):
+    try:
+        p=subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (out, err) = p.communicate()
+        if p.returncode != 0:
+            raise Exception("return code: %d\nError output: %s" % (p.returncode, err))
+        return out
+    except Exception as e:
+        raise Exception("Error executing '%s': %s" % (" ".join(command), str(e)))
+
+def validate_command(cmd_ln_args):
+    command = cl_args[:]
+    command.insert(0, SBATCH_COMMAND)
+    command.insert(1, '--test-only')
+    try:
+        run_command(command)
+    except Exception,e:
+        print "ERROR validating sbatch parameters %s" % e
+
+def parse_num_nodes(nodes):
+    #nodes puede ser un solo numero o tener el formato "min_num-max_num"
+    if '-' in nodes:
+        min_nodes = nodes[:nodes.index('-')]
+        max_nodes = nodes[nodes.index('-'):]
+    else:
+        max_nodes = nodes
+    return int(max_nodes)
+
+
+def translate_mem_value(memval):
+    memval = memval.lower().rstrip(".").strip()
+    
+    multiplier = 1
+    if len(memval) > 0:
+        qualifier = memval[-2:]
+        if qualifier == 'kb':
+            multiplier = 1024
+        elif qualifier == 'mb':
+            multiplier = 1024*1024
+        elif qualifier == 'gb':
+            multiplier = 1024*1024*1024
+        elif qualifier == 'tb':
+            multiplier = 1024*1024*1024*1024
+        elif qualifier == 'pb':
+            multiplier = 1024*1024*1024*1024*1024
+        
+    if multiplier > 1:
+        value_str = memval[:-2]
+    else:
+        value_str = memval
+    
+    try:
+        value = int(value_str)
+    except:
+        try:
+            value = float(value_str)
+        except:
+            value = -1
+            
+    return value * multiplier
+
+#metodo para parsear los argumentos del comando sbatch
+def parse_arguments(cmd_ln_args):
+    #cmd_ln_args_str = ' '.join(cmd_ln_args)
+    #cmd_ln_args = cmd_ln_args_str.split('=')
+    #job_script_file = False
+
+    cpus_per_task = 1
+    mem = 0
+    nodes = 1
+    partition = " "
+    
+    sbatch_path_flags = ['-c','--cpus-per-task','--mem','--mincpus','-N', '--nodes', '-p', '--partition', '-n', '--ntasks', '--tasks-per-node', '--ntasks-per-node', '--ntasks-per-core']
+  
+    ''''# find script file in args:
+    for arg in cmd_ln_args:
+        if (not arg[0] == '-') and os.path.isfile(arg):
+            if cmd_ln_args[cmd_ln_args.index(arg)-1] not in sbatch_path_flags:
+                job_script_file = True
+                del cmd_ln_args[cmd_ln_args.index(arg)]'''
+
+    # parse sbatch flags from job script:
+    if '-c' in cmd_ln_args:
+        cpus_per_task = int(cmd_ln_args[cmd_ln_args.index('-c')+1])
+        #print "CPUs per task: " + str(cpus_per_task)
+    elif '--cpus-per-task' in cmd_ln_args:
+        cpus_per_task = cmd_ln_args[cmd_ln_args.index('--cpus-per-task')+1]
+        #print "CPUs per task: " + str(cpus_per_task)
+
+    if '--mem' in cmd_ln_args:
+        mem = translate_mem_value(cmd_ln_args[cmd_ln_args.index('--mem')+1] + ".mb")
+        #print "Memory: " + str(mem)
+
+    if '-p' in cmd_ln_args:
+        partition = cmd_ln_args[cmd_ln_args.index('-p')+1]
+        #print "Partition: " + partition
+    elif '--partition' in cmd_ln_args:
+        partition = cmd_ln_args[cmd_ln_args.index('--partition')+1]
+        #print "Partition: " + partition
+
+    # nodes pueden ser dos valores, minimo y maximo numero de nodos
+    if '-N' in cmd_ln_args:
+        nodes_val = cmd_ln_args[cmd_ln_args.index('-N')+1]
+        nodes = parse_num_nodes(nodes_val)
+        #print "NumNodes: " + str(nodes)
+    elif '--nodes' in cmd_ln_args:
+        nodes_val = cmd_ln_args[cmd_ln_args.index('--nodes')+1]
+        nodes = parse_num_nodes(nodes_val)
+        #print "NumNodes: " + str(nodes)
+
+    #TODO: revisar el calculo de las cpus por trabajo y los nodos
+    # if '-n' in cmd_ln_args:
+        # nodes = cmd_ln_args[cmd_ln_args.index('-n')+1]
+        # print "ntasks: " + nodes
+    # elif '--ntasks' in cmd_ln_args:
+        # nodes = cmd_ln_args[cmd_ln_args.index('--ntasks')+1]
+        # print "ntasks: " + nodes
+
+    # if '--tasks-per-node' in cmd_ln_args:
+        # tasks_per_node = cmd_ln_args[cmd_ln_args.index('--tasks-per-node')+1]
+    # elif '--ntasks-per-node' in cmd_ln_args:
+        # tasks_per_node = cmd_ln_args[cmd_ln_args.index('--ntasks-per-node')+1]
+
+    # if '--ntasks-per-core' in cmd_ln_args:
+        # tasks_per_core = cmd_ln_args[cmd_ln_args.index('--ntasks-per-core')+1]
+        
+    return (cpus_per_task, mem, nodes, partition)
+    
+def wait_requests(clues_server, sec_info, pending_requests):
+    """
+    Wait the CLUES pending requests to be processed
+    """
+    config_general = cpyutils.config.Configuration(
+        "general",
+        {
+            "CLUES_REQUEST_WAIT_TIMEOUT": 180,
+        }
+    )
+    
+    now = time.time()
+    stop_waiting = (len(pending_requests) == 0)
+    while (not stop_waiting):
+        still_pending_requests = [] 
+        for r_id in pending_requests:
+            try:
+                success, served = clues_server.request_wait(sec_info, r_id, 1)
+            except:
+                logging.exception("Error waiting request.")
+                served = False
+                
+            if not served:
+                still_pending_requests.append(r_id)
+
+        pending_requests = still_pending_requests
+        stop_waiting = (len(pending_requests) == 0) or ((time.time() - now) > config_general.CLUES_REQUEST_WAIT_TIMEOUT)
+
+        if not stop_waiting:
+            if not stop_waiting:
+                time.sleep(1)
+
+    if len(pending_requests) > 0:
+        logging.info("stop wating for resources on CLUES for requests %s because it is lasting too much (you can fine tune var CLUES_REQUEST_WAIT_TIMEOUT to wait more time)" % pending_requests)
+    else:
+        logging.debug("requests served")
+
+def new_job(cpus_per_task, mem, nodes, queue):
+
+    clues_server = configcli.get_clues_proxy_from_config()
+    
+    try:
+        version = clues_server.version()
+    except:
+        print "Could not connect to CLUES server %s (please, check if it is running)" % configcli.config_client.CLUES_XMLRPC
+        sys.exit()
+
+    if queue is not " ":
+        req_str = '"' + queue + '" in queues'
+    else:
+        req_str = " "
+
+    pending_requests = []
+
+    success, r_id = clues_server.request_create(configcli.config_client.CLUES_SECRET_TOKEN, nodes, mem, cpus_per_task, req_str)
+    if success:
+        logging.info("a request for %d nodes of %d CPU and %d of RAM with requirements %s" % (nodes, mem, cpus_per_task, req_str))
+        pending_requests.append(r_id)
+    else:
+        logging.error("Error creating a CLUES request: %s" % r_id)
+    
+    if pending_requests:
+        wait_requests(clues_server, configcli.config_client.CLUES_SECRET_TOKEN, pending_requests)
+
+
+if __name__=='__main__':
+    try:
+        # copy by value to leave argv in place
+        cl_args = list(sys.argv[1:])
+        
+        #name es el nombre del script
+        name = sys.argv[0]
+
+        # si pasan el parametro de ayuda la mostramos
+        if '--help' in cl_args or '-h' in cl_args:
+            command = cl_args[:]
+            command.insert(0, SBATCH_COMMAND)
+            #print command
+            print run_command(command)
+            sys.exit(1)
+
+        # validamos los parametros que nos pasan
+        #validate_command(cl_args)   
+        cpus_per_task, mem, nodes, partition = parse_arguments(cl_args)
+
+        # avisamos a CLUES de la llegada de un nuevo trabajo y sus requerimientos
+        new_job(cpus_per_task, mem, nodes, partition)
+
+        # llamamos a sbatch original
+        command = cl_args[:]
+        command.insert(0, SBATCH_COMMAND)
+        #print command
+        print run_command(command)
+
+    except StandardError,e:
+        if len(sys.argv) > 1:
+            print "Error in sbatch wrapper: %s" % e

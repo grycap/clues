@@ -1,0 +1,19 @@
+/var/log/clues2/clues2.log {
+    weekly
+    missingok
+    compress
+    copytruncate
+    dateext
+    create 664 root root
+    rotate 10
+}
+
+/var/log/clues2/clues2-cli.log {
+    weekly
+    missingok
+    compress
+    copytruncate
+    dateext
+    create 664 root root
+    rotate 10
+}

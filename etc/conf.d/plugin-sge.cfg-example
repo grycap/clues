@@ -1,0 +1,16 @@
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings to consult the state of the nodes of a SGE deployment in which CLUES is automating power (is powering on or off the internal nodes). These
+# settings are only to check the state of the nodes. Please refer to the powermanager settings to specify how to power on or off the nodes.
+# 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[SGE]
+
+# Command used to get the hosts in the queue
+SGE_QHOST_COMMAND=/usr/bin/qhost
+
+# Command to get the configuration of sge
+SGE_QCONF_COMMAND=/usr/bin/qconf
+
+# Root path for SGE
+SGE_ROOT=/var/lib/gridengine

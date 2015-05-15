@@ -1,0 +1,189 @@
+#!/bin/bash
+#
+#    /etc/rc.d/init.d/cluesd
+#
+# Starts CLUES daemon
+#
+# chkconfig: 345 65 35
+# description: Starts the CLUES daemon
+# processname: clues
+
+### BEGIN INIT INFO
+# Provides: clues
+# Required-Start: $local_fs $network $remote_fs
+# Required-Stop: $local_fs $network $remote_fs
+# Default-Start:  2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: start and stop clues
+# Description: start and stop clues
+### END INIT INFO
+
+#
+# CLUES - Cluster Energy Saving System
+# Copyright (C) 2015 - GRyCAP - Universitat Politecnica de Valencia
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# http://refspecs.linuxbase.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-generic/initscrcomconv.html
+
+LOGFILE=/var/log/clues2/clues2.log
+PIDFILE=/var/lib/clues2/cluesserver.pid
+# PIDFILE=$HOME/clues2/var/cluesserver.pid
+APP=cluesserver
+DAEMON=$(which $APP)
+
+if [ "$DAEMON" == "" ]; then
+    [ -e /usr/bin/$APP ] && DAEMON=/usr/bin/$APP
+    [ -e /usr/local/bin/$APP ] && DAEMON=/usr/local/bin/$APP
+    [ -e ./$APP ] && DAEMON=./$APP
+fi
+
+if [ "$DAEMON" == "" ]; then
+    echo "could not find the cluesserver daemon"
+    exit 1
+fi
+
+function status {
+    if [ $1 == '-f' ]; then
+        if [ ! -e "$2" ]; then
+            echo "could not find the pid file $2... maybe it is not started?"
+            return 0
+        fi
+        PID=$(cat $2 | head -n 1 | awk '{print $1}')
+    else
+        PID=$1
+    fi
+    
+    CHECK=$(ps --pid "$PID")
+    if [ $? == 0 ]; then
+        echo $PID
+        return 1
+    else
+        echo "process not found"
+        return 0
+    fi
+}
+
+function stop {
+    PID=$(status -f $PIDFILE)
+    if [ $? == 1 ]; then
+        kill $PID
+        if [ $? == 0 ]; then
+            # echo "process killed... deleting pid file"
+            rm -f $PIDFILE
+            return 1
+        else
+            echo "could not kill the process ($PID)"
+            return 0
+        fi
+        return 1
+    else
+        echo "could not find the CLUES server ($PID)"
+        return 0
+    fi
+}
+
+function start {
+    if [ -e "$PIDFILE" ]; then
+        echo "pid file $PIDFILE exists... checking if $APP is running"
+        PID=$(status -f $PIDFILE)
+        if [ $? == 1 ]; then
+            echo "$APP is already running"
+            return 0
+        else
+            echo "assuming that $APP is not running"
+            rm -f "$PIDFILE"
+        fi
+    fi
+    
+    DIRLOG=$(dirname "$LOGFILE")
+    if [ "$DIRLOG" == "" ]; then
+        LOGFILE=/var/log/clues2/clues2.log
+        DIRLOG=/var/log/clues2
+    fi
+
+    [ ! -d "$DIRLOG" ] && mkdir -p "$DIRLOG"
+    
+    /usr/bin/python $DAEMON > /dev/null 2>> "$LOGFILE" &
+    PID=$!
+    sleep 2
+    status $PID > /dev/null
+    if [ $? == 1 ]; then
+        DIRPID=$(dirname $PIDFILE)
+        if [ ! -d "$DIRPID" ]; then
+            mkdir -p "$DIRPID"
+            [ $? -ne 0 ] && echo "could not create directory for pid file, check permissions for dir $DIRPID"
+        fi
+        echo $PID > $PIDFILE
+        [ $? -ne 0 ] && echo "could not create pid file $PIDFILE, check permissions"
+        return 1
+    else
+        return 0
+    fi
+}
+
+function start_msg {
+    RESULT=$(start)
+    if [ $? == 1 ]; then
+        echo "** CLUES successfully started"
+        return 0
+    else
+        echo "** error starting CLUES. Please check logs or try launching daemon with the next command: \"/usr/bin/python $DAEMON\""
+        echo "$RESULT"
+        return 1
+    fi
+}
+
+function stop_msg {
+    RESULT=$(stop)
+    if [ $? == 1 ]; then
+        echo "** CLUES stopped successfully"
+        return 0
+    else
+        echo "** error stopping CLUES. Please check logs"
+        echo "$RESULT"
+        return 1
+    fi
+}
+
+case "$1" in
+  start)
+    start_msg
+    exit $?
+    ;;
+  stop)
+    stop_msg
+    exit $?
+    ;;
+  restart)
+    stop_msg
+    [ $? == 0 ] && sleep 2 && start_msg
+    exit $?
+    ;;
+  status)
+    PID=$(status -f $PIDFILE)
+    if [ $? == 1 ]; then
+        echo "process running at pid $PID"
+    else
+        echo $PID
+        exit 1
+    fi
+    ;;
+  *)
+    echo "Useage: cluesd {start|stop|status}"
+    exit 1
+    ;;
+esac
+
+exit 0

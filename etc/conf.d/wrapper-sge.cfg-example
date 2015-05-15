@@ -1,0 +1,5 @@
+[SGE]
+# Command to get the configuration of sge
+SGE_QCONF_COMMAND=/usr/bin/qconf
+# Root path for SGE
+SGE_ROOT=/var/lib/gridengine

@@ -1,0 +1,12 @@
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings to consult the state of the nodes of a SLURM deployment in which CLUES is automating power (is powering on or off the internal nodes). These
+# settings are only to check the state of the nodes. Please refer to the powermanager settings to specify how to power on or off the nodes.
+# 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[SLURM]
+SLURM_SERVER=slurmserverpublic
+SLURM_PARTITION_COMMAND=/usr/local/bin/scontrol -o show partitions
+SLURM_NODES_COMMAND=/usr/local/bin/scontrol -o show nodes
+SLURM_JOBS_COMMAND=/usr/local/bin/scontrol -o show jobs

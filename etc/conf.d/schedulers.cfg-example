@@ -1,0 +1,50 @@
+[scheduling]
+
+# Seconds between calls to the schedulers pipeline
+PERIOD_SCHEDULE=5
+
+# Maximum number of nodes that will be booting simultaneously
+MAX_BOOTING_NODES=2
+
+# Comma separated list for the python classes that are used as schedulers. The scheduling pipeline will be called in the same order that are stated here. Each class MUST have a "schedule" method inside and the class MUST be accesible by python as an import
+# * Tip: if neeeded, you can modify the cluesd executable to include the path in which the module is using sys.path.append("/path/to/module")
+SCHEDULER_CLASSES=clueslib.schedulers.CLUES_Scheduler_PowOn_Requests, CLUES_Scheduler_Reconsider_Jobs, clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE
+
+# Setting for the recovery of nodes
+# * Not working yet...
+RETRIES_POWER_ON=3,
+PERIOD_RECOVERY_NODES=30
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# Settings for the clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE
+#
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[scheduler_power_off_idle]
+
+# Time (in seconds) to consider that a node that has remain idle can be powered off
+IDLE_TIME=1800
+
+# Seconds that must pass before considering a node to be powered off (e.g. it has just been powered off and it is idle again)
+COOLDOWN_NODES=0
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# Settings for the clueslib.schedulers.CLUES_Scheduler_PowOn_Requests
+#
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[scheduler_requests]
+
+# Time to allocate the resources for a request that have been served. To take into account the reservation in the period while the job is effectively released to the queue and it is scheduled.
+# * The problem of the 'second'
+ALLOCATE_SERVED_REQUESTS=1
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# Settings for the clueslib.schedulers.CLUES_Scheduler_Reconsider_Jobs
+#
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[scheduler_reconsider_jobs]
+
+# Time that a job has to be monitorized in pending state, before a new request for resources is created
+RECONSIDER_JOB_TIME=60                 

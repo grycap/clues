@@ -1,0 +1,16 @@
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings for powering on or off nodes using a IPMI mechanism. You will need to make sure that IPMI is properly working and then set the commands to power
+# on or off the working nodes. Please make sure that you have created and set the proper passwords. The command is issued as it is stated in the configuration, so you can
+# check it by issuing it in the commandline.
+# 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[IPMI]
+# The file in /etc/hosts format that contains the correspondence of the IPMI IP addresses to the host names in the LRMS
+IPMI_HOSTS_FILE=ipmi.hosts
+
+# The commandlines that must be used to power on and off the nodes using IPMI (CLUES will subsitute the %s as the name of the node, using print function)
+#
+# * you can use %%a to substitute the MAC address and %%h to substitute the hostname
+IPMI_CMDLINE_POWON=/usr/bin/ipmitool -I lan -H %%a -P "" power on
+IPMI_CMDLINE_POWOFF=/usr/bin/ipmitool -I lan -H %%a -P "" power off

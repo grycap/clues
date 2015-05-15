@@ -1,0 +1,16 @@
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings to consult the state of the nodes of a PBS deployment in which CLUES is automating power (is powering on or off the internal nodes). These
+# settings are only to check the state of the nodes. Please refer to the powermanager settings to specify how to power on or off the nodes.
+# 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[PBS]
+
+# Name of the PBS server
+PBS_SERVER=localhost
+
+# Command to get the state of the queue
+PBS_QSTAT_COMMAND=/usr/bin/qstat
+
+# Command to get the information about the nodes
+PBS_PBSNODES_COMMAND=/usr/bin/pbsnodes
