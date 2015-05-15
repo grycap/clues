@@ -17,11 +17,6 @@ import os
 # /etc/init.d/cluesd start
 # crear configuracion /etc/clues2/clues2.cfg y /etc/clues2/conf.d/plugin-one.cfg
 
-
-
-#cd /opt
-#svn co https://src-grycap.i3m.upv.es/svn/green/branch/maillon
-#cd maillon
 #mkdir -p /var/log/clues/ /var/lib/clues2/ /etc/clues2/
 #cp etc/conf.d/plugin-example.cfg /etc/clues2/
 #cp etc/clues2.cfg /etc/clues2/
@@ -36,11 +31,6 @@ import os
 # oneuser create clues cluespass
 # oneuser chgrp clues oneadmin
 # cp conf.d/plugin-one.cfg-example conf.d/plugin-ipmi.cfg-example /etc/clues2/conf.d/
-
-
-
-
-
 
 class my_install(install):
     def touch(self, fname):
