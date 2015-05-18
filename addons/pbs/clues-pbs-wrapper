@@ -23,6 +23,7 @@ import sys
 import logging
 import configcli
 import time
+import cpyutils
 
 # TODO: calculate the number of nodes needed as a default, for the queue that is being used for, in case that there is no nodespec, call for the default values
 
