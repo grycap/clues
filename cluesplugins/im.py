@@ -251,8 +251,8 @@ class powermanager(PowerManager):
 
 		if nname in self._mvs_seen:
 			vm = self._mvs_seen[nname]
-			ec3_destroy_interval = self.radl.systems[0].getValue('ec3_destroy_interval', 0)
-			ec3_destroy_safe = self.radl.systems[0].getValue('ec3_destroy_safe', 0)
+			ec3_destroy_interval = vm.radl.systems[0].getValue('ec3_destroy_interval', 0)
+			ec3_destroy_safe = vm.radl.systems[0].getValue('ec3_destroy_safe', 0)
 			
 			poweroff = True
 			if ec3_destroy_interval > 0:
