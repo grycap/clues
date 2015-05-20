@@ -172,7 +172,10 @@ class powermanager(PowerManager):
 		current_system = "wn"
 		while current_system:
 			system_orig = vm_info[current_system]["radl"]
-			if vm_info[current_system]["count"] < system_orig.getValue("ec3_max_instances"):
+			ec3_max_instances = system_orig.getValue("ec3_max_instances", -1)
+			if ec3_max_instances < 0:
+				ec3_max_instances = 99999999
+			if vm_info[current_system]["count"] < ec3_max_instances:
 				# launch this system type
 				new_radl = ""
 				for net in radl_all.networks:
@@ -193,7 +196,7 @@ class powermanager(PowerManager):
 				return new_radl
 			else:
 				# we must change the system to the next one
-				current_system = system_orig.getValue("ec3_if_fail")
+				current_system = system_orig.getValue("ec3_if_fail", '')
 		
 		return None
 	
