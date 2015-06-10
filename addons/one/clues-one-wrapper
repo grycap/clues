@@ -25,12 +25,11 @@ import logging
 
 if __name__ == '__main__':
     config_one = cpyutils.config.Configuration("ONE WRAPPER",
-	{
-	    "ONE_XMLRPC":"http://localhost:2633/RPC2",
-	    "ONE_AUTH":"clues:cluespass",
-	    "ONE_XMLRPC_TIMEOUT":10,
-	})
-    
+        {
+            "ONE_XMLRPC":"http://localhost:2633/RPC2",
+            "ONE_AUTH":"clues:cluespass",
+            "ONE_XMLRPC_TIMEOUT":10,
+        })
     clues_server = configcli.get_clues_proxy_from_config()
     
     try:
@@ -38,18 +37,18 @@ if __name__ == '__main__':
     except:
         print "Could not connect to CLUES server %s (please, check if it is running)" % configcli.config_client.CLUES_XMLRPC
         sys.exit()
-    
+
     encoded = sys.argv[1]
     success = False
     logging.debug("processing VM: %s" % encoded)
     try:
-	vm = cpyutils.oneconnect.VM(base64.b64decode(encoded))
-	one = cpyutils.oneconnect.ONEConnect(config_one.ONE_XMLRPC, config_one.ONE_AUTH, config_one.ONE_XMLRPC_TIMEOUT)
-	success = one.vm_hold(vm.ID)
-	if not success:
-	    logging.warn("could not hold the VM... will make the request anyway")
+        vm = cpyutils.oneconnect.VM(base64.b64decode(encoded))
+        one = cpyutils.oneconnect.ONEConnect(config_one.ONE_XMLRPC, config_one.ONE_AUTH, config_one.ONE_XMLRPC_TIMEOUT)
+        success = one.vm_hold(vm.ID)
+        if not success:
+            logging.warn("could not hold the VM... will make the request anyway")
     except Exception, e:
-	logging.error(str(e))
+        logging.error(str(e))
         logging.error("could not process the VM information, so there will be no request for nodes to CLUES daemon")
         vm = None
     
@@ -59,10 +58,10 @@ if __name__ == '__main__':
             logging.error("not allowed to create requests")
         else:
             now = time.time()
-	    try:
-		hosts = [ vm.HISTORY_RECORDS.HISTORY[-1].HOSTNAME ]
-	    except:
-		hosts = []
+            try:
+                hosts = [ vm.HISTORY_RECORDS.HISTORY[-1].HOSTNAME ]
+            except:
+                hosts = []
  
             success, r_id = clues_server.request_create(configcli.config_client.CLUES_SECRET_TOKEN, vm.TEMPLATE.CPU * 100, vm.TEMPLATE.MEMORY * 1024, 1, "", vm.ID, hosts)
             if success:
