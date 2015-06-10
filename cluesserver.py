@@ -63,7 +63,6 @@ try:
                     </html>" % (query, query, query, query)
         
         def _status(self, path, secret, ref = ""):
-            
             global CLUES_DAEMON
             if path == 'hosts':
                 succeed, nodeinfo = rawstatus(secret, "")
@@ -85,7 +84,10 @@ try:
                 return "%s<br>%s" % (cpyutils.eventloop.now(), str(CLUES_DAEMON.get_job_list()).replace("\n","<br>"))
 
             if path == 'requests':
-                return str(CLUES_DAEMON.get_requests_list()).replace("\n","<br>")
+                import clueslib.schedulers
+                booking_system = clueslib.schedulers.get_booking_system()
+                retval = "%s<br><h2>booking system</h2>%s<br>" % (str(CLUES_DAEMON.get_requests_list()), str(booking_system))
+                return str(retval.replace("\n","<br>"))
             
             return "Not available"
 

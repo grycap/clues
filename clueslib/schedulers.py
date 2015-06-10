@@ -148,7 +148,7 @@ class BookingSystem:
 
             if current_request.job_id is not None:
                 # TODO: should check if it is running?
-                if (current_request.job_id in j_ids) and (current_request.state in [Request.ATTENDED]) and (current_request.timestamp_state < monitoring_info.timestamp_joblist): # (len(current_request.job_nodes_ids) > 0):
+                if (current_request.job_id in j_ids) and (current_request.state in [Request.ATTENDED, Request.SERVED]) and (current_request.timestamp_state < monitoring_info.timestamp_joblist): # (len(current_request.job_nodes_ids) > 0):
                     _LOGGER.debug("request %s has already been attended by the LRMS (%s)" % (r_id, current_request.job_id))
                     
                     r_ids_to_cleanup.append(r_id)
@@ -246,10 +246,20 @@ class CLUES_Scheduler_Reconsider_Jobs(CLUES_Scheduler):
 
         return True
 
+# TODO: Eliminar; this is for debugging purposes only
+def get_booking_system():
+    global BOOKING_SYSTEM
+    try:
+        BOOKING_SYSTEM
+    except:
+        import configlib
+        BOOKING_SYSTEM = BookingSystem(configlib._CONFIGURATION_MONITORING.COOLDOWN_SERVED_REQUESTS)
+    return BOOKING_SYSTEM
+
 class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
     def __init__(self):
         CLUES_Scheduler.__init__(self, "Simple power On Nodes for requests")
-        cpyutils.config.read_config("scheduler_requests",
+        cpyutils.config.read_config("monitoring",
             {
                 "COOLDOWN_SERVED_REQUESTS": 1,                 # Tiempo que una request mantiene la reserva de recursos, una vez ya ha sido servida (tiene nodos validos)
             },
@@ -257,7 +267,7 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
         
         self._sched_time = 0
         self._request_2_state = {}
-        self._booking_system = BookingSystem(self.COOLDOWN_SERVED_REQUESTS)
+        self._booking_system = get_booking_system() #BookingSystem(self.COOLDOWN_SERVED_REQUESTS)
 
     def __str__(self):
         return str(self._booking_system)
@@ -293,11 +303,11 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
             nodes_on = []
             nodes_off = []
             nodes_powoff = []
-            
+
+            '''            
             if current_req.state == Request.ATTENDED:
                 still_attended = True
 
-                '''
                 if requests_alive == 0:
                     # Let's see if there are enough resources to 
                     nodelist.FILTER_reset()
@@ -314,16 +324,15 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                         node_pool = nodes_on
                         should_allocate_resources = True
                         still_attended = False
-                '''
                 
                 if still_attended:
                     # There is a live request, it is waiting for resources, but latter requests should wait for this one
                     # This avoids that requests that cannot be satisfied will be freed and steal the resources
                     requests_alive += 1
                     continue
+            '''
             
             if (current_req.state == Request.PENDING) or (current_req.state == Request.BLOCKED):
-                requests_alive += 1
                 node_pool = []
                 nodes_on = []
                 nodes_off = []
@@ -342,13 +351,14 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                 # Case 1: are there enough resources with those that are ON?
                 if node_count_on >= current_req.resources.nodecount:
                     
-                    if requests_alive > 1:
+                    if requests_alive > 0:
                         # The request is blocked by the scheduler, because even it has resources to be served we want that the jobs get the queue in the same order
                         # that they have been submitted. Nevertheless we are allocating the resources, to continue scheduling powering on nodes (e.g. check whether other
                         # requests in the queue need more resources to be powered on)
                         if current_req.state == Request.PENDING:
                             self.debug(current_req, "#1. we have %d nodes to serve request %s, but there are other alive requests (%d)" % (node_count_on, current_req.id, requests_alive))
                             # _LOGGER.debug("#1. we have %d nodes to serve request %s, but there are other alive requests (%d)" % (node_count_on, current_req.id, requests_alive))
+                            
                         current_req.set_state(request.Request.BLOCKED)
                     else:
                         # self.debug(current_req, "#1. we have %d nodes to serve request %s" % (node_count_on, current_req.id))
@@ -430,14 +440,10 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                 # TODO: should wait for the nodes that are being powered on BEFORE setting it as "not served"? (maybe setting it to BLOCKED status)
                 if request_held:
                     # We cannot do anything with this, so we'll free it if there are no pending requests in the queue
-                    if requests_alive == 1:
-                        
+                    if requests_alive == 0:
                         if len(node_pool) == 0:
                             _LOGGER.debug("#6. request %s cannot be satisfied, but there are no requests pending from powering on nodes, so let's free this request" % current_req.id)
                             current_req.set_state(request.Request.NOT_SERVED)
-
-                            # Now it is not alive
-                            requests_alive -= 1
                         else:
                             # If there are nodes to serve at least partially the request, we are marking it as attended, to wait for the nodes to be powered on
                             self.debug(current_req, "#6. request %s cannot be satisfied, but some nodes can be powered on" % current_req.id)
@@ -471,6 +477,10 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     local_candidates_on[n_id].append(current_req)
 
                 self._booking_system.book(current_req, allocated_nodes)
+
+            if current_req.state in [ Request.PENDING, Request.ATTENDED ]:
+                requests_alive += 1
+                _LOGGER.debug("request %s still alive (%d)" % (current_req.id, requests_alive))
 
         candidates_on.update(local_candidates_on)
         return True
