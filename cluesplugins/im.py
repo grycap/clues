@@ -30,7 +30,6 @@ import cpyutils.config
 import cpyutils.eventloop
 from clueslib.node import Node
 from clueslib.platform import PowerManager
-import clueslib
 
 _LOGGER = logging.getLogger("[PLUGIN-IM]")
 
@@ -70,9 +69,7 @@ class powermanager(PowerManager):
 				"IM_VIRTUAL_CLUSTER_XMLRCP_SSL": False,
 				"IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE": "/usr/local/ec3/auth.dat",
 				"IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS": 30,
-				"IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS": 30, 
-				"IM_VIRTUAL_CLUSTER_VM_PAY_FRACTION": 0,
-				"IM_VIRTUAL_CLUSTER_VM_TIME_MARGIN": 0
+				"IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS": 30
 			}
 		)
 
@@ -81,8 +78,6 @@ class powermanager(PowerManager):
 		self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS = config_im.IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS
 		self._IM_VIRTUAL_CLUSTER_XMLRPC_SERVER = self._get_server(config_im)
 		self._IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS = config_im.IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS
-		self._IM_VIRTUAL_CLUSTER_VM_PAY_FRACTION = float(config_im.IM_VIRTUAL_CLUSTER_VM_PAY_FRACTION)
-		self._IM_VIRTUAL_CLUSTER_VM_TIME_MARGIN = float(config_im.IM_VIRTUAL_CLUSTER_VM_TIME_MARGIN)
 		
 		# Structure for the recovery of nodes
 		self._mvs_seen = {}
@@ -138,7 +133,6 @@ class powermanager(PowerManager):
 
 		# Get all the info from RADL
 		# Especial features in system:
-		#- 'ec3_min_instances': minimum number of nodes with this system configuration; default value is 0.
 		#- 'ec3_max_instances': maximum number of nodes with this system configuration; a negative value is like no constrain; default value is -1.
 		#- 'ec3_destroy_interval': some cloud providers pay a certain amount of time in advance, like AWS EC2. The node will be destroyed only when it is idle at the end of the interval expressed by this option in seconds. The default value is 0.
 		#- 'ec3_destroy_safe': seconds before the deadline set by \'ec3_destroy_interval\' that the node can be destroyed; the default value is 0.
@@ -178,7 +172,10 @@ class powermanager(PowerManager):
 		current_system = "wn"
 		while current_system:
 			system_orig = vm_info[current_system]["radl"]
-			if vm_info[current_system]["count"] < system_orig.getValue("ec3_max_instances"):
+			ec3_max_instances = system_orig.getValue("ec3_max_instances", -1)
+			if ec3_max_instances < 0:
+				ec3_max_instances = 99999999
+			if vm_info[current_system]["count"] < ec3_max_instances:
 				# launch this system type
 				new_radl = ""
 				for net in radl_all.networks:
@@ -199,7 +196,7 @@ class powermanager(PowerManager):
 				return new_radl
 			else:
 				# we must change the system to the next one
-				current_system = system_orig.getValue("ec3_if_fail")
+				current_system = system_orig.getValue("ec3_if_fail", '')
 		
 		return None
 	
@@ -257,14 +254,16 @@ class powermanager(PowerManager):
 
 		if nname in self._mvs_seen:
 			vm = self._mvs_seen[nname]
+			ec3_destroy_interval = vm.radl.systems[0].getValue('ec3_destroy_interval', 0)
+			ec3_destroy_safe = vm.radl.systems[0].getValue('ec3_destroy_safe', 0)
 			
 			poweroff = True
-			if self._IM_VIRTUAL_CLUSTER_VM_PAY_FRACTION > 0:
+			if ec3_destroy_interval > 0:
 				poweroff = False
 				live_time = cpyutils.eventloop.now() - vm.timestamp_created
-				remaining_paid_time = self._IM_VIRTUAL_CLUSTER_VM_PAY_FRACTION - live_time % self._IM_VIRTUAL_CLUSTER_VM_PAY_FRACTION
+				remaining_paid_time = ec3_destroy_interval - live_time % ec3_destroy_interval
 				_LOGGER.debug("Remaining_paid_time = %d for node %s" % (int(remaining_paid_time), nname))
-				if remaining_paid_time < self._IM_VIRTUAL_CLUSTER_VM_TIME_MARGIN:
+				if remaining_paid_time < ec3_destroy_safe:
 					poweroff = True
 			
 			if poweroff:

@@ -23,6 +23,7 @@ import sys
 import logging
 import configcli
 import time
+import cpyutils
 
 # TODO: calculate the number of nodes needed as a default, for the queue that is being used for, in case that there is no nodespec, call for the default values
 
@@ -157,13 +158,6 @@ if __name__ == '__main__':
         print "Could not connect to CLUES server %s (please, check if it is running)" % configcli.config_client.CLUES_XMLRPC
         sys.exit()
 
-    config_general = cpyutils.config.Configuration(
-        "general",
-        {
-            "CLUES_REQUEST_WAIT_TIMEOUT": 180,
-        }
-    )
-
     arguments = []
 
     for line in sys.stdin:
@@ -266,7 +260,7 @@ if __name__ == '__main__':
                 still_pending_requests.append(r_id)
 
         pending_requests = still_pending_requests
-        stop_waiting = (len(pending_requests) == 0) or ((time.time() - now) > config_general.CLUES_REQUEST_WAIT_TIMEOUT)
+        stop_waiting = (len(pending_requests) == 0) or ((time.time() - now) > configcli.config_client.CLUES_REQUEST_WAIT_TIMEOUT)
 
         if not stop_waiting:
             if not stop_waiting:

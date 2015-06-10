@@ -14,10 +14,3 @@ IM_VIRTUAL_CLUSTER_XMLRCP_SSL=False
 IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE=/usr/local/ec3/auth.dat
 IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS=30
 IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS=30
-
-# Pay fraction in the cloud deployment (in seconds)
-IM_VIRTUAL_CLUSTER_VM_PAY_FRACTION = 0
-
-# Time margin to terminate the instances (in seconds)
-IM_VIRTUAL_CLUSTER_VM_TIME_MARGIN = 0
-
