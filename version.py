@@ -15,14 +15,4 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import cpyutils.config
-
-cpyutils.config.set_paths([ './etc/', '~/clues2/etc/', '/etc/clues2/' ])
-cpyutils.config.set_main_config_file("clues2.cfg")
-cpyutils.config.set_config_filter(filter_="*.cfg")
-
-import logging
-
-from clueslib.schedulers import config_scheduling
-from clueslib.configlib import _CONFIGURATION_CLUES, _CONFIGURATION_MONITORING, _CONFIGURATION_GENERAL
-    
+VERSION="2.0.3b"

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-VERSION="2.0.2b"
-
+from version import VERSION
 from distutils.core import setup
 from distutils.command.install import install
 import distutils.archive_util
@@ -65,28 +64,35 @@ setup(name='CLUES',
       author_email='caralla@upv.es',
       url='http://www.grycap.upv.es/clues',
       # package_dir = {'cluesonebindings':'../cluesonebindings'},
-      packages = [ 'clueslib', 'cluesplugins' ],
-      py_modules = [ 'configcli', 'configserver' ],
-      data_files = [ ('/etc/clues2/', ['etc/clues2.cfg-example',
-									   'etc/clues2.cfg-full-example',
-									   'etc/clues2.cfg-cli-example',
-									   'etc/virtualonecluster.hosts-example',
-                                       'etc/ipmi.hosts-example'
-                                       ] ),
-        
-        ('/etc/clues2/conf.d/', [ 'etc/conf.d/plugin-one.cfg-example',
-									 'etc/conf.d/wrapper-one.cfg-example',
-									 'etc/conf.d/plugin-im.cfg-example',
-                                     'etc/conf.d/plugin-pbs.cfg-example',
-                                     'etc/conf.d/plugin-sge.cfg-example',
-									 'etc/conf.d/wrapper-sge.cfg-example',
-									 'etc/conf.d/plugin-slurm.cfg-example',
-                                     'etc/conf.d/plugin-wol.cfg-example',
-                                     'etc/conf.d/plugin-ipmi.cfg-example',
-                                     'etc/conf.d/schedulers.cfg-example'
-                                    ]),
-        ('/etc/logrotate.d/', [ 'etc/clues-logrotate' ]),
-        ('/etc/init.d', ['cluesd']) ],
+      packages = [ 'clueslib', 'cluesplugins', 'clues' ],
+      package_dir = { 'clues': '.' },
+      # py_modules = [ 'configcli', 'configserver' ],
+      data_files = [
+        ('/etc/clues2/', [
+            'etc/clues2.cfg-example',
+            'etc/clues2.cfg-full-example',
+            'etc/clues2.cfg-cli-example',
+            'etc/virtualonecluster.hosts-example',
+            'etc/ipmi.hosts-example'
+            ] ),
+        ('/etc/clues2/conf.d/', [
+            'etc/conf.d/plugin-one.cfg-example',
+            'etc/conf.d/wrapper-one.cfg-example',
+            'etc/conf.d/plugin-im.cfg-example',
+            'etc/conf.d/plugin-pbs.cfg-example',
+            'etc/conf.d/plugin-sge.cfg-example',
+            'etc/conf.d/wrapper-sge.cfg-example',
+            'etc/conf.d/plugin-slurm.cfg-example',
+            'etc/conf.d/plugin-wol.cfg-example',
+            'etc/conf.d/plugin-ipmi.cfg-example',
+            'etc/conf.d/schedulers.cfg-example']),
+        ('/etc/logrotate.d/', [
+            'etc/clues-logrotate'
+            ]),
+        ('/etc/init.d', [
+            'cluesd'
+            ])
+        ],
       scripts = [ 'clues', 'cluesserver', 'addons/pbs/clues-pbs-wrapper', 'addons/one/clues-one-wrapper', 'addons/sge/clues-sge-wrapper', 'addons/slurm/clues-slurm-wrapper' ],
       # requires = [ 'cluesonebindings (>= 0.1)' ],
       cmdclass={'install': my_install}
