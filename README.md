@@ -88,3 +88,77 @@ For the ```SCHEDULER_CLASSES``` parameter you have the following options availab
 * clueslib.schedulers.CLUES_Scheduler_PowOn_Requests that will react up on the requests for resources from the underlying middleware. It will take into account the requests for resources and will power on some nodes if needed.
 * clueslib.schedulers.CLUES_Scheduler_Reconsider_Jobs, that will monitor the jobs in the LRMS and will power on some resources if the jobs are in the queue for too long.
 * clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE, that will power off the nodes that are IDLE after a period of time.
+* clueslib.schedulers.CLUES_Scheduler_PowOn_Free, that will keep extra empty slots or nodes.
+
+Each of the LRMS, POWERMANAGER or SCHEDULER has its own options that should be properly configured.
+
+### Example configuration with ONE
+
+In this example we are integrating CLUES in a OpenNebula 4.8 deployment, which is prepared to power on or off the working nodes using IPMI. In the next steps we are configuring CLUES to monitor the ONE deployment and to intercept the requests for new VMs.
+
+On the one side, we must set the proper values in /etc/clues2/clues2.cfg. The most important values are:
+
+```
+[general]
+CONFIG_DIR=conf.d
+LRMS_CLASS=cluesplugins.one
+POWERMANAGER_CLASS=cluesplugins.ipmi
+MAX_WAIT_POWERON=300
+...
+[monitoring]
+COOLDOWN_SERVED_REQUESTS=300
+...
+[scheduling]
+SCHEDULER_CLASSES=clueslib.schedulers.CLUES_Scheduler_PowOn_Requests, clueslib.schedulers.CLUES_Scheduler_Reconsider_Jobs, clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE, clueslib.schedulers.CLUES_Scheduler_PowOn_Free
+IDLE_TIME=600
+RECONSIDER_JOB_TIME=600
+EXTRA_SLOTS_FREE=0
+EXTRA_NODES_PERIOD=60
+```
+
+* CONFIG_DIR is the folder (relative to the CLUES configuration folder: /etc/clues2), where the *.cfg files will be considered as part of the configuration (e.g. for the configuration of the plugins).
+* LRMS_CLASS is set to use the ONE plugin to monitor the deployment.
+* POWERMANAGER_CLASS is set to use IPMI to power on or off the working nodes.
+* MAX_WAIT_POWERON is set to an upper bound of the time that a working node lasts to be power on and ready from the IPMI order to power on (in our case 5 minutes). If this time passes, CLUES will consider that the working node has failed to be powered on.
+* COOLDOWN_SERVED_REQUESTS is the time during which the requested resources for a VM will be booked by CLUES, once it has been attended (e.g. some working nodes have been powered on). It is needed to take into account the time that passes from when a VM is released to ONE to when the VM is finally deployed into a working node. In case of ONE, when the VM is finally hosted in a host, this time is aborted (it does not happen in other LRMS).
+* SCHEDULER_CLASSES are the power-on features that we want for the deployment. In this case, we are reacting up on requests, and we will also consider the requests for resources of jobs that are in the queue for too long. Then, we will power off the working nodes that have been idle for too long, but we will keep some slots free.
+* IDLE_TIME is related to the CLUES_Scheduler_PowOff_IDLE and is the time during which a working node has to be idle to be considered to be powered off.
+* RECONSIDER_JOB_TIME is related to the CLUES_Scheduler_Reconsider_Jobs scheduler, and states the frequency (in seconds) that a job has to be in the queue before its resources are reconsidered.
+* EXTRA_SLOTS_FREE is related to the CLUES_Scheduler_PowOn_Free scheduler and states how many slots should be free in the platform.
+* EXTRA_NODES_PERIOD=60 is also related to CLUES_Scheduler_PowOn_Free and states the frequency of the scheduler. It is not executed all the time to try to avoid transient allocations.
+ 
+Once this file is configured, we can use the templates in the /etc/clues2/conf.d folder to configure the ONE and IPMI plugins. So we are creating the proper files:
+
+```
+$ cd /etc/clues2/conf.d/
+$ cp plugin-one.cfg-example plugin-one.cfg         
+$ cp plugin-ipmi.cfg-example plugin-ipmi.cfg         
+```
+
+In the ```/etc/clues2/conf.d/plugin-one.cfg``` we should check the variables ```ONE_XMLRPC``` and ```ONE_AUTH```, and set them to the proper values of your deployment. The credentials in the ```ONE_AUTH``` variable should be of a user in the ```oneadmin``` group (you can use the oneadmin user or create a new one in ONE).
+
+```
+[ONE LRMS]
+ONE_XMLRPC=http://localhost:2633/RPC2
+ONE_AUTH=clues:cluespass
+```
+
+In the ```/etc/clues2/conf.d/plugin-ipmi.cfg``` we should check the variables ```IPMI_HOSTS_FILE``` and ```IPMI_CMDLINE_POWON```  and ```IPMI_CMDLINE_POWOF```, and set them to the proper values of your deployment. 
+
+```
+[IPMI]
+IPMI_HOSTS_FILE=ipmi.hosts
+IPMI_CMDLINE_POWON=/usr/bin/ipmitool -I lan -H %%a -P "" power on
+IPMI_CMDLINE_POWOFF=/usr/bin/ipmitool -I lan -H %%a -P "" power off
+```
+
+The ```ipmi.hosts``` should be located in the folder ```/etc/clues2/conf.d/``` and contains the correspondences of the IPMI IP addresses and the names of the hosts that appear in ONE, using the well known ```/etc/hosts``` file format. An example for this file is, where the first column is the IPMI IP address and the second column is the name of the host as appears in ONE.
+
+```
+192.168.1.100   niebla01
+192.168.1.102   niebla02
+192.168.1.103   niebla03
+192.168.1.104   niebla04
+```
+
+The you should adjust the commandline for powering on and off the working nodes, using IPMI. In the default configuration we use the common ```ipmitool``` app and we use a passwordless connection to the IPMI interface. To adjust the commandline you can use %%a to substitute the IP address and %%h to substitute the hostname
