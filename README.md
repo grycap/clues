@@ -162,3 +162,26 @@ The ```ipmi.hosts``` should be located in the folder ```/etc/clues2/conf.d/``` a
 ```
 
 The you should adjust the commandline for powering on and off the working nodes, using IPMI. In the default configuration we use the common ```ipmitool``` app and we use a passwordless connection to the IPMI interface. To adjust the commandline you can use %%a to substitute the IP address and %%h to substitute the hostname
+
+## Toubleshoting
+
+You can get information in the CLUES log file (i.e. ```/var/log/clues2/clues2.log```). But you can also set the  ```LOG_FILE``` to a empty value in the ```/etc/clues2/clues2.cfg``` file and execute CLUES as 
+
+```
+$ /usr/bin/python /usr/local/bin/cluesserver
+```
+
+In the logging information you can find useful messages to debug what is happening. Here we highlight some common issues.
+
+### Wrong ONE configuration
+
+Some messages like
+
+```
+[DEBUG] 2015-06-18 09:41:57,551 could not contact to the ONE server
+[WARNING] 2015-06-18 09:41:57,551 an error occurred when monitoring hosts (could not get information from ONE; please check ONE_XMLRPC and ONE_AUTH vars)
+```
+
+usually mean that either the URL that is pointed by ONE_XMLRPC is wrong (or not reachable) or the ONE_AUTH information has not enough privileges. 
+
+In a distributed configuration, maybe the ONE server is not reachable from outside the localhost.
