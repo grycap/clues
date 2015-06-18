@@ -35,11 +35,12 @@ try:
         def _access_page(self):
             return "<html><body><form method=get>secret token<input type=text name=\"secret\" id=\"secret\"><input type=submit></body></html>"
         
+            # <style>body {font-family: arial;} </style>\
         def _mainpage(self):
             import web
             query = web.ctx.query
             return "<html><head>\
-            <style>body {font-family: arial;} </style>\
+            <link rel=\"stylesheet\" href=\"http://csszengarden.com/examples/style.css\">\
             <script src=\"http://code.jquery.com/jquery-latest.min.js\" type=\"text/javascript\"></script>\
                     <script language=\"javascript\" type=\"text/javascript\">\
                             var timeout = setInterval(reloadHosts, 5000);\
@@ -50,17 +51,21 @@ try:
                             function reloadJobs () {$('#jobs').load('/status/jobs%s');}\
                     </script>\
                     <body><a href=\"/%s\">clear filter</a>\
-                    <h1>Hosts</h1>\
+                    <h1 class='expand-hosts'>Hosts</h1>\
                     <div id='hosts'>\
                     </div>\
-                    <h1>Requests</h1>\
+                    <h1 class='expand-requests'>Requests</h1>\
                     <div id='requests'>\
                     </div>\
-                    <h1>Jobs</h1>\
+                    <h1 class='expand-jobs'>Jobs</h1>\
                     <div id='jobs'>\
                     </div>\
                     %%s</body>\
-                    <script language=\"javascript\" type=\"text/javascript\">reloadHosts();reloadJobs();reloadRequests();</script>\
+                    <script language=\"javascript\" type=\"text/javascript\">\
+                    $('.expand-hosts').click(function(){$('#hosts').slideToggle('slow');});\
+                    $('.expand-requests').click(function(){$('#requests').slideToggle('slow');});\
+                    $('.expand-jobs').click(function(){$('#jobs').slideToggle('slow');});\
+                    reloadHosts();reloadJobs();reloadRequests();</script>\
                     </html>" % (query, query, query, query)
         
         def _status(self, path, secret, ref = ""):
@@ -110,7 +115,21 @@ try:
         def _get_host(self, secret, hostname):
             success, result = get_node_description(secret, hostname, False)
             if success:
-                return result.replace(";","<BR>")
+                import clueslib.cluesd
+                import clueslib.node
+                import time
+                db = clueslib.cluesd.NodeData()
+                changes = db.retrieve_node_state_history(hostname, True)
+                
+                changes_str = ""
+                for (state, timestamp) in changes:
+                    if changes_str == "":
+                        change_str = "began in state '%s' @ %s" % (clueslib.node.Node.state2str[int(state)], time.strftime("%b %d %Y %H:%M:%S", time.gmtime(long(timestamp))))
+                    else:
+                        change_str = "changed to state '%s' @ %s" % (clueslib.node.Node.state2str[int(state)], time.strftime("%b %d %Y %H:%M:%S", time.gmtime(long(timestamp))))
+                    changes_str="%s%s<BR>" % (changes_str, change_str)
+                
+                return changes_str + result.replace(";","<BR>")
             return "Could not get info"
         
         def GET(self, url):

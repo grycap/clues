@@ -77,8 +77,8 @@ MAX_WAIT_POWEROFF=300
 PERIOD_MONITORING_NODES=5
 
 # Seconds between monitoring the jobs (i.e. calls to the LRMS_CLASS.lrms.get_jobinfo method)
-# * 0 to deactivate. Deactivated by default
-PERIOD_MONITORING_JOBS=0
+# * 0 to deactivate. 
+PERIOD_MONITORING_JOBS=5
 
 # Seconds to call to the lifecycle for the classes of the powermanager or the lrms
 PERIOD_LIFECYCLE=5
@@ -114,7 +114,7 @@ MAX_BOOTING_NODES=2
 
 # Comma separated list for the python classes that are used as schedulers. The scheduling pipeline will be called in the same order that are stated here. Each class MUST have a "schedule" method inside and the class MUST be accesible by python as an import
 # * Tip: if neeeded, you can modify the cluesd executable to include the path in which the module is using sys.path.append("/path/to/module")
-SCHEDULER_CLASSES=clueslib.schedulers.CLUES_Scheduler_PowOn_Requests, CLUES_Scheduler_Reconsider_Jobs, clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE
+SCHEDULER_CLASSES=clueslib.schedulers.CLUES_Scheduler_PowOn_Requests, clueslib.schedulers.CLUES_Scheduler_Reconsider_Jobs, clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE
 
 # Setting for the recovery of nodes
 # * Not working yet...
@@ -126,8 +126,6 @@ PERIOD_RECOVERY_NODES=30
 # Settings for the clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE
 #
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-[scheduler_power_off_idle]
-
 # Time (in seconds) to consider that a node that has remain idle can be powered off
 IDLE_TIME=1800
 
@@ -136,24 +134,25 @@ COOLDOWN_NODES=0
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #
-# Settings for the clueslib.schedulers.CLUES_Scheduler_PowOn_Requests
-#
-# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-[scheduler_requests]
-
-# Time to allocate the resources for a request that have been served. To take into account the reservation in the period while the job is effectively released to the queue and it is scheduled.
-# * The problem of the 'second'
-ALLOCATE_SERVED_REQUESTS=1
-
-# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#
 # Settings for the clueslib.schedulers.CLUES_Scheduler_Reconsider_Jobs
 #
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-[scheduler_reconsider_jobs]
-
 # Time that a job has to be monitorized in pending state, before a new request for resources is created
 RECONSIDER_JOB_TIME=60                 
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# Settings for the clueslib.schedulers.CLUES_Scheduler_PowOn_Free
+#
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Number of slots that are wanted to be free (CLUES will power on some nodes to get the extra slots)
+EXTRA_SLOTS_FREE=0
+
+# Number of nodes that are wanted to be free (CLUES will power on some nodes)
+EXTRA_NODES_FREE=0
+
+# Frequence to run the extra slots or node scheduler
+EXTRA_NODES_PERIOD=30
 
 #####################################################################################################################
 #

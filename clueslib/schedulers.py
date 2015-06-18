@@ -62,7 +62,7 @@ class CLUES_Scheduler():
 class CLUES_Scheduler_PowOff_IDLE(CLUES_Scheduler):
     def __init__(self):
         CLUES_Scheduler.__init__(self, "Power Off Nodes that are idle")
-        cpyutils.config.read_config("scheduler_power_off_idle",
+        cpyutils.config.read_config("scheduling",
             {
                 "COOLDOWN_NODES": 0,
                 "IDLE_TIME": 1800
@@ -217,7 +217,7 @@ class BookingSystem:
 class CLUES_Scheduler_Reconsider_Jobs(CLUES_Scheduler):
     def __init__(self):
         CLUES_Scheduler.__init__(self, "Simple power On Nodes for jobs that have been waiting for too long")
-        cpyutils.config.read_config("scheduler_reconsider_jobs",
+        cpyutils.config.read_config("scheduling",
             {
                 "RECONSIDER_JOB_TIME": 60,                 # Tiempo tras el que un trabajo que ha estado pending debe ser reconsiderado (creada una nueva request)
             },
@@ -225,6 +225,10 @@ class CLUES_Scheduler_Reconsider_Jobs(CLUES_Scheduler):
 
     def schedule(self, requests_queue, monitoring_info, candidates_on, candidates_off):
         joblist = monitoring_info.joblist
+        if joblist is None:
+                _LOGGER.debug("could not get information about the jobs")
+                return True
+
         timestamp_joblist = monitoring_info.timestamp_joblist
         now = cpyutils.eventloop.now()
         
@@ -483,4 +487,112 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                 _LOGGER.debug("request %s still alive (%d)" % (current_req.id, requests_alive))
 
         candidates_on.update(local_candidates_on)
+        return True
+
+class CLUES_Scheduler_PowOn_Free(CLUES_Scheduler):
+    def __init__(self):
+        CLUES_Scheduler.__init__(self, "Power On extra nodes to maintain a set of slots or nodes free")
+        cpyutils.config.read_config("scheduling",
+            {
+                "EXTRA_SLOTS_FREE": 0,
+                "EXTRA_NODES_FREE": 0,
+                "EXTRA_NODES_PERIOD": 30
+            },
+            self)
+        self._timestamp_run = cpyutils.eventloop.now()
+
+    def schedule(self, requests_queue, monitoring_info, candidates_on, candidates_off):
+
+        now = cpyutils.eventloop.now()
+        if (now - self._timestamp_run < self.EXTRA_NODES_PERIOD) and (len(candidates_off) == 0):
+            # We are not running now
+            return True
+
+        # _LOGGER.debug("running the scheduler %s" % self.name)
+        self._timestamp_run = now
+        nodelist = monitoring_info.nodelist
+        nodecount_poweron = len(candidates_on)
+        nodecount_poweroff = len(candidates_off)
+
+        # WARNING: this algorithm may be improved for better performance, but in this way it is easier to understand
+
+        slots_free = 0
+        nodes_free = 0
+        slots_powon = 0
+        nodes_powon = 0
+        slots_powoff = 0
+        nodes_powoff= 0 
+        # Count the total free slots of the platform
+        
+        nodes_that_can_be_poweron_on = []
+        nodes_that_can_be_poweron_off = []
+        
+        for node in nodelist:
+            if node.state in [ Node.IDLE, Node.USED, Node.ON_ERR ]:
+                # In these states, the free slots are usable
+                node_slots_free = max(0, node.slots_free_original)                  # When the resources are negative they are commited to be understood as unknown
+                    
+                if node.name in candidates_off:
+                    nodes_that_can_be_poweron_on.append((node_slots_free, node.name))
+                else:
+                    slots_free += node_slots_free
+                    if node.state == Node.IDLE:
+                        nodes_free += 1
+                    
+            elif node.state in [ Node.POW_ON ]:
+                # In this state, the node will be usable
+                node_slots_free = max(0, node.slots_count)                      # When the resources are negative they are commited to be understood as unknown
+                slots_free += node_slots_free
+                nodes_free += 1
+            
+            elif node.state in [ Node.OFF ]:
+                node_slots_free = max(0, node.slots_count)                      # When the resources are negative they are commited to be understood as unknown
+                nodes_that_can_be_poweron_off.append((node_slots_free, node.name))
+            elif node.state in [ Node.OFF_ERR ]:
+
+                # TODO: check if the cooldown of nodes is fulfilled
+                if node.power_on_operation_failed < schedulers.config_scheduling.RETRIES_POWER_ON:
+                    node_slots_free = max(0, node.slots_count)                      # When the resources are negative they are commited to be understood as unknown
+                    nodes_that_can_be_poweron_off.append((node_slots_free, node.name))
+
+        slots_to_power_on = 0
+        nodes_to_power_on = 0
+        if slots_free < self.EXTRA_SLOTS_FREE:
+            slots_to_power_on = self.EXTRA_SLOTS_FREE - slots_free
+
+        if nodes_free < self.EXTRA_NODES_FREE:
+            nodes_to_power_on = self.EXTRA_NODES_FREE - nodes_free
+
+        nodes_that_can_be_poweron_off.sort(key=lambda tup:tup[1])
+        nodes_that_can_be_poweron_on.sort(key=lambda tup:tup[1])
+        nodes_that_can_be_poweron = nodes_that_can_be_poweron_on + nodes_that_can_be_poweron_off
+        
+        local_poweron = []
+        while ((len(nodes_that_can_be_poweron) > 0) and ((slots_to_power_on > 0) or (nodes_to_power_on >0))):
+            (slots_count, nname) = nodes_that_can_be_poweron.pop(0)
+            node = nodelist.get_node(nname)
+            
+            slots_to_power_on -= slots_count
+            if node.state in [ Node.IDLE, Node.POW_ON, Node.OFF, Node.OFF_ERR ]:
+                nodes_to_power_on -= 1
+                
+            local_poweron.append(nname)
+
+        # _LOGGER.debug("would poweron %s; poweroff: %s" % (str(local_poweron), str(candidates_off)))
+
+        if len(local_poweron) > 0:
+            log = False
+            for node in local_poweron:
+                if node in candidates_off:
+                    candidates_off.remove(node)
+                else:
+                    if node not in candidates_on:
+                        candidates_on[node] = []
+            if log:
+                _LOGGER.debug("will power on %s; still need %d slots and %d nodes" % (str(local_poweron), extra_slotcount, extra_nodecount))
+        else:
+            if (slots_to_power_on > 0) or (nodes_to_power_on > 0):
+                _LOGGER.debug("cannot power on any node but still need %d slots and %d nodes" % (slots_to_power_on, nodes_to_power_on))
+            
+        # _LOGGER.debug("will power on %s" % local_poweron)
         return True

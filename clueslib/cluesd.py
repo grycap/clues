@@ -51,6 +51,36 @@ class NodeData():
                 return prev_state
         return None
 
+    def retrieve_node_state_history(self, nname, brief = False):
+        # brief: only on and off
+        result, row_count, rows = self._db.sql_query("select state, timestamp from hostmonitoring where name=\"%s\" order by timestamp asc" % (nname))
+        if result:
+            current_state = -1
+            changes = []
+            if brief:
+                current_brief_state = -1
+                for (state, timestamp) in rows:
+                    if state != current_state:
+                        if state in [ Node.POW_ON, Node.IDLE, Node.USED, Node.ON_ERR ]:
+                            new_brief_state = Node.IDLE
+                        elif state in [ Node.POW_OFF, Node.OFF, Node.OFF_ERR ]:
+                            new_brief_state = Node.OFF
+                        else:
+                            new_brief_state = state
+                        if new_brief_state != current_brief_state:
+                            changes.append((new_brief_state, timestamp))
+                            current_brief_state = new_brief_state
+                        current_state = state
+            else:
+                for (state, timestamp) in rows:
+                    if state != current_state:
+                        changes.append((state, timestamp))
+                        current_state = state
+            return changes
+        else:
+            _LOGGER.error("could not obtain hostdata from database")
+            return None
+
     def retrieve_monitoring_data(self):
         # result, row_count, rows = self._db.sql_query("select max(timestamp), m.*, d.enabled from hostmonitoring as m left join hostdata as d on m.name=d.name where m.lrms_id=\"%s\" group by m.name" % lrms_id)
         result, row_count, rows = self._db.sql_query("select max(timestamp), m.*, d.enabled from hostmonitoring as m left join hostdata as d on m.name=d.name group by m.name")
@@ -59,7 +89,7 @@ class NodeData():
             for (timestamp, name, _, slots_count, slots_free, memory_total, memory_free, state, _, enabled) in rows:
                 n = Node(name, slots_count, slots_free, memory_total, memory_free)
                 n.state = state
-                n.timestamp_state = timestamp
+                n.timestamp_state = long(timestamp)
                 n.enabled = helpers.str_to_bool(enabled)
                 _nodes[name] = n
         else:

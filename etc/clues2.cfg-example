@@ -1,3 +1,20 @@
+[client]
+
+# Secret token to allow external XMLRPC calls
+CLUES_SECRET_TOKEN=8e0eadc543eef7bca47fefb4
+
+# URL for the CLUES XMLRPC server
+CLUES_XMLRPC=http://localhost:8000/RPC2
+
+# Timeout when waiting a request to be served
+CLUES_REQUEST_WAIT_TIMEOUT=300
+
+# Log file for the clients
+LOG_FILE=/var/log/clues2/clues2-cli.log
+
+# Log level for the clients: debug, info, warning, error
+LOG_LEVEL=debug
+
 [general]
 
 # CLUES will consider any *.cfg file inside CONFIG_DIR in the CLUES config directory
@@ -95,5 +112,38 @@ SCHEDULER_CLASSES=clueslib.schedulers.CLUES_Scheduler_PowOn_Requests, CLUES_Sche
 
 # Setting for the recovery of nodes
 # * Not working yet...
-RETRIES_POWER_ON=3,
+RETRIES_POWER_ON=3
 PERIOD_RECOVERY_NODES=30
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# Settings for the clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE
+#
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Time (in seconds) to consider that a node that has remain idle can be powered off
+IDLE_TIME=1800
+
+# Seconds that must pass before considering a node to be powered off (e.g. it has just been powered off and it is idle again)
+COOLDOWN_NODES=0
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# Settings for the clueslib.schedulers.CLUES_Scheduler_Reconsider_Jobs
+#
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Time that a job has to be monitorized in pending state, before a new request for resources is created
+RECONSIDER_JOB_TIME=60                 
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# Settings for the clueslib.schedulers.CLUES_Scheduler_PowOn_Free
+#
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Number of slots that are wanted to be free (CLUES will power on some nodes to get the extra slots)
+EXTRA_SLOTS_FREE=0
+
+# Number of nodes that are wanted to be free (CLUES will power on some nodes)
+EXTRA_NODES_FREE=0
+
+# Frequence to run the extra slots or node scheduler
+EXTRA_NODES_PERIOD=30

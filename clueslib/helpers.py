@@ -192,6 +192,8 @@ class SerializableXML():
 def str_to_class(field):
     container_module = field.strip().split(".")
     module_name = ".".join(container_module[0:-1])
+    if module_name == "":
+        raise NameError("The class is empty. The format should be <module>.<class>.")
 
     import importlib
     module = importlib.import_module(module_name)
