@@ -152,7 +152,7 @@ IPMI_CMDLINE_POWON=/usr/bin/ipmitool -I lan -H %%a -P "" power on
 IPMI_CMDLINE_POWOFF=/usr/bin/ipmitool -I lan -H %%a -P "" power off
 ```
 
-The ```ipmi.hosts``` should be located in the folder ```/etc/clues2/conf.d/``` and contains the correspondences of the IPMI IP addresses and the names of the hosts that appear in ONE, using the well known ```/etc/hosts``` file format. An example for this file is, where the first column is the IPMI IP address and the second column is the name of the host as appears in ONE.
+The ```ipmi.hosts``` should be located in the folder ```/etc/clues2/``` and contains the correspondences of the IPMI IP addresses and the names of the hosts that appear in ONE, using the well known ```/etc/hosts``` file format. An example for this file is, where the first column is the IPMI IP address and the second column is the name of the host as appears in ONE.
 
 ```
 192.168.1.100   niebla01
@@ -163,7 +163,7 @@ The ```ipmi.hosts``` should be located in the folder ```/etc/clues2/conf.d/``` a
 
 The you should adjust the commandline for powering on and off the working nodes, using IPMI. In the default configuration we use the common ```ipmitool``` app and we use a passwordless connection to the IPMI interface. To adjust the commandline you can use %%a to substitute the IP address and %%h to substitute the hostname
 
-## Toubleshoting
+## Troubleshooting
 
 You can get information in the CLUES log file (i.e. ```/var/log/clues2/clues2.log```). But you can also set the  ```LOG_FILE``` to a empty value in the ```/etc/clues2/clues2.cfg``` file and execute CLUES as 
 
