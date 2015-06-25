@@ -217,28 +217,7 @@ def main_function():
             Operation("req_get", desc = "Get the requests in a platform"),
         ])
 
-    parsed, result, info = p.autocall_ops(sys.argv[1:])
-    if not parsed:
-        if (result is None):
-            print "Error:", info
-            sys.exit(-1)
-            
-    if (result.values['-h']):
-        print p
-        sys.exit(0)
-
-    if (result.operation is None):
-        print info
-        sys.exit(-1)
-        
-    (opexecuted, explain) = info
-    print explain
-    if opexecuted:
-        sys.exit(0)
-    else:
-        sys.exit(-1)
-        
-    exit()
+    p.self_service(True)
     
 if __name__ == '__main__':
     main_function()    
