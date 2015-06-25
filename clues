@@ -21,148 +21,96 @@ import getpass
 import logging
 import clues.configcli as configcli
 import clueslib.helpers
+import cpyutils.parameters
+from cpyutils.parameters import *
 
-def main_function():
 
-    proxy = configcli.get_clues_proxy_from_config()
-    sec_info = configcli.config_client.CLUES_SECRET_TOKEN
-
-    try:
-        proxy.version()
-    except:
-        print "Could not connect to CLUES server %s (please, check if it is running)" % configcli.config_client.CLUES_XMLRPC
-        sys.exit()
-    args = sys.argv[1:]
-    if len(args) == 0:
-        sys.exit()
-
-    operation = (args[0].strip()).lower()
-    parameters = args[1:]
-
-    if operation == 'status':
-        if (len(parameters) != 0) and (len(parameters) != 1):
-            logging.error("usage: status [node]")
-            sys.exit(-1)
-        nname = ""
-        if (len(parameters) == 1):
-            nname = parameters[0]
-        succeed, text = proxy.status(sec_info, "")
+class CluesParameters(cpyutils.parameters.CmdLineParser):
+    def __init__(self, proxy, executable, desc, arguments):
+        cpyutils.parameters.CmdLineParser.__init__(self, executable, desc = desc, arguments = arguments)
+        self._proxy = proxy
+        self._sec_info = configcli.config_client.CLUES_SECRET_TOKEN
+    
+    def status(self, r, error):
+        succeed, text = self._proxy.status(self._sec_info, "")
         if succeed:
-            print text
+            return True, text
         else:
-            logging.error("Could not get the status of CLUES (%s)" % text)
-            sys.exit(-1)
-
-    if (operation == 'recover'):
-        if (len(parameters) != 1):
-            logging.error("usage: recover [node]")
-            sys.exit(-1)
-        nname = parameters[0]
-        '''
-        idle_txt = False
-        if (len(parameters) == 2):
-            idle_txt = parameters[1].lower()
-        if idle_txt == 'idle':
-            idle = True
-        elif idle_txt == 'off':
-            idle = False
-        else:
-            logging.error("usage: recover [node] [off|idle]")
-            sys.exit(-1)
-        ''' 
-        succeed, text = proxy.recover_node(sec_info, nname)
-        if not succeed:
-            print text
-            sys.exit(-1)
-        else:
-            print text
-
-    if (operation == 'enable'):
-        if (len(parameters) != 0) and (len(parameters) != 1):
-            logging.error("usage: enable [node]")
-            sys.exit(-1)
-        nname = ""
-        if (len(parameters) == 1):
-            nname = parameters[0]
-        succeed, text = proxy.enable_node(sec_info, nname, True)
-        if not succeed:
-            sys.exit(-1)
-        else:
-            print text
-
-    if (operation == 'disable'):
-        if (len(parameters) != 0) and (len(parameters) != 1):
-            logging.error("usage: disable [node]")
-            sys.exit(-1)
-        nname = ""
-        if (len(parameters) == 1):
-            nname = parameters[0]
-        succeed, text = proxy.enable_node(sec_info, nname, False)
-        if not succeed:
-            sys.exit(-1)
-        else:
-            print text
-
-    if (operation == 'poweron'):
-        if (len(parameters) < 1):
-            logging.error("usage: poweron [node]")
-            sys.exit(-1)
-        for nname in parameters:
-            succeed, text = proxy.poweron(sec_info, nname)
-            if not succeed:
-                print "node %s could not be powered on (%s)" % (nname, text)
-                sys.exit(-1)
-            else:
-                print text
-
-    if (operation == 'poweroff'):
-        if (len(parameters) < 1):
-            logging.error("usage: poweroff [node] [node] ...")
-            sys.exit(-1)
-        for nname in parameters:
-            succeed, text = proxy.poweroff(sec_info, nname)
-            if not succeed:
-                print "node %s could not be powered off (%s)" % (nname, text)
-                sys.exit(-1)
-            else:
-                print text
-
-    if (operation == 'nodeinfo_xml') or (operation == 'nodeinfo'):
-        if (len(parameters) < 1):
-            logging.error("usage: nodeinfo [node] [node] ...")
-            sys.exit(-1)
-        nname = ""
-
-        separator = ""
-        if len(parameters) > 0:
-            separator = "-"*40
+            return False, "Could not get the status of CLUES (%s)" % text
             
-        for nname in parameters:
-            if (operation == 'nodeinfo_xml'):
-                succeed, text = proxy.get_node_description(sec_info, nname, True)
-            else:
-                succeed, text = proxy.get_node_description(sec_info, nname, False)
+    def recover(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.recover_node(self._sec_info, node)
             if not succeed:
-                print "could not get the description of node %s (%s)" % (nname, text)
-            else:
-                print text
-            if separator != "":
-                print separator
+                failed = True
+            lines.append(text)
+        return (not failed), "\n".join(lines)
 
-    if (operation == 'shownode'):
-        if (len(parameters) < 1):
-            logging.error("usage: shownode [node] [node] ...")
-            sys.exit(-1)
-        nname = ""
-
-        separator = ""
-        if len(parameters) > 0:
-            separator = "-"*40
-            
-        for nname in parameters:
-            succeed, text = proxy.get_node_description(sec_info, nname, True)
+    def enable(self, r, error):
+        failed = False
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.enable_node(self._sec_info, node, True)
             if not succeed:
-                print "could not get the description of node %s (%s)" % (nname, text)
+                failed = True
+            print text
+        sys.exit(-1)
+
+    def disable(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.enable_node(self._sec_info, node, False)
+            if not succeed:
+                failed = True
+            lines.append(text)
+        return (not failed), "\n".join(lines)
+
+    def poweron(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.poweron(self._sec_info, node)
+            if not succeed:
+                failed = True
+                lines.append("node %s could not be powered on (%s)" % (node, text))
+            else:    
+                lines.append(text)
+        return (not failed), "\n".join(lines)
+
+    def poweroff(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.poweroff(self._sec_info, node)
+            if not succeed:
+                failed = True
+                lines.append("node %s could not be powered off (%s)" % (node, text))
+            else:    
+                lines.append(text)
+        return (not failed), "\n".join(lines)
+
+    def nodeinfo(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.get_node_description(self._sec_info, node, r.values['-x'])
+            if not succeed:
+                failed = True
+                lines.append("could not get info of the node (%s)" % (node, text))
+            else:    
+                lines.append(text)
+        return (not failed), "\n".join(lines)
+
+    def shownode(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.get_node_description(self._sec_info, node, True)
+            if not succeed:
+                lines.append("could not get the description of node %s (%s)" % (node, text))
+                failed = True
             else:
                 from clueslib.node import Node
                 node = Node.fromxml(Node("",0,0,0,0), text)
@@ -179,73 +127,118 @@ def main_function():
                 retval += "Memory (free/total): %s/%s\n" % (node.memory_free, node.memory_total)
                 retval += "Times that failed power (on/off): %s/%s\n" % (node.power_on_operation_failed, node.power_off_operation_failed)
                 retval += "Keywords: %s" % node.keywords
-                print retval
-            if separator != "":
-                print separator
-
-    if (operation == 'req_create'):
-        if (len(parameters) != 2) and (len(parameters) != 3) and (len(parameters) != 4):
-            logging.error("usage: req_create [cpu] [memory] [extra info] [number of nodes]")
-            sys.exit(-1)
-        text = ""
-        try:
-            cpu = int(parameters[0])
-            memory = int(parameters[1])
+                lines.append(retval)
+        return (not failed), "\n".join(lines)
+        
+    def req_create(self, r, error):
+        cpu = r.values['--cpu'][0]
+        memory = r.values['--memory'][0]
+        if r.values['--request'] is None:
             extra = ""
-            if len(parameters) > 2:
-                extra = parameters[2]
-            nodecount = 1
-            if len(parameters) == 4:
-                nodecount = int(parameters[3])
-        except:
-            succeed = False
-            logging.error("usage: req_create [cpu] [memory] [extra info] [number of nodes]")
-            sys.exit(-1)
-
-        succeed, text = proxy.request_create(sec_info, cpu, memory, nodecount, extra)
-        if not succeed:
-            print "request could not be created (%s)" % (text)
-            sys.exit(-1)
         else:
-            print text
-
-    if (operation == 'req_wait'):
-        if (len(parameters) != 1) and (len(parameters) != 2):
-            logging.error("usage: req_wait [req_id] [timeout]")
-            sys.exit(-1)
-        text = ""
-        try:
-            req_id = int(parameters[0])
-            timeout = -1
-            if len(parameters) == 2:
-                timeout = int(parameters[1])
-        except:
-            succeed = False
-            logging.error("usage: req_wait [req_id] [timeout]")
-            sys.exit(-1)
-
-        succeed, text = proxy.request_wait(sec_info, req_id, timeout)
+            extra = r.values['--request'][0]
+        if r.values['--count'] is None:
+            nodecount = 1
+        else:
+            nodecount = r.values['--count'][0]
+        
+        succeed, text = self._proxy.request_create(self._sec_info, cpu, memory, nodecount, extra)
         if not succeed:
-            print "request could not be waited (%s)" % (text)
-            sys.exit(-1)
+            return False, "request could not be created (%s)" % (text)
+        else:
+            return True, text
+
+    def req_wait(self, r, error):
+        req_id = r.values['id'][0]
+        timeout = -1
+        if r.values['timeout'] is not None:
+            timeout = r.values['timeout'][0]
+
+        succeed, text = self._proxy.request_wait(self._sec_info, req_id, timeout)
+        if not succeed:
+            return False, "request could not be waited (%s)" % (text)
         else:
             if text:
-                print "request %s is not currently in the queue" % req_id
+                return True, "request %s is not currently in the queue" % req_id
             else:
-                print "request %s is still pending" % req_id
+                return True, "request %s is still pending" % req_id
 
-    if operation == 'req_get':
-        if (len(parameters) != 0):
-            logging.error("usage: req_get")
-            sys.exit(-1)
-        succeed, text = proxy.get_requests(sec_info)
+    def req_get(self, r, error):
+        succeed, text = self._proxy.get_requests(self._sec_info)
         if succeed:
-            print text
+            return True, text
         else:
-            logging.error("Could not get the requests from CLUES (%s)" % text)
-            sys.exit(-1)
+            return False, "Could not get the requests from CLUES (%s)" % text
 
-    sys.exit(0)
+def main_function():
+    proxy = configcli.get_clues_proxy_from_config()
+    sec_info = configcli.config_client.CLUES_SECRET_TOKEN
+
+    try:
+        proxy.version()
+    except:
+        print "Could not connect to CLUES server %s (please, check if it is running)" % configcli.config_client.CLUES_XMLRPC
+        sys.exit()
+
+    p = CluesParameters(proxy, "clues", desc = "The CLUES command line utility", arguments = [
+            Operation("status", desc = "Show the status of the platform"),
+            Operation("recover", desc = "Recover one or more nodes from an error state", arguments = [
+                Argument("nodes", "names of the nodes that want to be recovered", mandatory = True, count = -1)
+            ]),
+            Operation("enable", desc = "Enable one or more nodes to be considered by the platform", arguments = [
+                Argument("nodes", "names of the nodes that want to be enabled", mandatory = True, count = -1)
+            ]),
+            Operation("disable", desc = "Disable one or more nodes to be considered by CLUES", arguments = [
+                Argument("nodes", "names of the nodes that want to be disabled", mandatory = True, count = -1)
+            ]),
+            Operation("poweron", desc = "Power on one or more nodes", arguments = [
+                Argument("nodes", "names of the nodes that want to be powered on", mandatory = True, count = -1)
+            ]),
+            Operation("poweroff", desc = "Power off one or more nodes", arguments = [
+                Argument("nodes", "names of the nodes that want to be powered off", mandatory = True, count = -1)
+            ]),
+            Operation("nodeinfo", desc = "Show the information about node(s), to be processed in a programmatically mode", arguments = [
+                Argument("nodes", "names of the nodes whose information is wanted to be shown", mandatory = True, count = -1),
+                Flag("-x", "--xml", desc = "shows the information in XML format")
+            ]),
+            Operation("shownode", desc = "Show the information about node(s) as human readable", arguments = [
+                Argument("nodes", "names of the nodes whose information is wanted to be shown", mandatory = True, count = -1),
+            ]),
+            Operation("req_create", desc = "Create one request for resources", arguments = [
+                Parameter_float("--cpu", "-c", desc = "Requested CPU", mandatory = True),
+                Parameter_float("--memory", "-m", desc = "Requested Memory", mandatory = True),               
+                Parameter("--request", "-r", desc = "Requested constraints for the nodes", mandatory = False),
+                Parameter_int("--count", "-n", desc = "Number of resources (default is 1)", mandatory = False),
+            ]),
+            Operation("req_wait", desc = "Wait for a request", arguments = [
+                Argument_int("id", desc = "Identifier of the request to wait", mandatory = True),
+                Argument_int("timeout", desc = "Timeout to wait", mandatory = False),
+              ]),
+            Operation("req_get", desc = "Get the requests in a platform"),
+        ])
+
+    parsed, result, info = p.autocall_ops(sys.argv[1:])
+    if not parsed:
+        if (result is None):
+            print "Error:", info
+            sys.exit(-1)
+            
+    if (result.values['-h']):
+        print p
+        sys.exit(0)
+
+    if (result.operation is None):
+        print info
+        sys.exit(-1)
+        
+    (opexecuted, explain) = info
+    print explain
+    if opexecuted:
+        sys.exit(0)
+    else:
+        sys.exit(-1)
+        
+    exit()
     
 if __name__ == '__main__':
     main_function()    
