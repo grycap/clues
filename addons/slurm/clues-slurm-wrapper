@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import configcli
+import clues.configcli
 import sys, os, os.path, stat, pwd, grp, time, string, tempfile
 import re, logging, xmlrpclib
 import subprocess
@@ -172,7 +172,7 @@ def wait_requests(clues_server, sec_info, pending_requests):
                 still_pending_requests.append(r_id)
 
         pending_requests = still_pending_requests
-        stop_waiting = (len(pending_requests) == 0) or ((time.time() - now) > configcli.config_client.CLUES_REQUEST_WAIT_TIMEOUT)
+        stop_waiting = (len(pending_requests) == 0) or ((time.time() - now) > clues.configcli.config_client.CLUES_REQUEST_WAIT_TIMEOUT)
 
         if not stop_waiting:
             if not stop_waiting:
@@ -185,12 +185,12 @@ def wait_requests(clues_server, sec_info, pending_requests):
 
 def new_job(cpus_per_task, mem, nodes, queue):
 
-    clues_server = configcli.get_clues_proxy_from_config()
+    clues_server = clues.configcli.get_clues_proxy_from_config()
     
     try:
         version = clues_server.version()
     except:
-        print "Could not connect to CLUES server %s (please, check if it is running)" % configcli.config_client.CLUES_XMLRPC
+        print "Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC
         sys.exit()
 
     if queue is not " ":
@@ -200,7 +200,7 @@ def new_job(cpus_per_task, mem, nodes, queue):
 
     pending_requests = []
 
-    success, r_id = clues_server.request_create(configcli.config_client.CLUES_SECRET_TOKEN, nodes, mem, cpus_per_task, req_str)
+    success, r_id = clues_server.request_create(clues.configcli.config_client.CLUES_SECRET_TOKEN, nodes, mem, cpus_per_task, req_str)
     if success:
         logging.info("a request for %d nodes of %d CPU and %d of RAM with requirements %s" % (nodes, mem, cpus_per_task, req_str))
         pending_requests.append(r_id)
@@ -208,7 +208,7 @@ def new_job(cpus_per_task, mem, nodes, queue):
         logging.error("Error creating a CLUES request: %s" % r_id)
     
     if pending_requests:
-        wait_requests(clues_server, configcli.config_client.CLUES_SECRET_TOKEN, pending_requests)
+        wait_requests(clues_server, clues.configcli.config_client.CLUES_SECRET_TOKEN, pending_requests)
 
 
 if __name__=='__main__':
