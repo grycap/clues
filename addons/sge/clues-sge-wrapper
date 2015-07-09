@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 VERSION="2.0.0"
 
-import configcli
+import clues.configcli
 import sys, os
 import re
 import logging
@@ -249,7 +249,7 @@ def wait_requests(clues_server, sec_info, pending_requests):
 				still_pending_requests.append(r_id)
 
 		pending_requests = still_pending_requests
-		stop_waiting = (len(pending_requests) == 0) or ((time.time() - now) > configcli.config_client.CLUES_REQUEST_WAIT_TIMEOUT)
+		stop_waiting = (len(pending_requests) == 0) or ((time.time() - now) > clues.configcli.config_client.CLUES_REQUEST_WAIT_TIMEOUT)
 
 		if not stop_waiting:
 			if not stop_waiting:
@@ -315,17 +315,17 @@ def new_job(params):
 	# CLUES analyzer do not like ' it wants "
 	req_str = req_str.replace("'","\"")
 	
-	clues_server = configcli.get_clues_proxy_from_config()
+	clues_server = clues.configcli.get_clues_proxy_from_config()
 	
 	try:
 		version = clues_server.version()
 	except:
-		print "Could not connect to CLUES server %s (please, check if it is running)" % configcli.config_client.CLUES_XMLRPC
+		print "Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC
 		sys.exit()
 
 	pending_requests = []
 
-	success, r_id = clues_server.request_create(configcli.config_client.CLUES_SECRET_TOKEN, slots_pn, memory, slots, req_str)
+	success, r_id = clues_server.request_create(clues.configcli.config_client.CLUES_SECRET_TOKEN, slots_pn, memory, slots, req_str)
 	if success:
 		logging.info("a request for %d nodes of %d CPU and %d of RAM with requirements %s" % (slots, slots_pn, memory, req_str))
 		pending_requests.append(r_id)
@@ -333,7 +333,7 @@ def new_job(params):
 		logging.error("Error creating a CLUES request: %s" % r_id)
 	
 	if pending_requests:
-		wait_requests(clues_server, configcli.config_client.CLUES_SECRET_TOKEN, pending_requests)
+		wait_requests(clues_server, clues.configcli.config_client.CLUES_SECRET_TOKEN, pending_requests)
 
 if __name__ == '__main__':
 	# Read the START line
