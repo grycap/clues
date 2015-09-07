@@ -76,19 +76,19 @@ class powermanager(PowerManager):
 		self._IM_VIRTUAL_CLUSTER_INFID = config_im.IM_VIRTUAL_CLUSTER_INFID
 		self._IM_VIRTUAL_CLUSTER_AUTH_DATA = self._read_auth_data(config_im.IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)		
 		self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS = config_im.IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS
-		self._IM_VIRTUAL_CLUSTER_XMLRPC_SERVER = self._get_server(config_im)
 		self._IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS = config_im.IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS
-		
+		self._IM_VIRTUAL_CLUSTER_XMLRCP_SSL = config_im.IM_VIRTUAL_CLUSTER_XMLRCP_SSL
+		self._IM_VIRTUAL_CLUSTER_XMLRPC = config_im.IM_VIRTUAL_CLUSTER_XMLRPC
+		self._IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS = config_im.IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS
 		# Structure for the recovery of nodes
 		self._mvs_seen = {}
 
-	@staticmethod
-	def _get_server(config):
-		if config.IM_VIRTUAL_CLUSTER_XMLRCP_SSL:
+	def _get_server(self):
+		if self._IM_VIRTUAL_CLUSTER_XMLRCP_SSL:
 			from springpython.remoting.xmlrpc import SSLClient
-			return SSLClient(config.IM_VIRTUAL_CLUSTER_XMLRPC, config.IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS)
+			return SSLClient(self._IM_VIRTUAL_CLUSTER_XMLRPC, self._IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS)
 		else:
-			return xmlrpclib.ServerProxy(config.IM_VIRTUAL_CLUSTER_XMLRPC,allow_none=True)
+			return xmlrpclib.ServerProxy(self._IM_VIRTUAL_CLUSTER_XMLRPC,allow_none=True)
 
 	# From IM.auth
 	@staticmethod
@@ -128,7 +128,7 @@ class powermanager(PowerManager):
 		return res
 	
 	def _get_radl(self, nname):
-		server = self._IM_VIRTUAL_CLUSTER_XMLRPC_SERVER
+		server = self._get_server()
 		(success, vm_ids) = server.GetInfrastructureInfo(self._IM_VIRTUAL_CLUSTER_INFID, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
 
 		# Get all the info from RADL
@@ -202,7 +202,7 @@ class powermanager(PowerManager):
 	
 	def _get_vms(self):
 		now = cpyutils.eventloop.now()
-		server = self._IM_VIRTUAL_CLUSTER_XMLRPC_SERVER
+		server = self._get_server()
 		(success, vm_ids) = server.GetInfrastructureInfo(self._IM_VIRTUAL_CLUSTER_INFID, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
 		if not success:
 			_LOGGER.error("ERROR getting infrastructure info: " + vm_ids)
@@ -235,7 +235,7 @@ class powermanager(PowerManager):
 			self.power_off(vm)
 		
 	def power_on(self, nname):
-		server = self._IM_VIRTUAL_CLUSTER_XMLRPC_SERVER
+		server = self._get_server()
 		radl_data = self._get_radl(nname)
 		
 		_LOGGER.debug("RADL to launch node " + nname + ": " + radl_data)
@@ -250,7 +250,7 @@ class powermanager(PowerManager):
 		return success, nname
 
 	def power_off(self, nname):
-		server = self._IM_VIRTUAL_CLUSTER_XMLRPC_SERVER
+		server = self._get_server()
 
 		if nname in self._mvs_seen:
 			vm = self._mvs_seen[nname]
