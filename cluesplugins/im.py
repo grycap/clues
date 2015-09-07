@@ -40,8 +40,7 @@ class powermanager(PowerManager):
 			self.vm_id = vm_id
 			self.radl = radl
 			self.timestamp_recovered = 0
-			self.timestamp_monitoring = 0
-			self.timestamp_created = self.timestamp_seen = cpyutils.eventloop.now()
+			self.timestamp_monitoring = self.timestamp_created = self.timestamp_seen = cpyutils.eventloop.now()
 
 		def monitored(self):
 			self.timestamp_monitoring = cpyutils.eventloop.now()
