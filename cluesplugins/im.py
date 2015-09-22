@@ -208,18 +208,22 @@ class powermanager(PowerManager):
 		else:
 			# The first one is always the front-end node
 			for vm_id in vm_ids[1:]:
-				(success, radl_data)  = server.GetVMInfo(self._IM_VIRTUAL_CLUSTER_INFID, vm_id, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
-	
-				if success:
-					radl = radl_parse.parse_radl(radl_data)
-					clues_node_name = radl.systems[0].getValue('net_interface.0.dns_name')
-	
-					if clues_node_name:
-						if clues_node_name not in self._mvs_seen:
-							self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
-						self._mvs_seen[clues_node_name].seen()
-				else:
-					_LOGGER.error("ERROR getting VM info: " + clues_node_name)
+				clues_node_name = None
+				try:
+					(success, radl_data)  = server.GetVMInfo(self._IM_VIRTUAL_CLUSTER_INFID, vm_id, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+					if success:
+						radl = radl_parse.parse_radl(radl_data)
+						clues_node_name = radl.systems[0].getValue('net_interface.0.dns_name')
+					else:
+						_LOGGER.error("ERROR getting VM info: " + vm_id)
+				except:
+					success = False
+					_LOGGER.exception("ERROR getting VM info: %s" % vm_id)
+
+				if clues_node_name:
+					if clues_node_name not in self._mvs_seen:
+						self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
+					self._mvs_seen[clues_node_name].seen()
 
 		# from the nodes that we have powered on, check which of them are still running
 		for nname, node in self._mvs_seen.items():
