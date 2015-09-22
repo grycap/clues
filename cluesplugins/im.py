@@ -25,6 +25,7 @@ import logging
 import xmlrpclib
 
 from IM.radl import radl_parse
+from IM.VirtualMachine import VirtualMachine
 
 import cpyutils.config
 import cpyutils.eventloop
@@ -214,6 +215,7 @@ class powermanager(PowerManager):
 					if success:
 						radl = radl_parse.parse_radl(radl_data)
 						clues_node_name = radl.systems[0].getValue('net_interface.0.dns_name')
+						state = radl.systems[0].getValue('state')
 					else:
 						_LOGGER.error("ERROR getting VM info: " + vm_id)
 				except:
@@ -221,9 +223,15 @@ class powermanager(PowerManager):
 					_LOGGER.exception("ERROR getting VM info: %s" % vm_id)
 
 				if clues_node_name:
-					if clues_node_name not in self._mvs_seen:
-						self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
-					self._mvs_seen[clues_node_name].seen()
+					if state in [VirtualMachine.OFF, VirtualMachine.FAILED]:
+						_LOGGER.error("VM with id %s is in state: %s" % (vm_id, state))
+						self.recover(clues_node_name)
+					if state in [VirtualMachine.UNCONFIGURED]:
+						_LOGGER.warn("VM with id %s is in state: %s" % (vm_id, state))
+					else:
+						if clues_node_name not in self._mvs_seen:
+							self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
+						self._mvs_seen[clues_node_name].seen()
 
 		# from the nodes that we have powered on, check which of them are still running
 		for nname, node in self._mvs_seen.items():
@@ -253,6 +261,7 @@ class powermanager(PowerManager):
 		return success, nname
 
 	def power_off(self, nname):
+		_LOGGER.debug("Powering off %s" % nname)
 		server = self._get_server()
 
 		if nname in self._mvs_seen:
