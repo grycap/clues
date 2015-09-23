@@ -225,11 +225,11 @@ class powermanager(PowerManager):
 				if clues_node_name:
 					if state in [VirtualMachine.OFF, VirtualMachine.FAILED]:
 						# This VM is in "terminal" state remove it from the infrastructure 
-						_LOGGER.error("VM with id %s is in state: %s" % (vm_id, state))
+						_LOGGER.error("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
 						self.recover(clues_node_name)
 					if state in [VirtualMachine.UNCONFIGURED]:
 						# This VM is unconfigured do not terminate
-						_LOGGER.warn("VM with id %s is in state: %s" % (vm_id, state))
+						_LOGGER.warn("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
 					else:
 						if clues_node_name not in self._mvs_seen:
 							self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
