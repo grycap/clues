@@ -92,16 +92,16 @@ class Nodespec:
     
     def to_request(self):
         kws = ""
-        if ns.hostname is not None:
-            kws = "%shostname==\"%s\"" % (kws, ns.hostname)
-        if queue != '':
+        if self.hostname:
+            kws = "%shostname==\"%s\"" % (kws, self.hostname)
+        if self.queue != '':
             if kws != "":
                 kws = "%s && " % kws
-            kws = "%s[\"%s\"] subset queues" % (kws, queue)
-        if len(ns.properties)>0:
+            kws = "%s[\"%s\"] subset queues" % (kws, self.queue)
+        if self.properties:
             comma_str = ""
             p_str = ""
-            for p in ns.properties:
+            for p in self.properties:
                 p_str = "%s%s\"%s\"" % (p_str, comma_str, p)
                 comma_str = " , "
 
@@ -109,16 +109,16 @@ class Nodespec:
                 kws = "%s && " % kws
 
             kws = "%s[%s] subset properties" % (kws, p_str)
-        if ns.ppn is not None:
+        if self.ppn:
             # We are not checking whether the format is correct or not (numeric or not); that is a task of PBS
             if kws != "":
                 kws = "%s && " % kws
-            kws = "%sppn>=%s" % (kws, ns.ppn)
-        if ns.gpus is not None:
+            kws = "%sppn>=%s" % (kws, self.ppn)
+        if self.gpus:
             # We are not checking whether the format is correct or not (numeric or not); that is a task of PBS
             if kws != "":
                 kws = "%s && " % kws
-            kws = "%sgpus>=%s" % (kws, ns.gpus)
+            kws = "%sgpus>=%s" % (kws, self.gpus)
         return kws
     
     def __init__(self):
@@ -127,6 +127,7 @@ class Nodespec:
         self.properties = []
         self.nodecount = None
         self.hostname = None
+        self.queue = None
         
     def __str__(self):
         if self.hostname is not None:
@@ -244,6 +245,7 @@ if __name__ == '__main__':
         nodespec.append(ns)
 
     for ns in nodespec:
+    	ns.queue = queue
         req_str = ns.to_request()
         success, r_id = clues_server.request_create(sec_info, ns.nodecount, 0, jobcount, req_str)
         if success:
