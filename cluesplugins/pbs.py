@@ -22,6 +22,7 @@ import clueslib.helpers
 import cpyutils.runcommand
 from clueslib.platform import PowerManager
 from clueslib.node import Node, NodeInfo, NodeList
+from clueslib.request import JobInfo, Request
 from cpyutils.xmlobject import XMLObject_KW, XMLObject
 import cpyutils.evaluate
 import re
@@ -65,6 +66,123 @@ def _translate_mem_value(memval):
             value = -1
             
     return value * multiplier
+
+class _Nodespec:
+    # cadena="nodes=server:hippi+10:ppn=1:noserver+3:bigmem:hippi,walltime=10:00:00"
+    # Copied from clues-pbs-wrapper
+    # TODO: Merge in a unique location
+    
+    @staticmethod
+    def createFromOptions(request_str):
+        # resource = resource_expr , resource2 = resource_expr2
+        _nodes_requested = []
+        
+        requests = request_str.split(",")
+        
+        for resource_request in requests:
+            # resource = resource_expr
+            resource_request_a = resource_request.split("=", 1)
+            
+            if len(resource_request_a) == 2:
+                resource, resspec_str = resource_request_a
+                
+                if resource == 'nodes':
+                    # nodes = nodeset1 + nodeset2 + ... 
+                    nodespec_a = resspec_str.split("+")
+                    
+                    for nodespec_str in nodespec_a:
+                        # nodeset = {<node_count> | <hostname>} [:ppn=<ppn>][:gpus=<gpu>][:<property>[:<property>]...] [+ ...]
+                        nodespec_a = nodespec_str.split(":")
+                        if len(nodespec_a) > 0:
+                            nodestring = nodespec_a[0]
+                            nodename = None
+                            node_requested = _Nodespec()
+                            
+                            # {<node_count> | <hostname>}
+                            try:
+                                nodecount = int(nodestring)
+                                node_requested.nodecount = nodecount
+                            except:
+                                node_requested.nodecount = 1
+                                node_requested.hostname = nodestring
+                                
+                            # [:ppn=<ppn>][:gpus=<gpu>][:<property>[:<property>]...] [+ ...]
+                            for prop_str in nodespec_a[1:]:
+                                prop_a = prop_str.split("=", 1)
+                                if len(prop_a) == 1:
+                                    # <property>
+                                    node_requested.properties.append(prop_a[0])
+                                else:
+                                    # [:ppn=<ppn>][:gpus=<gpu>]
+                                    prop, val = prop_a
+                                    if prop == "ppn":
+                                        node_requested.ppn = val
+                                    elif prop == "gpus":
+                                        node_requested.gpus = val
+                                    else:
+                                        logging.warning("ignoring requested value for property %s" % prop)
+                            
+                            _nodes_requested.append(node_requested)
+                else:
+                    # Other resources are ignored (e.g. walltime)
+                    # http://docs.adaptivecomputing.com/torque/4-1-3/Content/topics/2-jobs/requestingRes.htm
+                    logging.debug("ignoring resource %s" % resource)
+            else:
+                logging.debug("ignoring request %s" % resource_request)
+        
+        return _nodes_requested
+    
+    def to_request(self):
+        kws = ""
+        if self.hostname:
+            kws = "%shostname==\"%s\"" % (kws, self.hostname)
+        if self.queue:
+            if kws != "":
+                kws = "%s && " % kws
+            kws = "%s[\"%s\"] subset queues" % (kws, self.queue)
+        if self.properties:
+            comma_str = ""
+            p_str = ""
+            for p in self.properties:
+                p_str = "%s%s\"%s\"" % (p_str, comma_str, p)
+                comma_str = " , "
+
+            if kws != "":
+                kws = "%s && " % kws
+
+            kws = "%s[%s] subset properties" % (kws, p_str)
+        if self.ppn:
+            # We are not checking whether the format is correct or not (numeric or not); that is a task of PBS
+            if kws != "":
+                kws = "%s && " % kws
+            kws = "%sppn>=%s" % (kws, self.ppn)
+        if self.gpus:
+            # We are not checking whether the format is correct or not (numeric or not); that is a task of PBS
+            if kws != "":
+                kws = "%s && " % kws
+            kws = "%sgpus>=%s" % (kws, self.gpus)
+        return kws
+    
+    def __init__(self):
+        self.ppn = None
+        self.gpus = None
+        self.properties = []
+        self.nodecount = None
+        self.hostname = None
+        self.queue = None
+        
+    def __str__(self):
+        if self.hostname is not None:
+            ret_str = self.hostname
+        elif self.nodecount is not None:
+            ret_str = str(self.nodecount)
+        if self.ppn is not None:
+            ret_str = "%s:ppn=%s" % (ret_str, self.ppn)
+        if self.gpus is not None:
+            ret_str = "%s:gpus=%s" % (ret_str, self.gpus)
+        for p in self.properties:
+            ret_str = "%s:%s" % (ret_str, p)
+        return ret_str
 
 class _Node(XMLObject):
     values = [ 'name', 'state', 'ntype', 'status', 'np', 'properties', 'jobs' ]
@@ -188,16 +306,44 @@ class _PBSNodes(XMLObject):
 
 class _Job(XMLObject):
     values = [ 'Job_Id', 'job_state', 'nodes', 'queue', 'ctime', 'start_time' ]
-    numeric = [ 'nodes' ]
     noneval = ""
     
     def __init__(self, xml_str):
         XMLObject.__init__(self, xml_str)
         if self.nodes == "":
-            self.nodes = 1
+            self.nodes = "1"
     
     def __str__(self):
-        return "%s %d" % (self.Job_Id, self.nodes)
+        return "%s %s" % (self.Job_Id, self.nodes)
+       
+    def to_jobinfo(self):
+
+        nodespec = []
+        if self.nodes:
+            nodespec = _Nodespec.createFromOptions("nodes=" + self.nodes)
+        else:
+            ns = _Nodespec()
+            ns.nodecount=1
+            nodespec.queue = self.queue
+            nodespec.append(ns)
+        
+        req_str = []
+        for ns in nodespec:
+            req_str.append(ns.to_request())
+        if not req_str:
+            req_str.append("")
+        resources = clueslib.request.ResourcesNeeded(ns.nodecount, 0, req_str, nodecount = 1)
+        ji = JobInfo(resources, self.Job_Id, [])
+        if self.job_state == "Q":
+            ji.set_state(Request.PENDING)
+        elif self.job_state in ["R","E","C","T"]:
+            ji.set_state(Request.SERVED)
+        elif self.job_state in ["H", "W"]:
+            ji.set_state(Request.BLOCKED)
+        else:
+            _LOGGER.error("The PBS job state '%s' is unknown" % self.job_state)
+            
+        return ji
 
 class _Jobs(XMLObject):
     tuples_lists = {'Job': _Job}
@@ -296,9 +442,29 @@ class lrms(clueslib.platform.LRMS):
             for host in hosts.Node:
                 nodeinfolist[host.name] = host.to_nodeinfo()
         else:
-            _LOGGER.warning("an error occurred when monitoring hosts (could not get information from ONE; please check ONE_XMLRPC and ONE_AUTH vars)")
+            _LOGGER.warning("an error occurred when monitoring hosts (could not get information from PBS; please check PBS_SERVER and PBS_PBSNODES_COMMAND vars)")
                 
         return nodeinfolist
     
+    def get_jobinfolist(self):
+        command = self._qstat + [ '-x', '@%s' % self._server_ip ]
+        success, out_command = cpyutils.runcommand.runcommand(command, False, timeout = clueslib.configlib._CONFIGURATION_GENERAL.TIMEOUT_COMMANDS)
+
+        if not success:
+            _LOGGER.error("could not obtain information about PBS server %s (%s)" % (self._server_ip, out_command))
+            return None
+        
+        jobinfolist = []
+        if out_command.strip():
+            jobs = _Jobs(out_command)
+            
+            if jobs is not None:
+                for job in jobs.Job:
+                    jobinfolist.append(job.to_jobinfo())
+            else:
+                _LOGGER.warning("an error occurred when monitoring hosts (could not get information from PBS; please check PBS_SERVER and PBS_QSTAT_COMMAND vars)")
+
+        return jobinfolist
+
 if __name__ == '__main__':
     pass
