@@ -89,7 +89,7 @@ class Platform(object):
         if self._pow_mgr is None:
             return False
         
-        return self._pow_mgr.recover()
+        return self._pow_mgr.recover(nname)
 
 class LRMS:
     def __init__(self, _id):
