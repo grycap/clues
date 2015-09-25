@@ -248,12 +248,14 @@ class powermanager(PowerManager):
 			self.power_off(vm)
 		
 	def power_on(self, nname):
-		server = self._get_server()
-		radl_data = self._get_radl(nname)
-		
-		_LOGGER.debug("RADL to launch node " + nname + ": " + radl_data)
-
-		(success, vms_id) = server.AddResource(self._IM_VIRTUAL_CLUSTER_INFID, radl_data, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+		try:
+			server = self._get_server()
+			radl_data = self._get_radl(nname)
+			_LOGGER.debug("RADL to launch node " + nname + ": " + radl_data)
+			(success, vms_id) = server.AddResource(self._IM_VIRTUAL_CLUSTER_INFID, radl_data, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+		except:
+			_LOGGER.exception("Error launching node %s " % nname)
+			success = False
 	
 		if success:
 			_LOGGER.debug("Node " + nname + " successfully created")
@@ -264,77 +266,85 @@ class powermanager(PowerManager):
 
 	def power_off(self, nname):
 		_LOGGER.debug("Powering off %s" % nname)
-		server = self._get_server()
-		success = False
-
-		if nname in self._mvs_seen:
-			vm = self._mvs_seen[nname]
-			ec3_destroy_interval = vm.radl.systems[0].getValue('ec3_destroy_interval', 0)
-			ec3_destroy_safe = vm.radl.systems[0].getValue('ec3_destroy_safe', 0)
-			
-			poweroff = True
-			if ec3_destroy_interval > 0:
-				poweroff = False
-				live_time = cpyutils.eventloop.now() - vm.timestamp_created
-				remaining_paid_time = ec3_destroy_interval - live_time % ec3_destroy_interval
-				_LOGGER.debug("Remaining_paid_time = %d for node %s" % (int(remaining_paid_time), nname))
-				if remaining_paid_time < ec3_destroy_safe:
-					poweroff = True
-			
-			if poweroff:
-				(success, vm_ids) = server.RemoveResource(self._IM_VIRTUAL_CLUSTER_INFID, vm.vm_id, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
-				if not success: 
-					_LOGGER.error("ERROR deleting node: " + nname + ": " + vm_ids)
+		try:
+			server = self._get_server()
+			success = False
+	
+			if nname in self._mvs_seen:
+				vm = self._mvs_seen[nname]
+				ec3_destroy_interval = vm.radl.systems[0].getValue('ec3_destroy_interval', 0)
+				ec3_destroy_safe = vm.radl.systems[0].getValue('ec3_destroy_safe', 0)
+				
+				poweroff = True
+				if ec3_destroy_interval > 0:
+					poweroff = False
+					live_time = cpyutils.eventloop.now() - vm.timestamp_created
+					remaining_paid_time = ec3_destroy_interval - live_time % ec3_destroy_interval
+					_LOGGER.debug("Remaining_paid_time = %d for node %s" % (int(remaining_paid_time), nname))
+					if remaining_paid_time < ec3_destroy_safe:
+						poweroff = True
+				
+				if poweroff:
+					(success, vm_ids) = server.RemoveResource(self._IM_VIRTUAL_CLUSTER_INFID, vm.vm_id, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+					if not success: 
+						_LOGGER.error("ERROR deleting node: " + nname + ": " + vm_ids)
+				else:
+					_LOGGER.debug("Not powering off node %s" % nname)
+					success = False
 			else:
-				_LOGGER.debug("Not powering off node %s" % nname)
-				success = False
-		else:
-			_LOGGER.warning("There is not any VM associated to node %s (are IM credentials compatible to the VM?)" % nname)
-		
+				_LOGGER.warning("There is not any VM associated to node %s (are IM credentials compatible to the VM?)" % nname)
+		except:
+			_LOGGER.exception("Error powering off node %s " % nname)
+			success = False
+			
 		return success, nname
 
 	def lifecycle(self):
-		monitoring_info = self._clues_daemon.get_monitoring_info()
-		now = cpyutils.eventloop.now()
-
-		vms = self._get_vms()
-			
-		recover = []
-		# To store the name of the nodes to use it in the third case
-		node_names = []
-
-		# Two cases: (1) a VM that is on in the monitoring info, but it is not seen in IM; and (2) a VM that is off in the monitoring info, but it is seen in IM
-		for node in monitoring_info.nodelist:
-			node_names.append(node.name)
-			if node.enabled:
-				if node.state in [Node.OFF, Node.OFF_ERR]:
-					if self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS > 0:
-						if node.name in vms:
-							vm = vms[node.name]
-							time_recovered = now - vm.timestamp_recovered
-							time_monitoring = now - vm.timestamp_monitoring
-							_LOGGER.warning("node %s has a VM running but it is not detected by the monitoring system since %d seconds" % (node.name, time_monitoring))
-							if (time_recovered > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS) and (time_monitoring > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS):
-								_LOGGER.warning("Trying to recover it (state: %s)" % node.state)
-								vm.recovered()
-								recover.append(node.name)
-				else:
-					if node.name not in vms:
-						# This may happen because it is launched by hand using other credentials than those for the user used for IM (and he cannot manage the VMS)
-						_LOGGER.warning("node %s is detected by the monitoring system, but there is not any VM associated to it (are IM credentials compatible to the VM?)" % node.name)
+		try:
+			monitoring_info = self._clues_daemon.get_monitoring_info()
+			now = cpyutils.eventloop.now()
+	
+			vms = self._get_vms()
+				
+			recover = []
+			# To store the name of the nodes to use it in the third case
+			node_names = []
+	
+			# Two cases: (1) a VM that is on in the monitoring info, but it is not seen in IM; and (2) a VM that is off in the monitoring info, but it is seen in IM
+			for node in monitoring_info.nodelist:
+				node_names.append(node.name)
+				if node.enabled:
+					if node.state in [Node.OFF, Node.OFF_ERR]:
+						if self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS > 0:
+							if node.name in vms:
+								vm = vms[node.name]
+								time_recovered = now - vm.timestamp_recovered
+								time_monitoring = now - vm.timestamp_monitoring
+								_LOGGER.warning("node %s has a VM running but it is not detected by the monitoring system since %d seconds" % (node.name, time_monitoring))
+								if (time_recovered > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS) and (time_monitoring > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS):
+									_LOGGER.warning("Trying to recover it (state: %s)" % node.state)
+									vm.recovered()
+									recover.append(node.name)
 					else:
-						vms[node.name].monitored()	 
+						if node.name not in vms:
+							# This may happen because it is launched by hand using other credentials than those for the user used for IM (and he cannot manage the VMS)
+							_LOGGER.warning("node %s is detected by the monitoring system, but there is not any VM associated to it (are IM credentials compatible to the VM?)" % node.name)
+						else:
+							vms[node.name].monitored()	 
+	
+			# A third case: a VM that it is seen in IM but does not correspond to any node in the monitoring info
+			# This is a strange case but we assure not to have uncontrolled VMs
+			for name in vms:
+				vm = vms[name]
+				if name not in node_names:
+					_LOGGER.warning("VM with name %s is detected by the IM but it does not exist in the monitoring system... recovering it.)" % name)
+					vm.recovered()
+					recover.append(node.name)
+	
+			self._recover_ids(recover)
+		except:
+			_LOGGER.exception("Error executing lifecycle of IM PowerManager.")
 
-		# A third case: a VM that it is seen in IM but does not correspond to any node in the monitoring info
-		# This is a strange case but we assure not to have uncontrolled VMs
-		for name in vms:
-			vm = vms[name]
-			if name not in node_names:
-				_LOGGER.warning("VM with name %s is detected by the IM but it does not exist in the monitoring system... recovering it.)" % name)
-				vm.recovered()
-				recover.append(node.name)
-
-		self._recover_ids(recover)
 		return PowerManager.lifecycle(self)
 	
 	def recover(self, nname):
@@ -342,4 +352,4 @@ class powermanager(PowerManager):
 		if success:
 			return Node.OFF
 		
-		return None
+		return False
