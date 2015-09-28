@@ -230,6 +230,7 @@ class powermanager(PowerManager):
 					if state in [VirtualMachine.UNCONFIGURED]:
 						# This VM is unconfigured do not terminate
 						_LOGGER.warn("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
+						self._mvs_seen[clues_node_name].seen()
 					else:
 						if clues_node_name not in self._mvs_seen:
 							self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
