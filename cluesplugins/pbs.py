@@ -310,7 +310,7 @@ class _Job(XMLObject):
     
     def __init__(self, xml_str):
         XMLObject.__init__(self, xml_str)
-        if self.nodes == "":
+        if not self.nodes:
             self.nodes = "1"
     
     def __str__(self):
