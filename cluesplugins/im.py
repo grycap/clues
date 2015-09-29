@@ -53,6 +53,10 @@ class powermanager(PowerManager):
 
 		def recovered(self):
 			self.timestamp_recovered = cpyutils.eventloop.now()
+		
+		def update(self, vm_id, radl):	
+			self.vm_id = vm_id
+			self.radl = radl
 
 	def __init__(self):
 		#
@@ -223,17 +227,21 @@ class powermanager(PowerManager):
 					_LOGGER.exception("ERROR getting VM info: %s" % vm_id)
 
 				if clues_node_name:
+					# Create or update VM info
+					if clues_node_name not in self._mvs_seen:
+						self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
+					else:
+						self._mvs_seen[clues_node_name].update(vm_id, radl)
+
 					if state in [VirtualMachine.OFF, VirtualMachine.FAILED]:
 						# This VM is in "terminal" state remove it from the infrastructure 
 						_LOGGER.error("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
 						self.recover(clues_node_name)
-					if state in [VirtualMachine.UNCONFIGURED]:
+					elif state in [VirtualMachine.UNCONFIGURED]:
 						# This VM is unconfigured do not terminate
 						_LOGGER.warn("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
 						self._mvs_seen[clues_node_name].seen()
 					else:
-						if clues_node_name not in self._mvs_seen:
-							self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
 						self._mvs_seen[clues_node_name].seen()
 
 		# from the nodes that we have powered on, check which of them are still running
@@ -289,6 +297,8 @@ class powermanager(PowerManager):
 					(success, vm_ids) = server.RemoveResource(self._IM_VIRTUAL_CLUSTER_INFID, vm.vm_id, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
 					if not success: 
 						_LOGGER.error("ERROR deleting node: " + nname + ": " + vm_ids)
+					elif vm_ids == 0:
+						_LOGGER.error("ERROR deleting node: " + nname + ". No VM has been deleted.")
 				else:
 					_LOGGER.debug("Not powering off node %s" % nname)
 					success = False
