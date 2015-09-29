@@ -229,7 +229,7 @@ class CLUES_Scheduler_Reconsider_Jobs(CLUES_Scheduler):
                 _LOGGER.debug("could not get information about the jobs")
                 return True
 
-        timestamp_joblist = monitoring_info.timestamp_joblist
+        #timestamp_joblist = monitoring_info.timestamp_joblist
         now = cpyutils.eventloop.now()
         
         for job_request in joblist:
@@ -238,8 +238,14 @@ class CLUES_Scheduler_Reconsider_Jobs(CLUES_Scheduler):
                 if (now - inactivity_timestamp) > self.RECONSIDER_JOB_TIME:
                     should_reconsider = True
                     for request in requests_queue:
-                        if (request.job_id == job_request.job_id) and (request.state not in [ Request.SERVED, Request.DISCARDED, Request.NOT_SERVED ]):
-                            should_reconsider = False
+                        if request.job_id == job_request.job_id:
+                            if request.state == Request.SERVED:
+                                # We should check if it has been recently served
+                                if (now - request.timestamp_state) < self.RECONSIDER_JOB_TIME:
+                                    _LOGGER.debug("job %s has been recently served, do no reconsider it" % job_request)
+                                    should_reconsider = False
+                            elif request.state not in [ Request.DISCARDED, Request.NOT_SERVED ]:
+                                should_reconsider = False
                             
                     if should_reconsider:
                         _LOGGER.debug("job %s has been pending for too long... reconsidering it" % job_request)
