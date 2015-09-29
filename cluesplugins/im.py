@@ -264,8 +264,8 @@ class powermanager(PowerManager):
 			(success, vms_id) = server.AddResource(self._IM_VIRTUAL_CLUSTER_INFID, radl_data, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
 		except:
 			_LOGGER.exception("Error launching node %s " % nname)
-			success = False
-	
+			return False, nname
+
 		if success:
 			_LOGGER.debug("Node " + nname + " successfully created")
 		else:
