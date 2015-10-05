@@ -61,7 +61,7 @@ Now you ***must config*** CLUES, as it won't work unless you have a valid config
 You need a /etc/clues2/clues2.cfg file. So you can get the template and use it for your convenience.
 
 ```
-$ cd /etc/clues2/clues2
+$ cd /etc/clues2
 $ cp clues2.cfg-example clues2.cfg
 ``` 
 
