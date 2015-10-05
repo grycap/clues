@@ -41,11 +41,7 @@ class powermanager(PowerManager):
 			self.vm_id = vm_id
 			self.radl = radl
 			self.timestamp_recovered = 0
-			self.timestamp_monitoring = self.timestamp_created = self.timestamp_seen = cpyutils.eventloop.now()
-
-		def monitored(self):
-			self.timestamp_monitoring = cpyutils.eventloop.now()
-			# _LOGGER.debug("monitored %s" % self.vm_id)
+			self.timestamp_created = self.timestamp_seen = cpyutils.eventloop.now()
 
 		def seen(self):
 			self.timestamp_seen = cpyutils.eventloop.now()
@@ -333,7 +329,7 @@ class powermanager(PowerManager):
 							if node.name in vms:
 								vm = vms[node.name]
 								time_recovered = now - vm.timestamp_recovered
-								time_monitoring = now - vm.timestamp_monitoring
+								time_monitoring = now - vm.timestamp_seen
 								_LOGGER.warning("node %s has a VM running but it is not detected by the monitoring system since %d seconds" % (node.name, time_monitoring))
 								if (time_recovered > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS) and (time_monitoring > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS):
 									_LOGGER.warning("Trying to recover it (state: %s)" % node.state)
@@ -343,8 +339,6 @@ class powermanager(PowerManager):
 						if node.name not in vms:
 							# This may happen because it is launched by hand using other credentials than those for the user used for IM (and he cannot manage the VMS)
 							_LOGGER.warning("node %s is detected by the monitoring system, but there is not any VM associated to it (are IM credentials compatible to the VM?)" % node.name)
-						else:
-							vms[node.name].monitored()	 
 	
 			# A third case: a VM that it is seen in IM but does not correspond to any node in the monitoring info
 			# This is a strange case but we assure not to have uncontrolled VMs
