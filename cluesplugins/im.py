@@ -228,20 +228,16 @@ class powermanager(PowerManager):
 						self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
 					else:
 						self._mvs_seen[clues_node_name].update(vm_id, radl)
+					
+					self._mvs_seen[clues_node_name].seen()
 
 					if state in [VirtualMachine.FAILED]:
 						# This VM is in "terminal" state remove it from the infrastructure 
 						_LOGGER.error("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
 						self.recover(clues_node_name)
-					elif state in [VirtualMachine.OFF]:
-						# This VM is in "terminal" state remove it from the infrastructure 
+					elif state in [VirtualMachine.OFF, VirtualMachine.UNCONFIGURED]:
+						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
 						_LOGGER.warn("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
-					elif state in [VirtualMachine.UNCONFIGURED]:
-						# This VM is unconfigured do not terminate
-						_LOGGER.warn("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
-						self._mvs_seen[clues_node_name].seen()
-					else:
-						self._mvs_seen[clues_node_name].seen()
 
 		# from the nodes that we have powered on, check which of them are still running
 		for nname, node in self._mvs_seen.items():
@@ -328,13 +324,16 @@ class powermanager(PowerManager):
 						if self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS > 0:
 							if node.name in vms:
 								vm = vms[node.name]
+								time_off = now - node.timestamp_state
 								time_recovered = now - vm.timestamp_recovered
-								time_monitoring = now - vm.timestamp_seen
-								_LOGGER.warning("node %s has a VM running but it is not detected by the monitoring system since %d seconds" % (node.name, time_monitoring))
-								if (time_recovered > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS) and (time_monitoring > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS):
-									_LOGGER.warning("Trying to recover it (state: %s)" % node.state)
-									vm.recovered()
-									recover.append(node.name)
+								_LOGGER.warning("node %s has a VM running but it is OFF in the monitoring system since %d seconds" % (node.name, time_off))
+								if time_off > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS:
+									if time_recovered > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS:
+										_LOGGER.warning("Trying to recover it (state: %s)" % node.state)
+										vm.recovered()
+										recover.append(node.name)
+									else:
+										_LOGGER.debug("node %s has been recently recovered %d seconds ago. Do not recover it yet." % (node.name, time_recovered))
 					else:
 						if node.name not in vms:
 							# This may happen because it is launched by hand using other credentials than those for the user used for IM (and he cannot manage the VMS)
