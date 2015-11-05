@@ -1,0 +1,14 @@
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings to consult the state of the nodes of a Mesos deployment in which CLUES is automating power (is powering on or off the internal nodes). These
+# settings are only to check the state of the nodes. Please refer to the powermanager settings to specify how to power on or off the nodes.
+# 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[MESOS]
+MESOS_SERVER=mesosserverpublic
+MESOS_NODES_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/slaves
+MESOS_JOBS_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json
+MESOS_STATE_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/state.json
+#MESOS_CHRONOS_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:4400/scheduler/jobs
+#MESOS_JOBS_COMMAND tb podria ser si instalo el DCOS CLI asi: /home/ubuntu/dcos-cli/cli/env/bin/dcos task
