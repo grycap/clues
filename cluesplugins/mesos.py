@@ -342,7 +342,7 @@ class lrms(clueslib.platform.LRMS):
                     frameworks = details[1]
                     if len(frameworks) != 0:
                         for f in frameworks:
-                            if(f[name] != "chronos-2.4.0"):
+                            if(f['name'] != "chronos-2.4.0"):
                                 job_id = f['id']
                                 nodes = []
                                 numnodes = 1;
