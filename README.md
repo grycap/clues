@@ -6,7 +6,7 @@ CLUES also **integrates with the physical infrastructure by means of different p
 
 Although there exist some batch-queuing systems that provide energy saving mechanisms, **some of the most popular choices, such as Torque/PBS, lack this possibility**. As far as cloud infrastructure management middleware is concerned, **none of the most usual options for scientific environments provide similar features**. The additional advantage of the approach taken by **CLUES is that it can be integrated with virtually any resource manager**, whether or not the manager provides energy saving features.
 
-[Installing][]
+[Installing]()
 [Installing](#Installing)
 
 # Installing
