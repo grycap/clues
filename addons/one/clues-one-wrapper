@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+#
+# CLUES - Cluster Energy Saving System
+# Copyright (C) 2015 - GRyCAP - Universitat Politecnica de Valencia
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import clues.configcli
+import base64
+import sys
+import cpyutils.oneconnect
+import xmlrpclib
+import time
+import logging
+
+if __name__ == '__main__':
+    config_one = cpyutils.config.Configuration("ONE WRAPPER",
+        {
+            "ONE_XMLRPC":"http://localhost:2633/RPC2",
+            "ONE_AUTH":"clues:cluespass",
+            "ONE_XMLRPC_TIMEOUT":10,
+        })
+    clues_server = clues.configcli.get_clues_proxy_from_config()
+    
+    try:
+        version = clues_server.version()
+    except:
+        print "Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC
+        sys.exit()
+
+    encoded = sys.argv[1]
+    success = False
+    logging.debug("processing VM: %s" % encoded)
+    try:
+        vm = cpyutils.oneconnect.VM(base64.b64decode(encoded))
+        one = cpyutils.oneconnect.ONEConnect(config_one.ONE_XMLRPC, config_one.ONE_AUTH, config_one.ONE_XMLRPC_TIMEOUT)
+        success = one.vm_hold(vm.ID)
+        if not success:
+            logging.warn("could not hold the VM... will make the request anyway")
+    except Exception, e:
+        logging.error(str(e))
+        logging.error("could not process the VM information, so there will be no request for nodes to CLUES daemon")
+        vm = None
+    
+    if vm is not None:
+        success = True
+        if not success:
+            logging.error("not allowed to create requests")
+        else:
+            now = time.time()
+            try:
+                hosts = [ vm.HISTORY_RECORDS.HISTORY[-1].HOSTNAME ]
+            except:
+                hosts = []
+ 
+            success, r_id = clues_server.request_create(clues.configcli.config_client.CLUES_SECRET_TOKEN, vm.TEMPLATE.CPU * 100, vm.TEMPLATE.MEMORY * 1024, 1, "", vm.ID, hosts)
+            if success:
+                logging.info("a request for %d CPU and %d memory has been created, with id %s" % (vm.TEMPLATE.CPU * 100, vm.TEMPLATE.MEMORY * 1024, r_id))
+                
+                success, served = clues_server.request_wait(clues.configcli.config_client.CLUES_SECRET_TOKEN, r_id, 1)
+                while ((not served) and (time.time() - now < clues.configcli.config_client.CLUES_REQUEST_WAIT_TIMEOUT)):
+                    time.sleep(1)
+                    success, served = clues_server.request_wait(clues.configcli.config_client.CLUES_SECRET_TOKEN, r_id, 1)
+                        
+                if not served:
+                    logging.info("stop wating for resources on CLUES for request %s because it is lasting too much (you can fine tune var CLUES_REQUEST_WAIT_TIMEOUT to wait more time)" % r_id)
+                else:
+                    logging.debug("request %s served" % r_id)
+
+                success = one.vm_release(vm.ID)
+            else:
+                logging.error("failed to create request for resources (%s)" % r_id)

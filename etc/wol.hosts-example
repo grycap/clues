@@ -1,0 +1,7 @@
+# These are the MAC address of the interfaces of the nodes that will be used by the WOL powermanager
+#
+# * the format of the file is very similar to the /etc/hosts file:
+#
+# 0a:0b:0c:0d:0e:01 hostname01
+# 0a:0b:0c:0d:0e:02 hostname02
+#

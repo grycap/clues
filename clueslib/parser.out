@@ -1,0 +1,2773 @@
+Created by PLY version 3.4 (http://www.dabeaz.com/ply)
+
+Grammar
+
+Rule 0     S' -> kwl
+Rule 1     kwl -> kwv
+Rule 2     kwl -> kwv ;
+Rule 3     kwl -> kwv ; kwl
+Rule 4     kwl -> mexp
+Rule 5     kwl -> mexp ;
+Rule 6     kwv -> VAR EQU mexp
+Rule 7     mexp -> NOT mexp
+Rule 8     mexp -> LPARENT mexp RPARENT
+Rule 9     mexp -> mexp + mexp
+Rule 10    mexp -> mexp - mexp
+Rule 11    mexp -> mexp2
+Rule 12    mexp2 -> mexp * mexp
+Rule 13    mexp2 -> mexp / mexp
+Rule 14    mexp2 -> mexp AND mexp
+Rule 15    mexp2 -> mexp OR mexp
+Rule 16    mexp2 -> mexp GE mexp
+Rule 17    mexp2 -> mexp LE mexp
+Rule 18    mexp2 -> mexp LT mexp
+Rule 19    mexp2 -> mexp GT mexp
+Rule 20    mexp2 -> mexp NE mexp
+Rule 21    mexp2 -> mexp EQ mexp
+Rule 22    mexp2 -> mexp IN lexp
+Rule 23    mexp2 -> mexp IN VAR
+Rule 24    mexp2 -> mexp SUBSET lexp
+Rule 25    mexp2 -> mexp SUBSET VAR
+Rule 26    mexp2 -> term
+Rule 27    lexp -> SQ_LPARENT l SQ_RPARENT
+Rule 28    l -> <empty>
+Rule 29    l -> mexp
+Rule 30    l -> mexp COMMA l
+Rule 31    term -> VAR
+Rule 32    term -> - VAR
+Rule 33    term -> TRUE
+Rule 34    term -> FALSE
+Rule 35    term -> NUM
+Rule 36    term -> - NUM
+Rule 37    term -> lexp
+Rule 38    term -> STRING
+
+Terminals, with rules where they appear
+
+*                    : 12
++                    : 9
+-                    : 10 32 36
+/                    : 13
+;                    : 2 3 5
+AND                  : 14
+COMMA                : 30
+EQ                   : 21
+EQU                  : 6
+FALSE                : 34
+GE                   : 16
+GT                   : 19
+IN                   : 22 23
+LE                   : 17
+LPARENT              : 8
+LT                   : 18
+NE                   : 20
+NOT                  : 7
+NUM                  : 35 36
+OR                   : 15
+RPARENT              : 8
+SQ_LPARENT           : 27
+SQ_RPARENT           : 27
+STRING               : 38
+SUBSET               : 24 25
+TRUE                 : 33
+VAR                  : 6 23 25 31 32
+error                : 
+
+Nonterminals, with rules where they appear
+
+kwl                  : 3 0
+kwv                  : 1 2 3
+l                    : 27 30
+lexp                 : 22 24 37
+mexp                 : 4 5 6 7 8 9 9 10 10 12 12 13 13 14 14 15 15 16 16 17 17 18 18 19 19 20 20 21 21 22 23 24 25 29 30
+mexp2                : 11
+term                 : 26
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . kwl
+    (1) kwl -> . kwv
+    (2) kwl -> . kwv ;
+    (3) kwl -> . kwv ; kwl
+    (4) kwl -> . mexp
+    (5) kwl -> . mexp ;
+    (6) kwv -> . VAR EQU mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    VAR             shift and go to state 11
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp2                          shift and go to state 1
+    kwl                            shift and go to state 3
+    mexp                           shift and go to state 14
+    kwv                            shift and go to state 4
+
+state 1
+
+    (11) mexp -> mexp2 .
+
+    COMMA           reduce using rule 11 (mexp -> mexp2 .)
+    +               reduce using rule 11 (mexp -> mexp2 .)
+    -               reduce using rule 11 (mexp -> mexp2 .)
+    *               reduce using rule 11 (mexp -> mexp2 .)
+    /               reduce using rule 11 (mexp -> mexp2 .)
+    AND             reduce using rule 11 (mexp -> mexp2 .)
+    OR              reduce using rule 11 (mexp -> mexp2 .)
+    GE              reduce using rule 11 (mexp -> mexp2 .)
+    LE              reduce using rule 11 (mexp -> mexp2 .)
+    LT              reduce using rule 11 (mexp -> mexp2 .)
+    GT              reduce using rule 11 (mexp -> mexp2 .)
+    NE              reduce using rule 11 (mexp -> mexp2 .)
+    EQ              reduce using rule 11 (mexp -> mexp2 .)
+    IN              reduce using rule 11 (mexp -> mexp2 .)
+    SUBSET          reduce using rule 11 (mexp -> mexp2 .)
+    SQ_RPARENT      reduce using rule 11 (mexp -> mexp2 .)
+    ;               reduce using rule 11 (mexp -> mexp2 .)
+    $end            reduce using rule 11 (mexp -> mexp2 .)
+    RPARENT         reduce using rule 11 (mexp -> mexp2 .)
+
+
+state 2
+
+    (27) lexp -> SQ_LPARENT . l SQ_RPARENT
+    (28) l -> .
+    (29) l -> . mexp
+    (30) l -> . mexp COMMA l
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    SQ_RPARENT      reduce using rule 28 (l -> .)
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    l                              shift and go to state 17
+    mexp                           shift and go to state 18
+    lexp                           shift and go to state 7
+
+state 3
+
+    (0) S' -> kwl .
+
+
+
+state 4
+
+    (1) kwl -> kwv .
+    (2) kwl -> kwv . ;
+    (3) kwl -> kwv . ; kwl
+
+    $end            reduce using rule 1 (kwl -> kwv .)
+    ;               shift and go to state 19
+
+
+state 5
+
+    (33) term -> TRUE .
+
+    +               reduce using rule 33 (term -> TRUE .)
+    -               reduce using rule 33 (term -> TRUE .)
+    *               reduce using rule 33 (term -> TRUE .)
+    /               reduce using rule 33 (term -> TRUE .)
+    AND             reduce using rule 33 (term -> TRUE .)
+    OR              reduce using rule 33 (term -> TRUE .)
+    GE              reduce using rule 33 (term -> TRUE .)
+    LE              reduce using rule 33 (term -> TRUE .)
+    LT              reduce using rule 33 (term -> TRUE .)
+    GT              reduce using rule 33 (term -> TRUE .)
+    NE              reduce using rule 33 (term -> TRUE .)
+    EQ              reduce using rule 33 (term -> TRUE .)
+    IN              reduce using rule 33 (term -> TRUE .)
+    SUBSET          reduce using rule 33 (term -> TRUE .)
+    ;               reduce using rule 33 (term -> TRUE .)
+    $end            reduce using rule 33 (term -> TRUE .)
+    COMMA           reduce using rule 33 (term -> TRUE .)
+    SQ_RPARENT      reduce using rule 33 (term -> TRUE .)
+    RPARENT         reduce using rule 33 (term -> TRUE .)
+
+
+state 6
+
+    (8) mexp -> LPARENT . mexp RPARENT
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 20
+
+state 7
+
+    (37) term -> lexp .
+
+    +               reduce using rule 37 (term -> lexp .)
+    -               reduce using rule 37 (term -> lexp .)
+    *               reduce using rule 37 (term -> lexp .)
+    /               reduce using rule 37 (term -> lexp .)
+    AND             reduce using rule 37 (term -> lexp .)
+    OR              reduce using rule 37 (term -> lexp .)
+    GE              reduce using rule 37 (term -> lexp .)
+    LE              reduce using rule 37 (term -> lexp .)
+    LT              reduce using rule 37 (term -> lexp .)
+    GT              reduce using rule 37 (term -> lexp .)
+    NE              reduce using rule 37 (term -> lexp .)
+    EQ              reduce using rule 37 (term -> lexp .)
+    IN              reduce using rule 37 (term -> lexp .)
+    SUBSET          reduce using rule 37 (term -> lexp .)
+    ;               reduce using rule 37 (term -> lexp .)
+    $end            reduce using rule 37 (term -> lexp .)
+    COMMA           reduce using rule 37 (term -> lexp .)
+    SQ_RPARENT      reduce using rule 37 (term -> lexp .)
+    RPARENT         reduce using rule 37 (term -> lexp .)
+
+
+state 8
+
+    (32) term -> - . VAR
+    (36) term -> - . NUM
+
+    VAR             shift and go to state 21
+    NUM             shift and go to state 22
+
+
+state 9
+
+    (35) term -> NUM .
+
+    +               reduce using rule 35 (term -> NUM .)
+    -               reduce using rule 35 (term -> NUM .)
+    *               reduce using rule 35 (term -> NUM .)
+    /               reduce using rule 35 (term -> NUM .)
+    AND             reduce using rule 35 (term -> NUM .)
+    OR              reduce using rule 35 (term -> NUM .)
+    GE              reduce using rule 35 (term -> NUM .)
+    LE              reduce using rule 35 (term -> NUM .)
+    LT              reduce using rule 35 (term -> NUM .)
+    GT              reduce using rule 35 (term -> NUM .)
+    NE              reduce using rule 35 (term -> NUM .)
+    EQ              reduce using rule 35 (term -> NUM .)
+    IN              reduce using rule 35 (term -> NUM .)
+    SUBSET          reduce using rule 35 (term -> NUM .)
+    ;               reduce using rule 35 (term -> NUM .)
+    $end            reduce using rule 35 (term -> NUM .)
+    COMMA           reduce using rule 35 (term -> NUM .)
+    SQ_RPARENT      reduce using rule 35 (term -> NUM .)
+    RPARENT         reduce using rule 35 (term -> NUM .)
+
+
+state 10
+
+    (38) term -> STRING .
+
+    +               reduce using rule 38 (term -> STRING .)
+    -               reduce using rule 38 (term -> STRING .)
+    *               reduce using rule 38 (term -> STRING .)
+    /               reduce using rule 38 (term -> STRING .)
+    AND             reduce using rule 38 (term -> STRING .)
+    OR              reduce using rule 38 (term -> STRING .)
+    GE              reduce using rule 38 (term -> STRING .)
+    LE              reduce using rule 38 (term -> STRING .)
+    LT              reduce using rule 38 (term -> STRING .)
+    GT              reduce using rule 38 (term -> STRING .)
+    NE              reduce using rule 38 (term -> STRING .)
+    EQ              reduce using rule 38 (term -> STRING .)
+    IN              reduce using rule 38 (term -> STRING .)
+    SUBSET          reduce using rule 38 (term -> STRING .)
+    ;               reduce using rule 38 (term -> STRING .)
+    $end            reduce using rule 38 (term -> STRING .)
+    COMMA           reduce using rule 38 (term -> STRING .)
+    SQ_RPARENT      reduce using rule 38 (term -> STRING .)
+    RPARENT         reduce using rule 38 (term -> STRING .)
+
+
+state 11
+
+    (6) kwv -> VAR . EQU mexp
+    (31) term -> VAR .
+
+    EQU             shift and go to state 23
+    ;               reduce using rule 31 (term -> VAR .)
+    +               reduce using rule 31 (term -> VAR .)
+    -               reduce using rule 31 (term -> VAR .)
+    *               reduce using rule 31 (term -> VAR .)
+    /               reduce using rule 31 (term -> VAR .)
+    AND             reduce using rule 31 (term -> VAR .)
+    OR              reduce using rule 31 (term -> VAR .)
+    GE              reduce using rule 31 (term -> VAR .)
+    LE              reduce using rule 31 (term -> VAR .)
+    LT              reduce using rule 31 (term -> VAR .)
+    GT              reduce using rule 31 (term -> VAR .)
+    NE              reduce using rule 31 (term -> VAR .)
+    EQ              reduce using rule 31 (term -> VAR .)
+    IN              reduce using rule 31 (term -> VAR .)
+    SUBSET          reduce using rule 31 (term -> VAR .)
+    $end            reduce using rule 31 (term -> VAR .)
+
+
+state 12
+
+    (26) mexp2 -> term .
+
+    RPARENT         reduce using rule 26 (mexp2 -> term .)
+    +               reduce using rule 26 (mexp2 -> term .)
+    -               reduce using rule 26 (mexp2 -> term .)
+    *               reduce using rule 26 (mexp2 -> term .)
+    /               reduce using rule 26 (mexp2 -> term .)
+    AND             reduce using rule 26 (mexp2 -> term .)
+    OR              reduce using rule 26 (mexp2 -> term .)
+    GE              reduce using rule 26 (mexp2 -> term .)
+    LE              reduce using rule 26 (mexp2 -> term .)
+    LT              reduce using rule 26 (mexp2 -> term .)
+    GT              reduce using rule 26 (mexp2 -> term .)
+    NE              reduce using rule 26 (mexp2 -> term .)
+    EQ              reduce using rule 26 (mexp2 -> term .)
+    IN              reduce using rule 26 (mexp2 -> term .)
+    SUBSET          reduce using rule 26 (mexp2 -> term .)
+    ;               reduce using rule 26 (mexp2 -> term .)
+    $end            reduce using rule 26 (mexp2 -> term .)
+    COMMA           reduce using rule 26 (mexp2 -> term .)
+    SQ_RPARENT      reduce using rule 26 (mexp2 -> term .)
+
+
+state 13
+
+    (34) term -> FALSE .
+
+    +               reduce using rule 34 (term -> FALSE .)
+    -               reduce using rule 34 (term -> FALSE .)
+    *               reduce using rule 34 (term -> FALSE .)
+    /               reduce using rule 34 (term -> FALSE .)
+    AND             reduce using rule 34 (term -> FALSE .)
+    OR              reduce using rule 34 (term -> FALSE .)
+    GE              reduce using rule 34 (term -> FALSE .)
+    LE              reduce using rule 34 (term -> FALSE .)
+    LT              reduce using rule 34 (term -> FALSE .)
+    GT              reduce using rule 34 (term -> FALSE .)
+    NE              reduce using rule 34 (term -> FALSE .)
+    EQ              reduce using rule 34 (term -> FALSE .)
+    IN              reduce using rule 34 (term -> FALSE .)
+    SUBSET          reduce using rule 34 (term -> FALSE .)
+    ;               reduce using rule 34 (term -> FALSE .)
+    $end            reduce using rule 34 (term -> FALSE .)
+    COMMA           reduce using rule 34 (term -> FALSE .)
+    SQ_RPARENT      reduce using rule 34 (term -> FALSE .)
+    RPARENT         reduce using rule 34 (term -> FALSE .)
+
+
+state 14
+
+    (4) kwl -> mexp .
+    (5) kwl -> mexp . ;
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+    $end            reduce using rule 4 (kwl -> mexp .)
+    ;               shift and go to state 36
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+
+state 15
+
+    (7) mexp -> NOT . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 39
+
+state 16
+
+    (31) term -> VAR .
+
+    +               reduce using rule 31 (term -> VAR .)
+    -               reduce using rule 31 (term -> VAR .)
+    *               reduce using rule 31 (term -> VAR .)
+    /               reduce using rule 31 (term -> VAR .)
+    AND             reduce using rule 31 (term -> VAR .)
+    OR              reduce using rule 31 (term -> VAR .)
+    GE              reduce using rule 31 (term -> VAR .)
+    LE              reduce using rule 31 (term -> VAR .)
+    LT              reduce using rule 31 (term -> VAR .)
+    GT              reduce using rule 31 (term -> VAR .)
+    NE              reduce using rule 31 (term -> VAR .)
+    EQ              reduce using rule 31 (term -> VAR .)
+    IN              reduce using rule 31 (term -> VAR .)
+    SUBSET          reduce using rule 31 (term -> VAR .)
+    ;               reduce using rule 31 (term -> VAR .)
+    $end            reduce using rule 31 (term -> VAR .)
+    COMMA           reduce using rule 31 (term -> VAR .)
+    SQ_RPARENT      reduce using rule 31 (term -> VAR .)
+    RPARENT         reduce using rule 31 (term -> VAR .)
+
+
+state 17
+
+    (27) lexp -> SQ_LPARENT l . SQ_RPARENT
+
+    SQ_RPARENT      shift and go to state 40
+
+
+state 18
+
+    (29) l -> mexp .
+    (30) l -> mexp . COMMA l
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+    SQ_RPARENT      reduce using rule 29 (l -> mexp .)
+    COMMA           shift and go to state 41
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+
+state 19
+
+    (2) kwl -> kwv ; .
+    (3) kwl -> kwv ; . kwl
+    (1) kwl -> . kwv
+    (2) kwl -> . kwv ;
+    (3) kwl -> . kwv ; kwl
+    (4) kwl -> . mexp
+    (5) kwl -> . mexp ;
+    (6) kwv -> . VAR EQU mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    $end            reduce using rule 2 (kwl -> kwv ; .)
+    VAR             shift and go to state 11
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp2                          shift and go to state 1
+    kwl                            shift and go to state 42
+    mexp                           shift and go to state 14
+    kwv                            shift and go to state 4
+
+state 20
+
+    (8) mexp -> LPARENT mexp . RPARENT
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+    RPARENT         shift and go to state 43
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+
+state 21
+
+    (32) term -> - VAR .
+
+    +               reduce using rule 32 (term -> - VAR .)
+    -               reduce using rule 32 (term -> - VAR .)
+    *               reduce using rule 32 (term -> - VAR .)
+    /               reduce using rule 32 (term -> - VAR .)
+    AND             reduce using rule 32 (term -> - VAR .)
+    OR              reduce using rule 32 (term -> - VAR .)
+    GE              reduce using rule 32 (term -> - VAR .)
+    LE              reduce using rule 32 (term -> - VAR .)
+    LT              reduce using rule 32 (term -> - VAR .)
+    GT              reduce using rule 32 (term -> - VAR .)
+    NE              reduce using rule 32 (term -> - VAR .)
+    EQ              reduce using rule 32 (term -> - VAR .)
+    IN              reduce using rule 32 (term -> - VAR .)
+    SUBSET          reduce using rule 32 (term -> - VAR .)
+    ;               reduce using rule 32 (term -> - VAR .)
+    $end            reduce using rule 32 (term -> - VAR .)
+    COMMA           reduce using rule 32 (term -> - VAR .)
+    SQ_RPARENT      reduce using rule 32 (term -> - VAR .)
+    RPARENT         reduce using rule 32 (term -> - VAR .)
+
+
+state 22
+
+    (36) term -> - NUM .
+
+    +               reduce using rule 36 (term -> - NUM .)
+    -               reduce using rule 36 (term -> - NUM .)
+    *               reduce using rule 36 (term -> - NUM .)
+    /               reduce using rule 36 (term -> - NUM .)
+    AND             reduce using rule 36 (term -> - NUM .)
+    OR              reduce using rule 36 (term -> - NUM .)
+    GE              reduce using rule 36 (term -> - NUM .)
+    LE              reduce using rule 36 (term -> - NUM .)
+    LT              reduce using rule 36 (term -> - NUM .)
+    GT              reduce using rule 36 (term -> - NUM .)
+    NE              reduce using rule 36 (term -> - NUM .)
+    EQ              reduce using rule 36 (term -> - NUM .)
+    IN              reduce using rule 36 (term -> - NUM .)
+    SUBSET          reduce using rule 36 (term -> - NUM .)
+    ;               reduce using rule 36 (term -> - NUM .)
+    $end            reduce using rule 36 (term -> - NUM .)
+    COMMA           reduce using rule 36 (term -> - NUM .)
+    SQ_RPARENT      reduce using rule 36 (term -> - NUM .)
+    RPARENT         reduce using rule 36 (term -> - NUM .)
+
+
+state 23
+
+    (6) kwv -> VAR EQU . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 44
+
+state 24
+
+    (14) mexp2 -> mexp AND . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 45
+
+state 25
+
+    (24) mexp2 -> mexp SUBSET . lexp
+    (25) mexp2 -> mexp SUBSET . VAR
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    VAR             shift and go to state 47
+    SQ_LPARENT      shift and go to state 2
+
+    lexp                           shift and go to state 46
+
+state 26
+
+    (17) mexp2 -> mexp LE . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 48
+
+state 27
+
+    (9) mexp -> mexp + . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 49
+
+state 28
+
+    (12) mexp2 -> mexp * . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 50
+
+state 29
+
+    (10) mexp -> mexp - . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 51
+
+state 30
+
+    (18) mexp2 -> mexp LT . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 52
+
+state 31
+
+    (20) mexp2 -> mexp NE . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 53
+
+state 32
+
+    (16) mexp2 -> mexp GE . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 54
+
+state 33
+
+    (19) mexp2 -> mexp GT . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 55
+
+state 34
+
+    (13) mexp2 -> mexp / . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 56
+
+state 35
+
+    (22) mexp2 -> mexp IN . lexp
+    (23) mexp2 -> mexp IN . VAR
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    VAR             shift and go to state 58
+    SQ_LPARENT      shift and go to state 2
+
+    lexp                           shift and go to state 57
+
+state 36
+
+    (5) kwl -> mexp ; .
+
+    $end            reduce using rule 5 (kwl -> mexp ; .)
+
+
+state 37
+
+    (21) mexp2 -> mexp EQ . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 59
+
+state 38
+
+    (15) mexp2 -> mexp OR . mexp
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    lexp                           shift and go to state 7
+    mexp                           shift and go to state 60
+
+state 39
+
+    (7) mexp -> NOT mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    COMMA           reduce using rule 7 (mexp -> NOT mexp .)
+    SQ_RPARENT      reduce using rule 7 (mexp -> NOT mexp .)
+    ;               reduce using rule 7 (mexp -> NOT mexp .)
+    $end            reduce using rule 7 (mexp -> NOT mexp .)
+    RPARENT         reduce using rule 7 (mexp -> NOT mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! -               [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! *               [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! /               [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! AND             [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! OR              [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! GE              [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! LE              [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! LT              [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! GT              [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! NE              [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! EQ              [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! IN              [ reduce using rule 7 (mexp -> NOT mexp .) ]
+  ! SUBSET          [ reduce using rule 7 (mexp -> NOT mexp .) ]
+
+
+state 40
+
+    (27) lexp -> SQ_LPARENT l SQ_RPARENT .
+
+    +               reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    -               reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    *               reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    /               reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    AND             reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    OR              reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    GE              reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    LE              reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    LT              reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    GT              reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    NE              reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    EQ              reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    IN              reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    SUBSET          reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    ;               reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    $end            reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    COMMA           reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    SQ_RPARENT      reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+    RPARENT         reduce using rule 27 (lexp -> SQ_LPARENT l SQ_RPARENT .)
+
+
+state 41
+
+    (30) l -> mexp COMMA . l
+    (28) l -> .
+    (29) l -> . mexp
+    (30) l -> . mexp COMMA l
+    (7) mexp -> . NOT mexp
+    (8) mexp -> . LPARENT mexp RPARENT
+    (9) mexp -> . mexp + mexp
+    (10) mexp -> . mexp - mexp
+    (11) mexp -> . mexp2
+    (12) mexp2 -> . mexp * mexp
+    (13) mexp2 -> . mexp / mexp
+    (14) mexp2 -> . mexp AND mexp
+    (15) mexp2 -> . mexp OR mexp
+    (16) mexp2 -> . mexp GE mexp
+    (17) mexp2 -> . mexp LE mexp
+    (18) mexp2 -> . mexp LT mexp
+    (19) mexp2 -> . mexp GT mexp
+    (20) mexp2 -> . mexp NE mexp
+    (21) mexp2 -> . mexp EQ mexp
+    (22) mexp2 -> . mexp IN lexp
+    (23) mexp2 -> . mexp IN VAR
+    (24) mexp2 -> . mexp SUBSET lexp
+    (25) mexp2 -> . mexp SUBSET VAR
+    (26) mexp2 -> . term
+    (31) term -> . VAR
+    (32) term -> . - VAR
+    (33) term -> . TRUE
+    (34) term -> . FALSE
+    (35) term -> . NUM
+    (36) term -> . - NUM
+    (37) term -> . lexp
+    (38) term -> . STRING
+    (27) lexp -> . SQ_LPARENT l SQ_RPARENT
+
+    SQ_RPARENT      reduce using rule 28 (l -> .)
+    NOT             shift and go to state 15
+    LPARENT         shift and go to state 6
+    VAR             shift and go to state 16
+    -               shift and go to state 8
+    TRUE            shift and go to state 5
+    FALSE           shift and go to state 13
+    NUM             shift and go to state 9
+    STRING          shift and go to state 10
+    SQ_LPARENT      shift and go to state 2
+
+    mexp2                          shift and go to state 1
+    term                           shift and go to state 12
+    l                              shift and go to state 61
+    mexp                           shift and go to state 18
+    lexp                           shift and go to state 7
+
+state 42
+
+    (3) kwl -> kwv ; kwl .
+
+    $end            reduce using rule 3 (kwl -> kwv ; kwl .)
+
+
+state 43
+
+    (8) mexp -> LPARENT mexp RPARENT .
+
+    COMMA           reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    +               reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    -               reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    *               reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    /               reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    AND             reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    OR              reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    GE              reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    LE              reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    LT              reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    GT              reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    NE              reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    EQ              reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    IN              reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    SUBSET          reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    SQ_RPARENT      reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    ;               reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    $end            reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+    RPARENT         reduce using rule 8 (mexp -> LPARENT mexp RPARENT .)
+
+
+state 44
+
+    (6) kwv -> VAR EQU mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+    ;               reduce using rule 6 (kwv -> VAR EQU mexp .)
+    $end            reduce using rule 6 (kwv -> VAR EQU mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+
+state 45
+
+    (14) mexp2 -> mexp AND mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    RPARENT         reduce using rule 14 (mexp2 -> mexp AND mexp .)
+    ;               reduce using rule 14 (mexp2 -> mexp AND mexp .)
+    $end            reduce using rule 14 (mexp2 -> mexp AND mexp .)
+    COMMA           reduce using rule 14 (mexp2 -> mexp AND mexp .)
+    SQ_RPARENT      reduce using rule 14 (mexp2 -> mexp AND mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! -               [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! *               [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! /               [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! AND             [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! OR              [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! GE              [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! LE              [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! LT              [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! GT              [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! NE              [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! EQ              [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! IN              [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+  ! SUBSET          [ reduce using rule 14 (mexp2 -> mexp AND mexp .) ]
+
+
+state 46
+
+    (24) mexp2 -> mexp SUBSET lexp .
+
+    RPARENT         reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    +               reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    -               reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    *               reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    /               reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    AND             reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    OR              reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    GE              reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    LE              reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    LT              reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    GT              reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    NE              reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    EQ              reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    IN              reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    SUBSET          reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    ;               reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    $end            reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    COMMA           reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+    SQ_RPARENT      reduce using rule 24 (mexp2 -> mexp SUBSET lexp .)
+
+
+state 47
+
+    (25) mexp2 -> mexp SUBSET VAR .
+
+    RPARENT         reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    +               reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    -               reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    *               reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    /               reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    AND             reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    OR              reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    GE              reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    LE              reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    LT              reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    GT              reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    NE              reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    EQ              reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    IN              reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    SUBSET          reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    ;               reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    $end            reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    COMMA           reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+    SQ_RPARENT      reduce using rule 25 (mexp2 -> mexp SUBSET VAR .)
+
+
+state 48
+
+    (17) mexp2 -> mexp LE mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    RPARENT         reduce using rule 17 (mexp2 -> mexp LE mexp .)
+    ;               reduce using rule 17 (mexp2 -> mexp LE mexp .)
+    $end            reduce using rule 17 (mexp2 -> mexp LE mexp .)
+    COMMA           reduce using rule 17 (mexp2 -> mexp LE mexp .)
+    SQ_RPARENT      reduce using rule 17 (mexp2 -> mexp LE mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! -               [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! *               [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! /               [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! AND             [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! OR              [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! GE              [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! LE              [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! LT              [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! GT              [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! NE              [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! EQ              [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! IN              [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+  ! SUBSET          [ reduce using rule 17 (mexp2 -> mexp LE mexp .) ]
+
+
+state 49
+
+    (9) mexp -> mexp + mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    COMMA           reduce using rule 9 (mexp -> mexp + mexp .)
+    SQ_RPARENT      reduce using rule 9 (mexp -> mexp + mexp .)
+    ;               reduce using rule 9 (mexp -> mexp + mexp .)
+    $end            reduce using rule 9 (mexp -> mexp + mexp .)
+    RPARENT         reduce using rule 9 (mexp -> mexp + mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! -               [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! *               [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! /               [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! AND             [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! OR              [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! GE              [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! LE              [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! LT              [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! GT              [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! NE              [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! EQ              [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! IN              [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+  ! SUBSET          [ reduce using rule 9 (mexp -> mexp + mexp .) ]
+
+
+state 50
+
+    (12) mexp2 -> mexp * mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    RPARENT         reduce using rule 12 (mexp2 -> mexp * mexp .)
+    ;               reduce using rule 12 (mexp2 -> mexp * mexp .)
+    $end            reduce using rule 12 (mexp2 -> mexp * mexp .)
+    COMMA           reduce using rule 12 (mexp2 -> mexp * mexp .)
+    SQ_RPARENT      reduce using rule 12 (mexp2 -> mexp * mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! -               [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! *               [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! /               [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! AND             [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! OR              [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! GE              [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! LE              [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! LT              [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! GT              [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! NE              [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! EQ              [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! IN              [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+  ! SUBSET          [ reduce using rule 12 (mexp2 -> mexp * mexp .) ]
+
+
+state 51
+
+    (10) mexp -> mexp - mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    COMMA           reduce using rule 10 (mexp -> mexp - mexp .)
+    SQ_RPARENT      reduce using rule 10 (mexp -> mexp - mexp .)
+    ;               reduce using rule 10 (mexp -> mexp - mexp .)
+    $end            reduce using rule 10 (mexp -> mexp - mexp .)
+    RPARENT         reduce using rule 10 (mexp -> mexp - mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! -               [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! *               [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! /               [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! AND             [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! OR              [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! GE              [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! LE              [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! LT              [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! GT              [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! NE              [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! EQ              [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! IN              [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+  ! SUBSET          [ reduce using rule 10 (mexp -> mexp - mexp .) ]
+
+
+state 52
+
+    (18) mexp2 -> mexp LT mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    RPARENT         reduce using rule 18 (mexp2 -> mexp LT mexp .)
+    ;               reduce using rule 18 (mexp2 -> mexp LT mexp .)
+    $end            reduce using rule 18 (mexp2 -> mexp LT mexp .)
+    COMMA           reduce using rule 18 (mexp2 -> mexp LT mexp .)
+    SQ_RPARENT      reduce using rule 18 (mexp2 -> mexp LT mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! -               [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! *               [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! /               [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! AND             [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! OR              [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! GE              [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! LE              [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! LT              [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! GT              [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! NE              [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! EQ              [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! IN              [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+  ! SUBSET          [ reduce using rule 18 (mexp2 -> mexp LT mexp .) ]
+
+
+state 53
+
+    (20) mexp2 -> mexp NE mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    RPARENT         reduce using rule 20 (mexp2 -> mexp NE mexp .)
+    ;               reduce using rule 20 (mexp2 -> mexp NE mexp .)
+    $end            reduce using rule 20 (mexp2 -> mexp NE mexp .)
+    COMMA           reduce using rule 20 (mexp2 -> mexp NE mexp .)
+    SQ_RPARENT      reduce using rule 20 (mexp2 -> mexp NE mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! -               [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! *               [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! /               [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! AND             [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! OR              [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! GE              [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! LE              [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! LT              [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! GT              [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! NE              [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! EQ              [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! IN              [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+  ! SUBSET          [ reduce using rule 20 (mexp2 -> mexp NE mexp .) ]
+
+
+state 54
+
+    (16) mexp2 -> mexp GE mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    RPARENT         reduce using rule 16 (mexp2 -> mexp GE mexp .)
+    ;               reduce using rule 16 (mexp2 -> mexp GE mexp .)
+    $end            reduce using rule 16 (mexp2 -> mexp GE mexp .)
+    COMMA           reduce using rule 16 (mexp2 -> mexp GE mexp .)
+    SQ_RPARENT      reduce using rule 16 (mexp2 -> mexp GE mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! -               [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! *               [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! /               [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! AND             [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! OR              [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! GE              [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! LE              [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! LT              [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! GT              [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! NE              [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! EQ              [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! IN              [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+  ! SUBSET          [ reduce using rule 16 (mexp2 -> mexp GE mexp .) ]
+
+
+state 55
+
+    (19) mexp2 -> mexp GT mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    RPARENT         reduce using rule 19 (mexp2 -> mexp GT mexp .)
+    ;               reduce using rule 19 (mexp2 -> mexp GT mexp .)
+    $end            reduce using rule 19 (mexp2 -> mexp GT mexp .)
+    COMMA           reduce using rule 19 (mexp2 -> mexp GT mexp .)
+    SQ_RPARENT      reduce using rule 19 (mexp2 -> mexp GT mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! -               [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! *               [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! /               [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! AND             [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! OR              [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! GE              [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! LE              [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! LT              [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! GT              [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! NE              [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! EQ              [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! IN              [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+  ! SUBSET          [ reduce using rule 19 (mexp2 -> mexp GT mexp .) ]
+
+
+state 56
+
+    (13) mexp2 -> mexp / mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    RPARENT         reduce using rule 13 (mexp2 -> mexp / mexp .)
+    ;               reduce using rule 13 (mexp2 -> mexp / mexp .)
+    $end            reduce using rule 13 (mexp2 -> mexp / mexp .)
+    COMMA           reduce using rule 13 (mexp2 -> mexp / mexp .)
+    SQ_RPARENT      reduce using rule 13 (mexp2 -> mexp / mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! -               [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! *               [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! /               [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! AND             [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! OR              [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! GE              [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! LE              [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! LT              [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! GT              [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! NE              [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! EQ              [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! IN              [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+  ! SUBSET          [ reduce using rule 13 (mexp2 -> mexp / mexp .) ]
+
+
+state 57
+
+    (22) mexp2 -> mexp IN lexp .
+
+    RPARENT         reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    +               reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    -               reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    *               reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    /               reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    AND             reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    OR              reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    GE              reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    LE              reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    LT              reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    GT              reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    NE              reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    EQ              reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    IN              reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    SUBSET          reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    ;               reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    $end            reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    COMMA           reduce using rule 22 (mexp2 -> mexp IN lexp .)
+    SQ_RPARENT      reduce using rule 22 (mexp2 -> mexp IN lexp .)
+
+
+state 58
+
+    (23) mexp2 -> mexp IN VAR .
+
+    RPARENT         reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    +               reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    -               reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    *               reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    /               reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    AND             reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    OR              reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    GE              reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    LE              reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    LT              reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    GT              reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    NE              reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    EQ              reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    IN              reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    SUBSET          reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    ;               reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    $end            reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    COMMA           reduce using rule 23 (mexp2 -> mexp IN VAR .)
+    SQ_RPARENT      reduce using rule 23 (mexp2 -> mexp IN VAR .)
+
+
+state 59
+
+    (21) mexp2 -> mexp EQ mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    RPARENT         reduce using rule 21 (mexp2 -> mexp EQ mexp .)
+    ;               reduce using rule 21 (mexp2 -> mexp EQ mexp .)
+    $end            reduce using rule 21 (mexp2 -> mexp EQ mexp .)
+    COMMA           reduce using rule 21 (mexp2 -> mexp EQ mexp .)
+    SQ_RPARENT      reduce using rule 21 (mexp2 -> mexp EQ mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! -               [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! *               [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! /               [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! AND             [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! OR              [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! GE              [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! LE              [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! LT              [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! GT              [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! NE              [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! EQ              [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! IN              [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+  ! SUBSET          [ reduce using rule 21 (mexp2 -> mexp EQ mexp .) ]
+
+
+state 60
+
+    (15) mexp2 -> mexp OR mexp .
+    (9) mexp -> mexp . + mexp
+    (10) mexp -> mexp . - mexp
+    (12) mexp2 -> mexp . * mexp
+    (13) mexp2 -> mexp . / mexp
+    (14) mexp2 -> mexp . AND mexp
+    (15) mexp2 -> mexp . OR mexp
+    (16) mexp2 -> mexp . GE mexp
+    (17) mexp2 -> mexp . LE mexp
+    (18) mexp2 -> mexp . LT mexp
+    (19) mexp2 -> mexp . GT mexp
+    (20) mexp2 -> mexp . NE mexp
+    (21) mexp2 -> mexp . EQ mexp
+    (22) mexp2 -> mexp . IN lexp
+    (23) mexp2 -> mexp . IN VAR
+    (24) mexp2 -> mexp . SUBSET lexp
+    (25) mexp2 -> mexp . SUBSET VAR
+
+  ! shift/reduce conflict for + resolved as shift
+  ! shift/reduce conflict for - resolved as shift
+  ! shift/reduce conflict for * resolved as shift
+  ! shift/reduce conflict for / resolved as shift
+  ! shift/reduce conflict for AND resolved as shift
+  ! shift/reduce conflict for OR resolved as shift
+  ! shift/reduce conflict for GE resolved as shift
+  ! shift/reduce conflict for LE resolved as shift
+  ! shift/reduce conflict for LT resolved as shift
+  ! shift/reduce conflict for GT resolved as shift
+  ! shift/reduce conflict for NE resolved as shift
+  ! shift/reduce conflict for EQ resolved as shift
+  ! shift/reduce conflict for IN resolved as shift
+  ! shift/reduce conflict for SUBSET resolved as shift
+    RPARENT         reduce using rule 15 (mexp2 -> mexp OR mexp .)
+    ;               reduce using rule 15 (mexp2 -> mexp OR mexp .)
+    $end            reduce using rule 15 (mexp2 -> mexp OR mexp .)
+    COMMA           reduce using rule 15 (mexp2 -> mexp OR mexp .)
+    SQ_RPARENT      reduce using rule 15 (mexp2 -> mexp OR mexp .)
+    +               shift and go to state 27
+    -               shift and go to state 29
+    *               shift and go to state 28
+    /               shift and go to state 34
+    AND             shift and go to state 24
+    OR              shift and go to state 38
+    GE              shift and go to state 32
+    LE              shift and go to state 26
+    LT              shift and go to state 30
+    GT              shift and go to state 33
+    NE              shift and go to state 31
+    EQ              shift and go to state 37
+    IN              shift and go to state 35
+    SUBSET          shift and go to state 25
+
+  ! +               [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! -               [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! *               [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! /               [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! AND             [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! OR              [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! GE              [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! LE              [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! LT              [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! GT              [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! NE              [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! EQ              [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! IN              [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+  ! SUBSET          [ reduce using rule 15 (mexp2 -> mexp OR mexp .) ]
+
+
+state 61
+
+    (30) l -> mexp COMMA l .
+
+    SQ_RPARENT      reduce using rule 30 (l -> mexp COMMA l .)
+
+WARNING: 
+WARNING: Conflicts:
+WARNING: 
+WARNING: shift/reduce conflict for + in state 39 resolved as shift
+WARNING: shift/reduce conflict for - in state 39 resolved as shift
+WARNING: shift/reduce conflict for * in state 39 resolved as shift
+WARNING: shift/reduce conflict for / in state 39 resolved as shift
+WARNING: shift/reduce conflict for AND in state 39 resolved as shift
+WARNING: shift/reduce conflict for OR in state 39 resolved as shift
+WARNING: shift/reduce conflict for GE in state 39 resolved as shift
+WARNING: shift/reduce conflict for LE in state 39 resolved as shift
+WARNING: shift/reduce conflict for LT in state 39 resolved as shift
+WARNING: shift/reduce conflict for GT in state 39 resolved as shift
+WARNING: shift/reduce conflict for NE in state 39 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 39 resolved as shift
+WARNING: shift/reduce conflict for IN in state 39 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 39 resolved as shift
+WARNING: shift/reduce conflict for + in state 45 resolved as shift
+WARNING: shift/reduce conflict for - in state 45 resolved as shift
+WARNING: shift/reduce conflict for * in state 45 resolved as shift
+WARNING: shift/reduce conflict for / in state 45 resolved as shift
+WARNING: shift/reduce conflict for AND in state 45 resolved as shift
+WARNING: shift/reduce conflict for OR in state 45 resolved as shift
+WARNING: shift/reduce conflict for GE in state 45 resolved as shift
+WARNING: shift/reduce conflict for LE in state 45 resolved as shift
+WARNING: shift/reduce conflict for LT in state 45 resolved as shift
+WARNING: shift/reduce conflict for GT in state 45 resolved as shift
+WARNING: shift/reduce conflict for NE in state 45 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 45 resolved as shift
+WARNING: shift/reduce conflict for IN in state 45 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 45 resolved as shift
+WARNING: shift/reduce conflict for + in state 48 resolved as shift
+WARNING: shift/reduce conflict for - in state 48 resolved as shift
+WARNING: shift/reduce conflict for * in state 48 resolved as shift
+WARNING: shift/reduce conflict for / in state 48 resolved as shift
+WARNING: shift/reduce conflict for AND in state 48 resolved as shift
+WARNING: shift/reduce conflict for OR in state 48 resolved as shift
+WARNING: shift/reduce conflict for GE in state 48 resolved as shift
+WARNING: shift/reduce conflict for LE in state 48 resolved as shift
+WARNING: shift/reduce conflict for LT in state 48 resolved as shift
+WARNING: shift/reduce conflict for GT in state 48 resolved as shift
+WARNING: shift/reduce conflict for NE in state 48 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 48 resolved as shift
+WARNING: shift/reduce conflict for IN in state 48 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 48 resolved as shift
+WARNING: shift/reduce conflict for + in state 49 resolved as shift
+WARNING: shift/reduce conflict for - in state 49 resolved as shift
+WARNING: shift/reduce conflict for * in state 49 resolved as shift
+WARNING: shift/reduce conflict for / in state 49 resolved as shift
+WARNING: shift/reduce conflict for AND in state 49 resolved as shift
+WARNING: shift/reduce conflict for OR in state 49 resolved as shift
+WARNING: shift/reduce conflict for GE in state 49 resolved as shift
+WARNING: shift/reduce conflict for LE in state 49 resolved as shift
+WARNING: shift/reduce conflict for LT in state 49 resolved as shift
+WARNING: shift/reduce conflict for GT in state 49 resolved as shift
+WARNING: shift/reduce conflict for NE in state 49 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 49 resolved as shift
+WARNING: shift/reduce conflict for IN in state 49 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 49 resolved as shift
+WARNING: shift/reduce conflict for + in state 50 resolved as shift
+WARNING: shift/reduce conflict for - in state 50 resolved as shift
+WARNING: shift/reduce conflict for * in state 50 resolved as shift
+WARNING: shift/reduce conflict for / in state 50 resolved as shift
+WARNING: shift/reduce conflict for AND in state 50 resolved as shift
+WARNING: shift/reduce conflict for OR in state 50 resolved as shift
+WARNING: shift/reduce conflict for GE in state 50 resolved as shift
+WARNING: shift/reduce conflict for LE in state 50 resolved as shift
+WARNING: shift/reduce conflict for LT in state 50 resolved as shift
+WARNING: shift/reduce conflict for GT in state 50 resolved as shift
+WARNING: shift/reduce conflict for NE in state 50 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 50 resolved as shift
+WARNING: shift/reduce conflict for IN in state 50 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 50 resolved as shift
+WARNING: shift/reduce conflict for + in state 51 resolved as shift
+WARNING: shift/reduce conflict for - in state 51 resolved as shift
+WARNING: shift/reduce conflict for * in state 51 resolved as shift
+WARNING: shift/reduce conflict for / in state 51 resolved as shift
+WARNING: shift/reduce conflict for AND in state 51 resolved as shift
+WARNING: shift/reduce conflict for OR in state 51 resolved as shift
+WARNING: shift/reduce conflict for GE in state 51 resolved as shift
+WARNING: shift/reduce conflict for LE in state 51 resolved as shift
+WARNING: shift/reduce conflict for LT in state 51 resolved as shift
+WARNING: shift/reduce conflict for GT in state 51 resolved as shift
+WARNING: shift/reduce conflict for NE in state 51 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 51 resolved as shift
+WARNING: shift/reduce conflict for IN in state 51 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 51 resolved as shift
+WARNING: shift/reduce conflict for + in state 52 resolved as shift
+WARNING: shift/reduce conflict for - in state 52 resolved as shift
+WARNING: shift/reduce conflict for * in state 52 resolved as shift
+WARNING: shift/reduce conflict for / in state 52 resolved as shift
+WARNING: shift/reduce conflict for AND in state 52 resolved as shift
+WARNING: shift/reduce conflict for OR in state 52 resolved as shift
+WARNING: shift/reduce conflict for GE in state 52 resolved as shift
+WARNING: shift/reduce conflict for LE in state 52 resolved as shift
+WARNING: shift/reduce conflict for LT in state 52 resolved as shift
+WARNING: shift/reduce conflict for GT in state 52 resolved as shift
+WARNING: shift/reduce conflict for NE in state 52 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 52 resolved as shift
+WARNING: shift/reduce conflict for IN in state 52 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 52 resolved as shift
+WARNING: shift/reduce conflict for + in state 53 resolved as shift
+WARNING: shift/reduce conflict for - in state 53 resolved as shift
+WARNING: shift/reduce conflict for * in state 53 resolved as shift
+WARNING: shift/reduce conflict for / in state 53 resolved as shift
+WARNING: shift/reduce conflict for AND in state 53 resolved as shift
+WARNING: shift/reduce conflict for OR in state 53 resolved as shift
+WARNING: shift/reduce conflict for GE in state 53 resolved as shift
+WARNING: shift/reduce conflict for LE in state 53 resolved as shift
+WARNING: shift/reduce conflict for LT in state 53 resolved as shift
+WARNING: shift/reduce conflict for GT in state 53 resolved as shift
+WARNING: shift/reduce conflict for NE in state 53 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 53 resolved as shift
+WARNING: shift/reduce conflict for IN in state 53 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 53 resolved as shift
+WARNING: shift/reduce conflict for + in state 54 resolved as shift
+WARNING: shift/reduce conflict for - in state 54 resolved as shift
+WARNING: shift/reduce conflict for * in state 54 resolved as shift
+WARNING: shift/reduce conflict for / in state 54 resolved as shift
+WARNING: shift/reduce conflict for AND in state 54 resolved as shift
+WARNING: shift/reduce conflict for OR in state 54 resolved as shift
+WARNING: shift/reduce conflict for GE in state 54 resolved as shift
+WARNING: shift/reduce conflict for LE in state 54 resolved as shift
+WARNING: shift/reduce conflict for LT in state 54 resolved as shift
+WARNING: shift/reduce conflict for GT in state 54 resolved as shift
+WARNING: shift/reduce conflict for NE in state 54 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 54 resolved as shift
+WARNING: shift/reduce conflict for IN in state 54 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 54 resolved as shift
+WARNING: shift/reduce conflict for + in state 55 resolved as shift
+WARNING: shift/reduce conflict for - in state 55 resolved as shift
+WARNING: shift/reduce conflict for * in state 55 resolved as shift
+WARNING: shift/reduce conflict for / in state 55 resolved as shift
+WARNING: shift/reduce conflict for AND in state 55 resolved as shift
+WARNING: shift/reduce conflict for OR in state 55 resolved as shift
+WARNING: shift/reduce conflict for GE in state 55 resolved as shift
+WARNING: shift/reduce conflict for LE in state 55 resolved as shift
+WARNING: shift/reduce conflict for LT in state 55 resolved as shift
+WARNING: shift/reduce conflict for GT in state 55 resolved as shift
+WARNING: shift/reduce conflict for NE in state 55 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 55 resolved as shift
+WARNING: shift/reduce conflict for IN in state 55 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 55 resolved as shift
+WARNING: shift/reduce conflict for + in state 56 resolved as shift
+WARNING: shift/reduce conflict for - in state 56 resolved as shift
+WARNING: shift/reduce conflict for * in state 56 resolved as shift
+WARNING: shift/reduce conflict for / in state 56 resolved as shift
+WARNING: shift/reduce conflict for AND in state 56 resolved as shift
+WARNING: shift/reduce conflict for OR in state 56 resolved as shift
+WARNING: shift/reduce conflict for GE in state 56 resolved as shift
+WARNING: shift/reduce conflict for LE in state 56 resolved as shift
+WARNING: shift/reduce conflict for LT in state 56 resolved as shift
+WARNING: shift/reduce conflict for GT in state 56 resolved as shift
+WARNING: shift/reduce conflict for NE in state 56 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 56 resolved as shift
+WARNING: shift/reduce conflict for IN in state 56 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 56 resolved as shift
+WARNING: shift/reduce conflict for + in state 59 resolved as shift
+WARNING: shift/reduce conflict for - in state 59 resolved as shift
+WARNING: shift/reduce conflict for * in state 59 resolved as shift
+WARNING: shift/reduce conflict for / in state 59 resolved as shift
+WARNING: shift/reduce conflict for AND in state 59 resolved as shift
+WARNING: shift/reduce conflict for OR in state 59 resolved as shift
+WARNING: shift/reduce conflict for GE in state 59 resolved as shift
+WARNING: shift/reduce conflict for LE in state 59 resolved as shift
+WARNING: shift/reduce conflict for LT in state 59 resolved as shift
+WARNING: shift/reduce conflict for GT in state 59 resolved as shift
+WARNING: shift/reduce conflict for NE in state 59 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 59 resolved as shift
+WARNING: shift/reduce conflict for IN in state 59 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 59 resolved as shift
+WARNING: shift/reduce conflict for + in state 60 resolved as shift
+WARNING: shift/reduce conflict for - in state 60 resolved as shift
+WARNING: shift/reduce conflict for * in state 60 resolved as shift
+WARNING: shift/reduce conflict for / in state 60 resolved as shift
+WARNING: shift/reduce conflict for AND in state 60 resolved as shift
+WARNING: shift/reduce conflict for OR in state 60 resolved as shift
+WARNING: shift/reduce conflict for GE in state 60 resolved as shift
+WARNING: shift/reduce conflict for LE in state 60 resolved as shift
+WARNING: shift/reduce conflict for LT in state 60 resolved as shift
+WARNING: shift/reduce conflict for GT in state 60 resolved as shift
+WARNING: shift/reduce conflict for NE in state 60 resolved as shift
+WARNING: shift/reduce conflict for EQ in state 60 resolved as shift
+WARNING: shift/reduce conflict for IN in state 60 resolved as shift
+WARNING: shift/reduce conflict for SUBSET in state 60 resolved as shift

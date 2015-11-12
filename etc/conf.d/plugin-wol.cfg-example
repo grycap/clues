@@ -1,0 +1,17 @@
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings for powering on or off nodes using a Wake-on-Lan based and SSH mechanism. You will need to make sure that WOL is properly working and then set the
+# commands to power on the working nodes. Powering off the nodes is supposed to be done by issuing the poweroff command in the node by ssh. The command is issued as it is
+# stated in the configuration, so you can check it by issuing it in the commandline.
+# 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[WOL]
+# The file in /etc/hosts format-like that contains the correspondence of the MAC addresses to the host names in the LRMS
+WOL_HOSTS_FILE=wol.hosts
+
+# The commandlines that must be used to power on and off the nodes using WOL (CLUES will subsitute the %%a as the MAC address of the node, using print function)
+#
+# * you can use %%a to substitute the MAC address and %%h to substitute the hostname
+WOL_CMDLINE_POWON=/sbin/ether-wake %%a
+WOL_CMDLINE_POWOFF=ssh %%h power off

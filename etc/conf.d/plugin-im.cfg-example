@@ -1,0 +1,16 @@
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings for creating and managing a Virtual Cluster using the IM. The settings refer to use IM as a power manager. So by making use of this power manager, 
+# the working nodes of the cluster are supposed to be VMs that are dynamically created using CLUES. These settings refer only to powering on or off the nodes. Please refer
+# to the LRMS settings to specify how to check the state of the nodes to decide wich one to power on or off.
+# 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[IM VIRTUAL CLUSTER]
+
+IM_VIRTUAL_CLUSTER_INFID=0
+IM_VIRTUAL_CLUSTER_XMLRPC=http://localhost:8899
+IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS=''
+IM_VIRTUAL_CLUSTER_XMLRCP_SSL=False
+IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE=/usr/local/ec3/auth.dat
+IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS=30
+IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS=30

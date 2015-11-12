@@ -1,0 +1,357 @@
+#!/usr/bin/env python
+#
+# CLUES - Cluster Energy Saving System
+# Copyright (C) 2015 - GRyCAP - Universitat Politecnica de Valencia
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+VERSION="2.0.0"
+
+import clues.configcli
+import sys, os
+import re
+import logging
+import time
+import xmlrpclib
+import cpyutils.runcommand
+
+def translate_mem_value(memval):
+	"""
+	Convert a memory value string into a numeric value in bytes
+	See memory_specifier in sge_types manual page
+	"""
+	memval = memval.rstrip(".").strip()
+	
+	multiplier = 1
+	if len(memval) > 0:
+		qualifier = memval[-1:]
+		if qualifier == 'k':
+			multiplier = 1000
+		elif qualifier == 'm':
+			multiplier = 1000*1000
+		elif qualifier == 'g':
+			multiplier = 1000*1000*1000
+		elif qualifier == 'K':
+			multiplier = 1024
+		elif qualifier == 'M':
+			multiplier = 1024*1024
+		elif qualifier == 'G':
+			multiplier = 1024*1024*1024
+		
+	if multiplier > 1:
+		value_str = memval[:-1]
+	else:
+		value_str = memval
+	
+	try:
+		value = int(value_str)
+	except:
+		try:
+			value = float(value_str)
+		except:
+			value = -1
+			
+	return value * multiplier
+
+def get_num_slots(params):
+	"""
+	Process the SGE parameters to get the number of requested total slots
+	"""
+	fin = None
+	ini = None
+	step = None
+	tc = None
+	pe_max = None
+	for param in params:
+		if param[0] == "pe_max":
+			pe_max = int(param[1])
+		if param[0] == "t_max":
+			fin = int(param[1])
+		if param[0] == "t_min":
+			ini = int(param[1])
+		if param[0] == "t_step":
+			step = int(param[1])
+		if param[0] == "tc":
+			tc = int(param[1])
+
+	# the default value is 1
+	res = 1
+	if fin is not None:
+		if tc is not None:
+			res = tc
+		else:
+			res = ((fin - ini) / step) + 1
+
+	if pe_max is not None:
+		res *= pe_max
+
+	return res
+
+def get_pe_allocation_rule(pe_name):
+	"""
+	Get the allocation rule of the P.E.
+	"""
+	config_sge = cpyutils.config.Configuration(
+		"SGE",
+		{
+			"SGE_QCONF_COMMAND": "/usr/bin/qconf",
+			"SGE_ROOT": "/var/lib/gridengine",
+			"SGE_TIMEOUT_COMMANDS": 10
+		}
+	)
+
+	# Set the SGE_ROOT environment variable
+	sge_root_var = os.getenv("SGE_ROOT")
+	if sge_root_var is None:
+		os.environ['SGE_ROOT'] = config_sge.SGE_ROOT
+
+	allocation_rule = None
+	command = [ config_sge.SGE_QCONF_COMMAND, '-sp', pe_name]
+	success, out_command = cpyutils.runcommand.runcommand(command, False, timeout = config_sge.SGE_TIMEOUT_COMMANDS)
+	if success:
+		pe_info = out_command.split('\n')
+		for pe_info_line in pe_info:
+			if pe_info_line.startswith('allocation_rule'):
+				allocation_rule = pe_info_line[15:].strip()
+
+	return allocation_rule
+
+def get_slots_pn_in_pe(params):
+	"""
+	Process the SGE parameters to get the number of requested slots per node
+	"""
+	pe_name = None
+	pe_max = None
+	for param in params:
+		if param[0] == "pe_max":
+			pe_max = int(param[1])
+		if param[0] == "pe_name":
+			pe_name = param[1]
+
+	res = None
+	if pe_name:
+		allocation_rule = get_pe_allocation_rule(pe_name)
+		if allocation_rule == "$fill_up":
+			res = None
+		elif allocation_rule == "$round_robin":
+			res = None
+		elif allocation_rule == "$pe_slots":
+			res = pe_max
+		else:
+			res = int(allocation_rule)
+	return res
+
+def get_key_value_pair(str_kv):
+	"""
+	Parse a string with format key operator value
+	"""
+	m = re.search('(\w+)([<>=!]{1,2})(\w+)', str_kv)
+	if m is not None:
+		return [m.group(1), m.group(2) ,m.group(3)]
+	else:
+		return None
+
+def get_resource_list(params):
+	"""
+	Get the "-l" parameters of the qsub command
+	"""
+	res = []
+	for param in params:
+		if param[0] == "l_hard" or param[0] == "l_soft":
+			resource_list = param[1].split(',')
+			for elem in resource_list:
+				key_value_pair = get_key_value_pair(elem)
+				if key_value_pair is not None:
+					res.append(key_value_pair)
+	return res
+
+def get_wc_queue_list(wc_queue_list):
+	"""
+	Parse values from the "-q" parameters of the qsub command
+	(see wc_queue_list in qsub manual)
+	"""
+	res = []
+	for queue_data in wc_queue_list.split(','):
+		queue = None
+		host = None
+		hostgroup = None
+		if queue_data.find('@@') != -1:
+			parts = queue_data.split('@@')
+			queue = parts[0]
+			hostgroup = parts[1]
+		elif queue_data.find('@') != -1:
+			parts = queue_data.split('@')
+			queue = parts[0]
+			host = parts[1]
+		else:
+			queue = queue_data
+		res.append((queue, host, hostgroup))
+
+	return res
+
+def get_queue_params(params):
+	"""
+	Get the "-q" parameters of the qsub command
+	"""
+	queue_param = None
+	for param in params:
+		if param[0] == "q_hard":
+			queue_param = param[1]
+		if param[0] == "masterq":
+			queue_param = param[1]
+		if param[0] == "q_soft" and queue_param is None:
+			queue_param = param[1]
+
+	queue_list = []
+	if queue_param != None:
+		queue_list = get_wc_queue_list(queue_param)
+
+	return queue_list
+
+def format_request_multi_parameter(name, value_list):
+	req_str = ""
+	for value in value_list:
+		if req_str:
+			req_str += " || "
+		else:
+			req_str += "("
+		req_str += "'" + value + "' in " + name
+	req_str += ") "
+	
+	return req_str
+
+def wait_requests(clues_server, sec_info, pending_requests):
+	"""
+	Wait the CLUES pending requests to be processed
+	"""
+	now = time.time()
+	stop_waiting = (len(pending_requests) == 0)
+	while (not stop_waiting):
+		still_pending_requests = []	
+		for r_id in pending_requests:
+			try:
+				success, served = clues_server.request_wait(sec_info, r_id, 1)
+			except:
+				logging.exception("Error waiting request.")
+				served = False
+				
+			if not served:
+				still_pending_requests.append(r_id)
+
+		pending_requests = still_pending_requests
+		stop_waiting = (len(pending_requests) == 0) or ((time.time() - now) > clues.configcli.config_client.CLUES_REQUEST_WAIT_TIMEOUT)
+
+		if not stop_waiting:
+			if not stop_waiting:
+				time.sleep(1)
+
+	if len(pending_requests) > 0:
+		logging.info("stop wating for resources on CLUES for requests %s because it is lasting too much (you can fine tune var CLUES_REQUEST_WAIT_TIMEOUT to wait more time)" % pending_requests)
+	else:
+		logging.debug("requests served")
+
+def new_job(params):
+	"""
+	Process the SGE submitted job params and create a CLUES request 
+	"""	
+	# get the number of total slots
+	slots = get_num_slots(params)
+	
+	# get the number of processes per node in the p.e.
+	slots_pn = get_slots_pn_in_pe(params)
+	
+	memory = 0
+	hostnames = []
+	queues = []
+	
+	res_list = get_resource_list(params)
+	for elem in res_list:
+		# check the -l qname=<queue name> param
+		if elem[0] == "qname":
+			queues.append(elem[2])
+		elif elem[0] == "hostname":
+			hostnames.append(elem[2])
+		elif elem[0] in ["h_vmem", "s_vmem"]:
+			memory = translate_mem_value(elem[2])
+	
+	# get the -q params
+	queue_params = get_queue_params(params)
+
+	hostgroups = []
+	for (queue, host, hostgroup) in queue_params:
+		if queue is not None:
+			queues.append(queue)
+		if host is not None:
+			hostnames.append(host)
+		if hostgroup is not None:
+			hostgroups.append(hostgroup)
+	
+	req_str = ""
+	if len(queues) > 0:
+		req_str += format_request_multi_parameter('queues', queues)
+	if len(hostnames) > 0:
+		if not req_str:
+			req_str+= ' && '
+		req_str += 'hostname in %s ' % hostnames
+	if len(hostgroups) > 0:
+		if not req_str:
+			req_str+= ' && '
+		req_str += format_request_multi_parameter('hostgroups', hostgroups)
+	if slots_pn:
+		slots = int(slots / slots_pn)
+	else:
+		slots_pn = 1
+	
+	# CLUES analyzer do not like ' it wants "
+	req_str = req_str.replace("'","\"")
+	
+	clues_server = clues.configcli.get_clues_proxy_from_config()
+	
+	try:
+		version = clues_server.version()
+	except:
+		print "Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC
+		sys.exit()
+
+	pending_requests = []
+
+	success, r_id = clues_server.request_create(clues.configcli.config_client.CLUES_SECRET_TOKEN, slots_pn, memory, slots, req_str)
+	if success:
+		logging.info("a request for %d nodes of %d CPU and %d of RAM with requirements %s" % (slots, slots_pn, memory, req_str))
+		pending_requests.append(r_id)
+	else:
+		logging.error("Error creating a CLUES request: %s" % r_id)
+	
+	if pending_requests:
+		wait_requests(clues_server, clues.configcli.config_client.CLUES_SECRET_TOKEN, pending_requests)
+
+if __name__ == '__main__':
+	# Read the START line
+	start=sys.stdin.readline()
+	
+	sys.stdout.write("STARTED\n")
+	sys.stdout.flush()
+	
+	line=sys.stdin.readline()
+	
+	params = []
+	while len(line) > 0 and not line.startswith("BEGIN"):
+		param = line.strip().split(' ')
+		if param[0] == 'PARAM':
+			params.append(param[1:])
+		line=sys.stdin.readline()
+	
+	new_job(params)
+		
+	sys.stdout.write("RESULT STATE ACCEPT\n")
+	sys.stdout.flush()

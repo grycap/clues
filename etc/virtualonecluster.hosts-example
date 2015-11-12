@@ -1,0 +1,6 @@
+# Virtual nodes that will be created by instantiating a template in ONE
+#
+# * the format of the file is the same than the /etc/hosts file:
+#
+# 192.168.1.1 hostname01
+# 192.168.1.2 hostname02

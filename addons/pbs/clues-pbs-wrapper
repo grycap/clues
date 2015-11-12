@@ -1,0 +1,276 @@
+#!/usr/bin/env python
+#
+# CLUES - Cluster Energy Saving System
+# Copyright (C) 2015 - GRyCAP - Universitat Politecnica de Valencia
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+VERSION="2.0.1"
+
+# TODO: need to check what happens in schedulers when there are not enough hosts to serve a request: POWER ON ALL THOSE NODES THAT FULLFILL THE REQUIREMENTS
+# TODO: need to think about co-allocation of requests
+import sys
+import logging
+import clues.configcli
+import time
+import cpyutils
+
+# TODO: calculate the number of nodes needed as a default, for the queue that is being used for, in case that there is no nodespec, call for the default values
+
+class Nodespec:
+    # cadena="nodes=server:hippi+10:ppn=1:noserver+3:bigmem:hippi,walltime=10:00:00"
+    
+    @staticmethod
+    def createFromOptions(request_str):
+        # resource = resource_expr , resource2 = resource_expr2
+        _nodes_requested = []
+        
+        requests = request_str.split(",")
+        
+        for resource_request in requests:
+            # resource = resource_expr
+            resource_request_a = resource_request.split("=", 1)
+            
+            if len(resource_request_a) == 2:
+                resource, resspec_str = resource_request_a
+                
+                if resource == 'nodes':
+                    # nodes = nodeset1 + nodeset2 + ... 
+                    nodespec_a = resspec_str.split("+")
+                    
+                    for nodespec_str in nodespec_a:
+                        # nodeset = {<node_count> | <hostname>} [:ppn=<ppn>][:gpus=<gpu>][:<property>[:<property>]...] [+ ...]
+                        nodespec_a = nodespec_str.split(":")
+                        if len(nodespec_a) > 0:
+                            nodestring = nodespec_a[0]
+                            nodename = None
+                            node_requested = Nodespec()
+                            
+                            # {<node_count> | <hostname>}
+                            try:
+                                nodecount = int(nodestring)
+                                node_requested.nodecount = nodecount
+                            except:
+                                node_requested.nodecount = 1
+                                node_requested.hostname = nodestring
+                                
+                            # [:ppn=<ppn>][:gpus=<gpu>][:<property>[:<property>]...] [+ ...]
+                            for prop_str in nodespec_a[1:]:
+                                prop_a = prop_str.split("=", 1)
+                                if len(prop_a) == 1:
+                                    # <property>
+                                    node_requested.properties.append(prop_a[0])
+                                else:
+                                    # [:ppn=<ppn>][:gpus=<gpu>]
+                                    prop, val = prop_a
+                                    if prop == "ppn":
+                                        node_requested.ppn = val
+                                    elif prop == "gpus":
+                                        node_requested.gpus = val
+                                    else:
+                                        logging.warning("ignoring requested value for property %s" % prop)
+                            
+                            _nodes_requested.append(node_requested)
+                else:
+                    # Other resources are ignored (e.g. walltime)
+                    # http://docs.adaptivecomputing.com/torque/4-1-3/Content/topics/2-jobs/requestingRes.htm
+                    logging.debug("ignoring resource %s" % resource)
+            else:
+                logging.debug("ignoring request %s" % resource_request)
+        
+        return _nodes_requested
+    
+    def to_request(self):
+        kws = ""
+        if self.hostname:
+            kws = "%shostname==\"%s\"" % (kws, self.hostname)
+        if self.queue != '':
+            if kws != "":
+                kws = "%s && " % kws
+            kws = "%s[\"%s\"] subset queues" % (kws, self.queue)
+        if self.properties:
+            comma_str = ""
+            p_str = ""
+            for p in self.properties:
+                p_str = "%s%s\"%s\"" % (p_str, comma_str, p)
+                comma_str = " , "
+
+            if kws != "":
+                kws = "%s && " % kws
+
+            kws = "%s[%s] subset properties" % (kws, p_str)
+        if self.ppn:
+            # We are not checking whether the format is correct or not (numeric or not); that is a task of PBS
+            if kws != "":
+                kws = "%s && " % kws
+            kws = "%sppn>=%s" % (kws, self.ppn)
+        if self.gpus:
+            # We are not checking whether the format is correct or not (numeric or not); that is a task of PBS
+            if kws != "":
+                kws = "%s && " % kws
+            kws = "%sgpus>=%s" % (kws, self.gpus)
+        return kws
+    
+    def __init__(self):
+        self.ppn = None
+        self.gpus = None
+        self.properties = []
+        self.nodecount = None
+        self.hostname = None
+        self.queue = None
+        
+    def __str__(self):
+        if self.hostname is not None:
+            ret_str = self.hostname
+        elif self.nodecount is not None:
+            ret_str = str(self.nodecount)
+        if self.ppn is not None:
+            ret_str = "%s:ppn=%s" % (ret_str, self.ppn)
+        if self.gpus is not None:
+            ret_str = "%s:gpus=%s" % (ret_str, self.gpus)
+        for p in self.properties:
+            ret_str = "%s:%s" % (ret_str, p)
+        return ret_str
+
+def txt2int(v):
+    try:
+        r = int(v)
+    except:
+        return None
+    return r
+
+if __name__ == '__main__':
+    clues_server = clues.configcli.get_clues_proxy_from_config()
+    sec_info = clues.configcli.config_client.CLUES_SECRET_TOKEN
+
+    try:
+        clues_server.version()
+    except:
+        print "Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC
+        sys.exit()
+
+    arguments = []
+
+    for line in sys.stdin:
+        print line,
+        
+        lhs = line[:5]
+        if lhs == "#PBS ":
+            rhs = line[5:]
+            current_argument = rhs.strip("\n").split(" ", 1)
+            if current_argument[0] in [ '-l', '-q', '-t']:
+                if len(current_argument) == 2:
+                    arguments.append((current_argument[0], current_argument[1]))
+                else:
+                    logging.error("Found incorrect format for #PBS directive when processing script (%s)" % rhs)
+                    
+        # TODO: in the previous version, when found the first line without comment, the rest was ignored. In the examples in the web it seems that it is should not necessarely be done in that way
+
+    print
+    flag = None
+    value = None
+    for argument in sys.argv[1:]:
+        if flag is None:
+            if argument in [ '-l', '-q', '-t']:
+                flag = argument
+                value = None
+            else:
+                # ignore other arguments (e.g. the executable or the mail, etc.)
+                pass
+        else:
+            value = argument
+            arguments.append((flag, value))
+            flag = None
+
+    queue = ''
+    nodespec = []
+    jobcount = 1
+    for (argument, value) in arguments:
+        if argument == '-l':
+            ns = Nodespec.createFromOptions(value)
+            nodespec = nodespec + ns
+        elif argument == '-q':
+            queue = value
+        elif argument == '-t':
+            # -t XXXX%5 means that will be running up to 5 jobs at the same time
+            value_pct = value.split("%", 1)
+            if len(value_pct) == 2:
+                # The second part is the maximum number of active jobs with these features
+                jobcount = txt2int(value_pct[1])
+                if jobcount is None:
+                    logging.error("bad index array format")
+                    jobcount = 1
+                continue
+            
+            jobcount = 0
+
+            # -t 1-10,15,20,40-50 means that will use job ids from 1 to 10, 15, 20 and 40 to 50
+            value_list = value.split(",")
+            for idxset in value_list:
+                idx_range_a = idxset.split("-", 1)
+                if len(idx_range_a) == 2:
+                    # beginning and end
+                    beg = txt2int(idx_range_a[0])
+                    end = txt2int(idx_range_a[1])
+                    if (beg is None) or (end is None):
+                        logging.error("bad index array format")
+                    else:
+                        jobcount = jobcount + (end-beg)+1
+                else:
+                    # only an index
+                    idx = txt2int(idxset)
+                    jobcount = jobcount + 1
+
+    # TODO: known issues: what to do when the arrays of jobs are included, but also -l arguments are provided. I mean in example
+    #       -t 1-100 -l 5:q1
+    # What do we need? (1) 5 nodes with properties q1, (2) 100 nodes with any property, (3) 5 nodes with property q1 and other 100 nodes, (4) 100 nodes, but at least 5 of them have property q1
+    # By now we are supposing that
+    pending_requests = []
+    
+    # If there are no nodespecs, we should call for the default resources of the queue
+    # TODO: get the default values for the queue
+    if len(nodespec) == 0:
+        ns = Nodespec()
+        ns.nodecount=1
+        nodespec.append(ns)
+
+    for ns in nodespec:
+    	ns.queue = queue
+        req_str = ns.to_request()
+        success, r_id = clues_server.request_create(sec_info, ns.nodecount, 0, jobcount, req_str)
+        if success:
+            logging.info("a request for %d nodes of %d CPU with requirements %s" % (jobcount, ns.nodecount, req_str))
+            pending_requests.append(r_id)
+        
+    now = time.time()
+    stop_waiting = (len(pending_requests) == 0)
+    while (not stop_waiting):
+        still_pending_requests = []    
+        for r_id in pending_requests:
+            success, served = clues_server.request_wait(sec_info, r_id, 1)
+            if not served:
+                still_pending_requests.append(r_id)
+
+        pending_requests = still_pending_requests
+        stop_waiting = (len(pending_requests) == 0) or ((time.time() - now) > clues.configcli.config_client.CLUES_REQUEST_WAIT_TIMEOUT)
+
+        if not stop_waiting:
+            if not stop_waiting:
+                time.sleep(1)
+
+    if len(pending_requests) > 0:
+        logging.info("stop wating for resources on CLUES for requests %s because it is lasting too much (you can fine tune var CLUES_REQUEST_WAIT_TIMEOUT to wait more time)" % pending_requests)
+    else:
+        logging.debug("requests served")
+        
+    sys.exit()

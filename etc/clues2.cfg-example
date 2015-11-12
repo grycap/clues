@@ -1,0 +1,149 @@
+[client]
+
+# Secret token to allow external XMLRPC calls
+CLUES_SECRET_TOKEN=8e0eadc543eef7bca47fefb4
+
+# URL for the CLUES XMLRPC server
+CLUES_XMLRPC=http://localhost:8000/RPC2
+
+# Timeout when waiting a request to be served
+CLUES_REQUEST_WAIT_TIMEOUT=300
+
+# Log file for the clients
+LOG_FILE=/var/log/clues2/clues2-cli.log
+
+# Log level for the clients: debug, info, warning, error
+LOG_LEVEL=debug
+
+[general]
+
+# CLUES will consider any *.cfg file inside CONFIG_DIR in the CLUES config directory
+# CLUES considers (in this order) /etc/clues2/ ~/clues2/etc/ and ./etc/ folders to contain the clues2.cfg file
+CONFIG_DIR=conf.d
+
+# Seconds in which CLUES will issue a control line in the log file (to make sure that it continues working)
+LOGGER_MARK=1800
+
+# Path to the database that it is used by CLUES. You can also use a sqlite db (format: sqlite:///filename.db) or a mysql db (format: mysql://user:password@host/database)
+DB_CONNECTION_STRING=sqlite:///var/lib/clues2/clues.db
+
+# Space separated list of hosts that will not be considered by CLUES (e.g. node1 node2)
+DISABLED_HOSTS=
+
+# True to load the state of the nodes from the database on startup. Otherwise CLUES will not have any information until the infrastructure is monitorized
+RETRIEVE_NODES_FROM_DB_ON_STARTUP=True
+
+# Seconds to wait for the execution of commands e.g. command to power on a node or to monitorize a lrms
+TIMEOUT_COMMANDS=10
+
+# Secret token to allow external XMLRPC calls
+CLUES_SECRET_TOKEN=8e0eadc543eef7bca47fefb4
+
+# Port in which the CLUES server will listen
+CLUES_PORT=8000
+
+# Path to the log file for CLUES (leave it in blank to get output on screen; useful for debugging)
+LOG_FILE=/var/log/clues2/clues2.log
+
+# Log level to output in the log file: debug, info, warning, error
+LOG_LEVEL=debug
+
+# The python module that CLUES will use to monitorize the LRMS. It MUST have a "lrms" class inside and it MUST be accesible by python as an import
+# * Tip: if neeeded, you can modify the cluesd executable to include the path in which the module is using sys.path.append("/path/to/module")
+LRMS_CLASS=cluesplugins.pbs
+
+# The python module that CLUES will use to power on or off the internal nodes. It MUST have a "powermanager" class inside and it MUST be accesible by python as an import
+# * Tip: if neeeded, you can modify the cluesd executable to include the path in which the module is using sys.path.append("/path/to/module")
+POWERMANAGER_CLASS=cluesplugins.ipmi
+
+# Host in which CLUES is 
+CLUES_HOST=
+
+[monitoring]
+# Max time to wait to power on a node. Once passed this time, if the monitor still reports a off state, CLUES will consider that the power-on command for the node has failed
+MAX_WAIT_POWERON=300
+
+# Max time to wait to power off a node. Once passed this time, if the monitor still reports a on state, CLUES will consider that the power-off command for the node has failed
+MAX_WAIT_POWEROFF=300
+
+# Seconds between monitoring the nodes (i.e. calls to the LRMS_CLASS.lrms.get_nodeinfo method)
+# * 0 to deactivate
+PERIOD_MONITORING_NODES=5
+
+# Seconds between monitoring the jobs (i.e. calls to the LRMS_CLASS.lrms.get_jobinfo method)
+# * 0 to deactivate. Deactivated by default
+PERIOD_MONITORING_JOBS=0
+
+# Seconds to call to the lifecycle for the classes of the powermanager or the lrms
+PERIOD_LIFECYCLE=5
+
+# Seconds of grace for fails on monitoring the nodes. If a monitorization fails, the previous monitorization will be considered valid up to this value.
+PERIOD_MONITORING_NODES_FAIL_GRACE=120
+
+# Seconds of grace for fails on monitoring the jobs. If a monitorization fails, the previous monitorization will be considered valid up to this value.
+PERIOD_MONITORING_JOBS_FAIL_GRACE=120
+
+# If a lrms reports a negative value, should it be considered as literal or as infinite resources?
+NEGATIVE_RESOURCES_MEANS_INFINITE=True
+
+# Period of time while a node will not be considered on even if it is reported to be on by the lrms (e.g. the lrms monitoring system has noticed that the node is on but it cannot execute jobs, yet)
+DELAY_POWON=10
+
+# Period of time while a node will not be considered off even if it is reported to be off by the lrms (e.g. we have just powered off the node and the lrms monitoring system have not noticed it yet)
+DELAY_POWOFF=10
+
+# Period of time while the jobs will remain in the monitoring system even if they have dissapeared from the lrms monitorization
+COOLDOWN_SERVED_JOBS=120
+
+# Period of time while the request will remain in the monitoring system even if they have been served
+COOLDOWN_SERVED_REQUESTS=120
+
+[scheduling]
+
+# Seconds between calls to the schedulers pipeline
+PERIOD_SCHEDULE=5
+
+# Maximum number of nodes that will be booting simultaneously
+MAX_BOOTING_NODES=2
+
+# Comma separated list for the python classes that are used as schedulers. The scheduling pipeline will be called in the same order that are stated here. Each class MUST have a "schedule" method inside and the class MUST be accesible by python as an import
+# * Tip: if neeeded, you can modify the cluesd executable to include the path in which the module is using sys.path.append("/path/to/module")
+SCHEDULER_CLASSES=clueslib.schedulers.CLUES_Scheduler_PowOn_Requests, CLUES_Scheduler_Reconsider_Jobs, clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE
+
+# Setting for the recovery of nodes
+# * Not working yet...
+RETRIES_POWER_ON=3
+PERIOD_RECOVERY_NODES=30
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# Settings for the clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE
+#
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Time (in seconds) to consider that a node that has remain idle can be powered off
+IDLE_TIME=1800
+
+# Seconds that must pass before considering a node to be powered off (e.g. it has just been powered off and it is idle again)
+COOLDOWN_NODES=0
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# Settings for the clueslib.schedulers.CLUES_Scheduler_Reconsider_Jobs
+#
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Time that a job has to be monitorized in pending state, before a new request for resources is created
+RECONSIDER_JOB_TIME=60                 
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# Settings for the clueslib.schedulers.CLUES_Scheduler_PowOn_Free
+#
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Number of slots that are wanted to be free (CLUES will power on some nodes to get the extra slots)
+EXTRA_SLOTS_FREE=0
+
+# Number of nodes that are wanted to be free (CLUES will power on some nodes)
+EXTRA_NODES_FREE=0
+
+# Frequence to run the extra slots or node scheduler
+EXTRA_NODES_PERIOD=30

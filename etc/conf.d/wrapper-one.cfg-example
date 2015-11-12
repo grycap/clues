@@ -1,0 +1,9 @@
+[ONE WRAPPER]
+# The address of the ONE XML-RPC server
+ONE_XMLRPC=http://localhost:2633/RPC2
+
+# The credentials for the ONE user that will be used to access to ONE
+ONE_AUTH=clues:cluespass
+
+# Timeout for contacting the ONE XML-RPC server
+ONE_XMLRPC_TIMEOUT=180

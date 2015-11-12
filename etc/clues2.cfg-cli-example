@@ -1,0 +1,16 @@
+[client]
+
+# Secret token to allow external XMLRPC calls
+CLUES_SECRET_TOKEN=8e0eadc543eef7bca47fefb4
+
+# URL for the CLUES XMLRPC server
+CLUES_XMLRPC=http://localhost:8000/RPC2
+
+# Timeout when waiting a request to be served
+CLUES_REQUEST_WAIT_TIMEOUT=300
+
+# Log file for the clients
+LOG_FILE=/var/log/clues2/clues2-cli.log
+
+# Log level for the clients: debug, info, warning, error
+LOG_LEVEL=debug

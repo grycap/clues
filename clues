@@ -1,0 +1,224 @@
+#!/usr/bin/env python
+#
+# CLUES - Cluster Energy Saving System
+# Copyright (C) 2015 - GRyCAP - Universitat Politecnica de Valencia
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import xmlrpclib
+import sys
+import getpass
+import logging
+import clues.configcli as configcli
+import clueslib.helpers
+import cpyutils.parameters
+from cpyutils.parameters import *
+
+
+class CluesParameters(cpyutils.parameters.CmdLineParser):
+    def __init__(self, proxy, executable, desc, arguments):
+        cpyutils.parameters.CmdLineParser.__init__(self, executable, desc = desc, arguments = arguments)
+        self._proxy = proxy
+        self._sec_info = configcli.config_client.CLUES_SECRET_TOKEN
+    
+    def status(self, r, error):
+        succeed, text = self._proxy.status(self._sec_info, "")
+        if succeed:
+            return True, text
+        else:
+            return False, "Could not get the status of CLUES (%s)" % text
+            
+    def recover(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.recover_node(self._sec_info, node)
+            if not succeed:
+                failed = True
+            lines.append(text)
+        return (not failed), "\n".join(lines)
+
+    def enable(self, r, error):
+        failed = False
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.enable_node(self._sec_info, node, True)
+            if not succeed:
+                failed = True
+            print text
+        sys.exit(-1)
+
+    def disable(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.enable_node(self._sec_info, node, False)
+            if not succeed:
+                failed = True
+            lines.append(text)
+        return (not failed), "\n".join(lines)
+
+    def poweron(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.poweron(self._sec_info, node)
+            if not succeed:
+                failed = True
+                lines.append("node %s could not be powered on (%s)" % (node, text))
+            else:    
+                lines.append(text)
+        return (not failed), "\n".join(lines)
+
+    def poweroff(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.poweroff(self._sec_info, node)
+            if not succeed:
+                failed = True
+                lines.append("node %s could not be powered off (%s)" % (node, text))
+            else:    
+                lines.append(text)
+        return (not failed), "\n".join(lines)
+
+    def nodeinfo(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.get_node_description(self._sec_info, node, r.values['-x'])
+            if not succeed:
+                failed = True
+                lines.append("could not get info of the node (%s)" % (node, text))
+            else:    
+                lines.append(text)
+        return (not failed), "\n".join(lines)
+
+    def shownode(self, r, error):
+        failed = False
+        lines = []
+        for node in r.values['nodes']:
+            succeed, text = self._proxy.get_node_description(self._sec_info, node, True)
+            if not succeed:
+                lines.append("could not get the description of node %s (%s)" % (node, text))
+                failed = True
+            else:
+                from clueslib.node import Node
+                node = Node.fromxml(Node("",0,0,0,0), text)
+                retval = "Name: %s\n" % node.name
+                
+                # TODO: sale "no"
+                if node.enabled:
+                    retval += "Enabled: Yes\n"
+                else:
+                    retval += "Enabled: No\n"
+                retval += "State: %s\n" % node.state2str[node.state]
+                retval += "Time got current state: %s\n" % node.timestamp_state
+                retval += "Slots (free/total): %s/%s\n" % (node.slots_free, node.slots_count)
+                retval += "Memory (free/total): %s/%s\n" % (node.memory_free, node.memory_total)
+                retval += "Times that failed power (on/off): %s/%s\n" % (node.power_on_operation_failed, node.power_off_operation_failed)
+                retval += "Keywords: %s" % node.keywords
+                lines.append(retval)
+        return (not failed), "\n".join(lines)
+        
+    def req_create(self, r, error):
+        cpu = r.values['--cpu'][0]
+        memory = r.values['--memory'][0]
+        if r.values['--request'] is None:
+            extra = ""
+        else:
+            extra = r.values['--request'][0]
+        if r.values['--count'] is None:
+            nodecount = 1
+        else:
+            nodecount = r.values['--count'][0]
+        
+        succeed, text = self._proxy.request_create(self._sec_info, cpu, memory, nodecount, extra)
+        if not succeed:
+            return False, "request could not be created (%s)" % (text)
+        else:
+            return True, text
+
+    def req_wait(self, r, error):
+        req_id = r.values['id'][0]
+        timeout = -1
+        if r.values['timeout'] is not None:
+            timeout = r.values['timeout'][0]
+
+        succeed, text = self._proxy.request_wait(self._sec_info, req_id, timeout)
+        if not succeed:
+            return False, "request could not be waited (%s)" % (text)
+        else:
+            if text:
+                return True, "request %s is not currently in the queue" % req_id
+            else:
+                return True, "request %s is still pending" % req_id
+
+    def req_get(self, r, error):
+        succeed, text = self._proxy.get_requests(self._sec_info)
+        if succeed:
+            return True, text
+        else:
+            return False, "Could not get the requests from CLUES (%s)" % text
+
+def main_function():
+    proxy = configcli.get_clues_proxy_from_config()
+    sec_info = configcli.config_client.CLUES_SECRET_TOKEN
+
+    try:
+        proxy.version()
+    except:
+        print "Could not connect to CLUES server %s (please, check if it is running)" % configcli.config_client.CLUES_XMLRPC
+        sys.exit()
+
+    p = CluesParameters(proxy, "clues", desc = "The CLUES command line utility", arguments = [
+            Operation("status", desc = "Show the status of the platform"),
+            Operation("recover", desc = "Recover one or more nodes from an error state", arguments = [
+                Argument("nodes", "names of the nodes that want to be recovered", mandatory = True, count = -1)
+            ]),
+            Operation("enable", desc = "Enable one or more nodes to be considered by the platform", arguments = [
+                Argument("nodes", "names of the nodes that want to be enabled", mandatory = True, count = -1)
+            ]),
+            Operation("disable", desc = "Disable one or more nodes to be considered by CLUES", arguments = [
+                Argument("nodes", "names of the nodes that want to be disabled", mandatory = True, count = -1)
+            ]),
+            Operation("poweron", desc = "Power on one or more nodes", arguments = [
+                Argument("nodes", "names of the nodes that want to be powered on", mandatory = True, count = -1)
+            ]),
+            Operation("poweroff", desc = "Power off one or more nodes", arguments = [
+                Argument("nodes", "names of the nodes that want to be powered off", mandatory = True, count = -1)
+            ]),
+            Operation("nodeinfo", desc = "Show the information about node(s), to be processed in a programmatically mode", arguments = [
+                Argument("nodes", "names of the nodes whose information is wanted to be shown", mandatory = True, count = -1),
+                Flag("-x", "--xml", desc = "shows the information in XML format")
+            ]),
+            Operation("shownode", desc = "Show the information about node(s) as human readable", arguments = [
+                Argument("nodes", "names of the nodes whose information is wanted to be shown", mandatory = True, count = -1),
+            ]),
+            Operation("req_create", desc = "Create one request for resources", arguments = [
+                Parameter_float("--cpu", "-c", desc = "Requested CPU", mandatory = True),
+                Parameter_float("--memory", "-m", desc = "Requested Memory", mandatory = True),               
+                Parameter("--request", "-r", desc = "Requested constraints for the nodes", mandatory = False),
+                Parameter_int("--count", "-n", desc = "Number of resources (default is 1)", mandatory = False),
+            ]),
+            Operation("req_wait", desc = "Wait for a request", arguments = [
+                Argument_int("id", desc = "Identifier of the request to wait", mandatory = True),
+                Argument_int("timeout", desc = "Timeout to wait", mandatory = False),
+              ]),
+            Operation("req_get", desc = "Get the requests in a platform"),
+        ])
+
+    p.self_service(True)
+    
+if __name__ == '__main__':
+    main_function()    
+    
