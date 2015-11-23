@@ -369,13 +369,13 @@ class lrms(clueslib.platform.LRMS):
                                                     if element['id'] == node_id:
                                                         nodes.append(element['hostname'])
                                                     
-                        # Usamos la cola ficticia
-                        queue = '"default" in queues'
+                                # Usamos la cola ficticia
+                                queue = '"default" in queues'
 
-                        resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
-                        j = clueslib.request.JobInfo(resources, job_id, nodes)
-                        j.set_state(state)
-                        jobinfolist.append(j)
+                                resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
+                                j = clueslib.request.JobInfo(resources, job_id, nodes)
+                                j.set_state(state)
+                                jobinfolist.append(j)
         
         return jobinfolist
         
