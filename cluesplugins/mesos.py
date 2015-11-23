@@ -28,7 +28,7 @@ from cpyutils.evaluate import TypedClass, TypedList
 
 _LOGGER = logging.getLogger("[PLUGIN-MESOS]")
 
-def _translate_mem_value(memval):
+'''def _translate_mem_value(memval):
     memval = memval.lower().rstrip(".").strip()
     
     multiplier = 1
@@ -58,7 +58,7 @@ def _translate_mem_value(memval):
         except:
             value = -1
             
-    return value * multiplier
+    return value * multiplier'''
 
 def run_command(command):
     try:
@@ -106,7 +106,7 @@ def obtain_cpu_mem_used(node_id):
             for element in details:
                 if str(element['slave_id']) == node_id and str(element['state']) == "TASK_RUNNING":
                     used_cpu = float(element['resources']['cpus'])
-                    used_mem = _translate_mem_value(str(element['resources']['mem']) + ".MB")
+                    used_mem = element['resources']['mem'] * 1048576
     
     return used_cpu, used_mem
 
@@ -233,9 +233,9 @@ class lrms(clueslib.platform.LRMS):
                         if name == nodeinfolist[node].name:
                             state = infer_clues_node_state(element["id"], element["active"], used_nodes)
                             slots_count = float(element['resources']['cpus'])
-                            memory_total = _translate_mem_value(str(element['resources']['mem']) + ".MB")
+                            memory_total = element['resources']['mem'] * 1048576
                             
-                            used_cpu, used_mem = obtain_cpu_mem_used(name)
+                            used_cpu, used_mem = obtain_cpu_mem_used(element["id"])
                             slots_free = slots_count - used_cpu
                             memory_free = memory_total - used_mem
 
@@ -348,7 +348,7 @@ class lrms(clueslib.platform.LRMS):
                                 numnodes = 1;
                                 tasks = f['tasks']
                                 state = clueslib.request.Request.PENDING
-                                memory = _translate_mem_value(str(f['resources']['mem']) + ".MB")
+                                memory = f['resources']['mem'] * 1048576
                                 cpus_per_task = float(f['resources']['cpus'])
                                 if len(tasks) != 0:
                                     for t in tasks:
