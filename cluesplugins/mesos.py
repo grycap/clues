@@ -231,7 +231,7 @@ class lrms(clueslib.platform.LRMS):
                     name = element['hostname']
                     for node in nodeinfolist:
                         if name == nodeinfolist[node].name:
-                            state = infer_clues_node_state(name, element["active"], used_nodes)
+                            state = infer_clues_node_state(element["id"], element["active"], used_nodes)
                             slots_count = float(element['resources']['cpus'])
                             memory_total = _translate_mem_value(str(element['resources']['mem']) + ".MB")
                             
