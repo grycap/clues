@@ -349,7 +349,11 @@ class lrms(clueslib.platform.LRMS):
                                 tasks = f['tasks']
                                 state = clueslib.request.Request.PENDING
                                 memory = f['resources']['mem'] * 1048576
+                                if memory <= 0:
+                                    memory = 536870912
                                 cpus_per_task = float(f['resources']['cpus'])
+                                if cpus_per_task <= 0:
+                                    cpus_per_task = 1
                                 if len(tasks) != 0:
                                     for t in tasks:
                                         state = infer_clues_job_state(str(t['state']))
