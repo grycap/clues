@@ -96,7 +96,7 @@ class powermanager(PowerManager):
 				else:
 					_LOGGER.error("Error getting infrastruture list: No infrastructure!.")
 			else:
-				_LOGGER.error("Error getting infrastruture list: " + inf_list)
+				_LOGGER.error("Error getting infrastruture list: %s" % inf_list)
 				return None
 
 	def _get_server(self):
@@ -167,9 +167,9 @@ class powermanager(PowerManager):
 						vm_info[ec3_class]['count'] = 0
 					vm_info[ec3_class]['count'] += 1
 				else:
-					_LOGGER.error("Error getting VM info: " + radl_data)
+					_LOGGER.error("Error getting VM info: %s" % radl_data)
 		else:
-			_LOGGER.error("Error getting infrastructure info: " + vm_ids)
+			_LOGGER.error("Error getting infrastructure info: %s" % vm_ids)
 
 		(success, radl_data) = server.GetInfrastructureRADL(self._get_inf_id(), self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
 		if success:
@@ -221,7 +221,7 @@ class powermanager(PowerManager):
 		server = self._get_server()
 		(success, vm_ids) = server.GetInfrastructureInfo(self._get_inf_id(), self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
 		if not success:
-			_LOGGER.error("ERROR getting infrastructure info: " + vm_ids)
+			_LOGGER.error("ERROR getting infrastructure info: %s" % vm_ids)
 		else:
 			# The first one is always the front-end node
 			for vm_id in vm_ids[1:]:
@@ -233,7 +233,7 @@ class powermanager(PowerManager):
 						clues_node_name = radl.systems[0].getValue('net_interface.0.dns_name')
 						state = radl.systems[0].getValue('state')
 					else:
-						_LOGGER.error("ERROR getting VM info: " + vm_id)
+						_LOGGER.error("ERROR getting VM info: %s" % vm_id)
 				except:
 					success = False
 					_LOGGER.exception("ERROR getting VM info: %s" % vm_id)
@@ -271,16 +271,16 @@ class powermanager(PowerManager):
 		try:
 			server = self._get_server()
 			radl_data = self._get_radl(nname)
-			_LOGGER.debug("RADL to launch node " + nname + ": " + radl_data)
+			_LOGGER.debug("RADL to launch node %s: %s" % (nname, radl_data))
 			(success, vms_id) = server.AddResource(self._get_inf_id(), radl_data, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
 		except:
 			_LOGGER.exception("Error launching node %s " % nname)
 			return False, nname
 
 		if success:
-			_LOGGER.debug("Node " + nname + " successfully created")
+			_LOGGER.debug("Node %s successfully created" % nname)
 		else:
-			_LOGGER.error("ERROR creating the infrastructure: " + vms_id)
+			_LOGGER.error("ERROR creating the infrastructure: %s" % vms_id)
 		
 		return success, nname
 
@@ -307,9 +307,9 @@ class powermanager(PowerManager):
 				if poweroff:
 					(success, vm_ids) = server.RemoveResource(self._get_inf_id(), vm.vm_id, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
 					if not success: 
-						_LOGGER.error("ERROR deleting node: " + nname + ": " + vm_ids)
+						_LOGGER.error("ERROR deleting node: %s: %s" % (nname,vm_ids))
 					elif vm_ids == 0:
-						_LOGGER.error("ERROR deleting node: " + nname + ". No VM has been deleted.")
+						_LOGGER.error("ERROR deleting node: %. No VM has been deleted." % nname)
 				else:
 					_LOGGER.debug("Not powering off node %s" % nname)
 					success = False
