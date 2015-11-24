@@ -83,7 +83,7 @@ class powermanager(PowerManager):
 		self._inf_id = None
 
 	def _get_inf_id(self):
-		if self._inf_id:
+		if self._inf_id is not None:
 			return self._inf_id
 		else:
 			server = self._get_server()
