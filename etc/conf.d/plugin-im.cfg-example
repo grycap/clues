@@ -7,7 +7,6 @@
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 [IM VIRTUAL CLUSTER]
 
-IM_VIRTUAL_CLUSTER_INFID=0
 IM_VIRTUAL_CLUSTER_XMLRPC=http://localhost:8899
 IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS=''
 IM_VIRTUAL_CLUSTER_XMLRCP_SSL=False
