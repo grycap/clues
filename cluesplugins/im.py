@@ -90,6 +90,7 @@ class powermanager(PowerManager):
 			(success, inf_list) = server.GetInfrastructureList(self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
 			if success:
 				if len(inf_list) > 0:
+					_LOGGER.debug("The IM Inf ID is %s" % inf_list[0])
 					self._inf_id = inf_list[0]
 					return inf_list[0]
 				else:
