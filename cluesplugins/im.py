@@ -251,7 +251,7 @@ class powermanager(PowerManager):
 						# This VM is in "terminal" state remove it from the infrastructure 
 						_LOGGER.error("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
 						self.recover(clues_node_name)
-					elif state in [VirtualMachine.OFF]:
+					elif state in [VirtualMachine.OFF, VirtualMachine.UNKNOWN]:
 						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
 						_LOGGER.warn("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
 
