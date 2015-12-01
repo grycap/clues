@@ -144,7 +144,54 @@ def infer_clues_job_state(state):
 
 class lrms(clueslib.platform.LRMS):
 
-    def __init__(self, MESOS_SERVER = None, MESOS_NODES_COMMAND = None,  MESOS_STATE_COMMAND = None, MESOS_JOBS_COMMAND = None): 
+    # Metodo encargado de monitorizar la cola de trabajos de Marathon
+    def _get_marathon_jobinfolist(self):
+        exit = " "
+        jobinfolist = []
+        try:
+            exit = run_command(self._marathon)
+            json_data = json.loads(exit)
+        except:
+            _LOGGER.error("could not obtain information about Marathon status %s (%s)" % (self._server_ip, exit))
+            return None
+                    
+        # procesado de la salida del comando de estado del sistema de mesos 
+        if json_data:
+            for details in json_data.items():
+                if details[0] == "apps":
+                    apps = details[1]
+                    if len(apps) != 0:
+                        for a in apps:
+                            job_id = a['id']
+                            memory = a['mem'] * 1048576
+                            if memory <= 0:
+                                memory = 536870912
+                            cpus_per_task = float(a['cpus'])
+                            if cpus_per_task <= 0:
+                                cpus_per_task = 1
+                            nodes = []
+                            numnodes = a['instances'];
+                            tasks = a['tasks']
+                            if(a['tasksRunning'] > 0 and len(tasks) != 0):
+                                state = clueslib.request.Request.ATTENDED
+                            else:
+                                state = clueslib.request.Request.PENDING
+                            if len(tasks) != 0:
+                                for t in tasks:
+                                    # tambien esta disponible "slaveId", por si no va con el nombre
+                                    nodes.append(t['host'])
+                                                
+                            # Usamos la cola ficticia
+                            queue = '"default" in queues'
+
+                            resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
+                            j = clueslib.request.JobInfo(resources, job_id, nodes)
+                            j.set_state(state)
+                            jobinfolist.append(j)
+        
+        return jobinfolist
+
+    def __init__(self, MESOS_SERVER = None, MESOS_NODES_COMMAND = None,  MESOS_STATE_COMMAND = None, MESOS_JOBS_COMMAND = None, MESOS_MARATHON_COMMAND = None): 
 
         import cpyutils.config
         config_mesos = cpyutils.config.Configuration(
@@ -153,7 +200,8 @@ class lrms(clueslib.platform.LRMS):
                 "MESOS_SERVER": "mesosserverpublic", 
                 "MESOS_NODES_COMMAND": "/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/slaves",
                 "MESOS_STATE_COMMAND": "/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/state.json",
-                "MESOS_JOBS_COMMAND": "/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json"
+                "MESOS_JOBS_COMMAND": "/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json",
+                "MESOS_MARATHON_COMMAND": "/usr/bin/curl -L -X GET http://mesosserverpublic:8080/v2/apps?embed=tasks"
                 #"MESOS_CHRONOS_COMMAND":"/usr/bin/curl -L -X GET http://mesosserverpublic:4400/scheduler/jobs"
             }
         )
@@ -165,6 +213,8 @@ class lrms(clueslib.platform.LRMS):
         self._state = _state_cmd.split(" ")
         _jobs_cmd = clueslib.helpers.val_default(MESOS_JOBS_COMMAND, config_mesos.MESOS_JOBS_COMMAND)
         self._jobs = _jobs_cmd.split(" ")
+        _marathon_cmd = clueslib.helpers.val_default(MESOS_MARATHON_COMMAND, config_mesos.MESOS_MARATHON_COMMAND)
+        self._marathon = _marathon_cmd.split(" ")
         #_chronos_cmd = clueslib.helpers.val_default(MESOS_CHRONOS_COMMAND, config_mesos.MESOS_CHRONOS_COMMAND)
         #self._chronos = _chronos_cmd.split(" ")
         clueslib.platform.LRMS.__init__(self, "SLURM_%s" % self._server_ip)
@@ -380,6 +430,10 @@ class lrms(clueslib.platform.LRMS):
                                 j = clueslib.request.JobInfo(resources, job_id, nodes)
                                 j.set_state(state)
                                 jobinfolist.append(j)
+
+        #Obtenemos los trabajos de marathon y los anyadimos a los requests para clues
+        #TODO: hacer un metodo equivalente para CHRONOS
+        jobinfolist = list(set(jobinfolist + self._get_marathon_jobinfolist()))
         
         return jobinfolist
         
