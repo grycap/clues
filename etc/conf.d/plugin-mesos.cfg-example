@@ -10,5 +10,5 @@ MESOS_SERVER=mesosserverpublic
 MESOS_NODES_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/slaves
 MESOS_JOBS_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json
 MESOS_STATE_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/state.json
+MESOS_MARATHON_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:8080/v2/apps?embed=tasks
 #MESOS_CHRONOS_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:4400/scheduler/jobs
-#MESOS_JOBS_COMMAND tb podria ser si instalo el DCOS CLI asi: /home/ubuntu/dcos-cli/cli/env/bin/dcos task
