@@ -72,7 +72,7 @@ class powermanager(PowerManager):
 			}
 		)
 
-		self._IM_VIRTUAL_CLUSTER_AUTH_DATA = self._read_auth_data(config_im.IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)		
+		self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE = config_im.IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE		
 		self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS = config_im.IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS
 		self._IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS = config_im.IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS
 		self._IM_VIRTUAL_CLUSTER_XMLRCP_SSL = config_im.IM_VIRTUAL_CLUSTER_XMLRCP_SSL
@@ -87,7 +87,8 @@ class powermanager(PowerManager):
 			return self._inf_id
 		else:
 			server = self._get_server()
-			(success, inf_list) = server.GetInfrastructureList(self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+			auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
+			(success, inf_list) = server.GetInfrastructureList(auth_data)
 			if success:
 				if len(inf_list) > 0:
 					_LOGGER.debug("The IM Inf ID is %s" % inf_list[0])
@@ -145,7 +146,8 @@ class powermanager(PowerManager):
 	
 	def _get_radl(self, nname):
 		server = self._get_server()
-		(success, vm_ids) = server.GetInfrastructureInfo(self._get_inf_id(), self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+		auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
+		(success, vm_ids) = server.GetInfrastructureInfo(self._get_inf_id(), auth_data)
 
 		# Get all the info from RADL
 		# Especial features in system:
@@ -158,7 +160,7 @@ class powermanager(PowerManager):
 		if success:
 			# The first one is always the front-end node
 			for vm_id in vm_ids[1:]:
-				(success, radl_data)  = server.GetVMInfo(self._get_inf_id(), vm_id, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+				(success, radl_data)  = server.GetVMInfo(self._get_inf_id(), vm_id, auth_data)
 				if success:
 					radl = radl_parse.parse_radl(radl_data)
 					ec3_class = radl.systems[0].getValue("ec3_class")
@@ -171,7 +173,7 @@ class powermanager(PowerManager):
 		else:
 			_LOGGER.error("Error getting infrastructure info: %s" % vm_ids)
 
-		(success, radl_data) = server.GetInfrastructureRADL(self._get_inf_id(), self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+		(success, radl_data) = server.GetInfrastructureRADL(self._get_inf_id(), auth_data)
 		if success:
 			radl_all = radl_parse.parse_radl(radl_data)
 		else:
@@ -219,7 +221,8 @@ class powermanager(PowerManager):
 	def _get_vms(self):
 		now = cpyutils.eventloop.now()
 		server = self._get_server()
-		(success, vm_ids) = server.GetInfrastructureInfo(self._get_inf_id(), self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+		auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
+		(success, vm_ids) = server.GetInfrastructureInfo(self._get_inf_id(), auth_data)
 		if not success:
 			_LOGGER.error("ERROR getting infrastructure info: %s" % vm_ids)
 		else:
@@ -227,13 +230,17 @@ class powermanager(PowerManager):
 			for vm_id in vm_ids[1:]:
 				clues_node_name = None
 				try:
-					(success, radl_data)  = server.GetVMInfo(self._get_inf_id(), vm_id, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+					(success, radl_data)  = server.GetVMInfo(self._get_inf_id(), vm_id, auth_data)
 					if success:
 						radl = radl_parse.parse_radl(radl_data)
 						clues_node_name = radl.systems[0].getValue('net_interface.0.dns_name')
 						state = radl.systems[0].getValue('state')
 					else:
 						_LOGGER.error("ERROR getting VM info: %s" % vm_id)
+				except TypeError:
+					success = False
+					reload(radl_parse)
+					_LOGGER.exception("ERROR getting VM info: %s. Trying to reload radl_parse module." % vm_id)
 				except:
 					success = False
 					_LOGGER.exception("ERROR getting VM info: %s" % vm_id)
@@ -272,7 +279,8 @@ class powermanager(PowerManager):
 			server = self._get_server()
 			radl_data = self._get_radl(nname)
 			_LOGGER.debug("RADL to launch node %s: %s" % (nname, radl_data))
-			(success, vms_id) = server.AddResource(self._get_inf_id(), radl_data, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+			auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
+			(success, vms_id) = server.AddResource(self._get_inf_id(), radl_data, auth_data)
 		except:
 			_LOGGER.exception("Error launching node %s " % nname)
 			return False, nname
@@ -305,7 +313,8 @@ class powermanager(PowerManager):
 						poweroff = True
 				
 				if poweroff:
-					(success, vm_ids) = server.RemoveResource(self._get_inf_id(), vm.vm_id, self._IM_VIRTUAL_CLUSTER_AUTH_DATA)
+					auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
+					(success, vm_ids) = server.RemoveResource(self._get_inf_id(), vm.vm_id, auth_data)
 					if not success: 
 						_LOGGER.error("ERROR deleting node: %s: %s" % (nname,vm_ids))
 					elif vm_ids == 0:
