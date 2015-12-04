@@ -177,6 +177,7 @@ class powermanager(PowerManager):
 		if success:
 			radl_all = radl_parse.parse_radl(radl_data)
 		else:
+			_LOGGER.error("Error getting infrastructure RADL: %s" % radl_data)
 			return None
 
 		# Get info from the original RADL
@@ -215,7 +216,10 @@ class powermanager(PowerManager):
 			else:
 				# we must change the system to the next one
 				current_system = system_orig.getValue("ec3_if_fail", '')
+				if not current_system:
+					_LOGGER.error("Error: we need more instances but ec3_if_fail of system %s is empty" % system_orig.name)
 		
+		_LOGGER.error("Error generating infrastructure RADL")
 		return None
 	
 	def _get_vms(self):
@@ -276,11 +280,20 @@ class powermanager(PowerManager):
 		
 	def power_on(self, nname):
 		try:
+			vms = self._get_vms()
+			
+			if nname in vms:
+				_LOGGER.warn("Trying to launch an existing node %s. Ignoring it." % nname)
+				return True, nname
+			
 			server = self._get_server()
 			radl_data = self._get_radl(nname)
-			_LOGGER.debug("RADL to launch node %s: %s" % (nname, radl_data))
-			auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
-			(success, vms_id) = server.AddResource(self._get_inf_id(), radl_data, auth_data)
+			if radl_data:
+				_LOGGER.debug("RADL to launch node %s: %s" % (nname, radl_data))
+				auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
+				(success, vms_id) = server.AddResource(self._get_inf_id(), radl_data, auth_data)
+			else:
+				_LOGGER.error("RADL to launch node %s is empty!!" % nname)
 		except:
 			_LOGGER.exception("Error launching node %s " % nname)
 			return False, nname
@@ -288,7 +301,7 @@ class powermanager(PowerManager):
 		if success:
 			_LOGGER.debug("Node %s successfully created" % nname)
 		else:
-			_LOGGER.error("ERROR creating the infrastructure: %s" % vms_id)
+			_LOGGER.error("ERROR launching node %s: %s" % (nname, vms_id))
 		
 		return success, nname
 
@@ -345,13 +358,13 @@ class powermanager(PowerManager):
 			for node in monitoring_info.nodelist:
 				node_names.append(node.name)
 				if node.enabled:
-					if node.state in [Node.OFF, Node.OFF_ERR]:
+					if node.state in [Node.OFF, Node.OFF_ERR, Node.UNKNOWN]:
 						if self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS > 0:
 							if node.name in vms:
 								vm = vms[node.name]
 								time_off = now - node.timestamp_state
 								time_recovered = now - vm.timestamp_recovered
-								_LOGGER.warning("node %s has a VM running but it is OFF in the monitoring system since %d seconds" % (node.name, time_off))
+								_LOGGER.warning("node %s has a VM running but it is OFF or UNKNOWN in the monitoring system since %d seconds" % (node.name, time_off))
 								if time_off > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS:
 									if time_recovered > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS:
 										_LOGGER.warning("Trying to recover it (state: %s)" % node.state)
