@@ -433,7 +433,9 @@ class lrms(clueslib.platform.LRMS):
 
         #Obtenemos los trabajos de marathon y los anyadimos a los requests para clues
         #TODO: hacer un metodo equivalente para CHRONOS
-        jobinfolist = list(set(jobinfolist + self._get_marathon_jobinfolist()))
+        jobinfolist2 = self._get_marathon_jobinfolist();
+        if(jobinfolist2 != None and len(jobinfolist2) > 0):
+            jobinfolist = list(set(jobinfolist + self._get_marathon_jobinfolist()))
         
         return jobinfolist
         
