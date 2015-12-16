@@ -86,7 +86,7 @@ def obtain_used_nodes():
         for job, details in json_data.items():
             for element in details:
                 state = str(element['state'])
-                if state == "TASK_RUNNING":
+                if state == "TASK_RUNNING" or state == "TASK_STAGING":
                     used_nodes.append(str(element['slave_id']))
     return used_nodes
 
