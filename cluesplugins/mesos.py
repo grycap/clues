@@ -70,8 +70,7 @@ def run_command(command):
     except Exception as e:
         raise Exception("Error executing '%s': %s" % (" ".join(command), str(e)))
 
-        
-#Funcion para obtener la lista de trabajos e identificar los nodos que estan USED (trabajos en estado TASK_RUNNING)
+# Obtains the list of jobs and identifies the nodes that are in "USED" state (jobs in state "TASK_RUNNING")
 def obtain_used_nodes():
     exit = " "
     used_nodes = []
@@ -90,7 +89,7 @@ def obtain_used_nodes():
                     used_nodes.append(str(element['slave_id']))
     return used_nodes
 
-#Funcion para obtener la memoria y la cpu usadas por el posible trabajo en ejecucion en el nodo
+# Obtains the mem and cpu used by the possible job that is in execution in the node "node_id"
 def obtain_cpu_mem_used(node_id):
     used_cpu = 0
     used_mem = 0
@@ -111,11 +110,11 @@ def obtain_cpu_mem_used(node_id):
     return used_cpu, used_mem
 
         
-#Funcion que pasa del estado de los slaves MESOS al equivalente estado CLUES2
+# Determines the equivalent state between Mesos slaves and Clues2 possible node states
 def infer_clues_node_state(id, state, used_nodes):
-    # Estados MESOS: active=true || active=false
-    # Estados CLUES2: ERROR, UNKNOWN, IDLE, USED, OFF
-    #TODO: como se si esta idle or used? tendre que mirar si hay procesos running en ellos
+    # MESOS node states: active=true || active=false
+    # CLUES2 node states: ERROR, UNKNOWN, IDLE, USED, OFF
+
     res_state = ""
 
     if state and id not in used_nodes:
@@ -129,10 +128,10 @@ def infer_clues_node_state(id, state, used_nodes):
     
     return res_state
 
-#Funcion que pasa del estado de los trabajos MESOS al equivalente estado CLUES2
+# Determines the equivalent state between Mesos tasks and Clues2 possible job states
 def infer_clues_job_state(state):
-    # Estados MESOS: TASK_RUNNING, TASK_PENDING, TASK_KILLED, TASK_FINISHED (no se si hay mas)
-    # Estados CLUES: ATTENDED o PENDING
+    # MESOS job states: TASK_RUNNING, TASK_PENDING, TASK_KILLED, TASK_FINISHED (TODO: check if there are more possible states)
+    # CLUES2 job states: ATTENDED o PENDING
     res_state = ""
 
     if state == 'TASK_PENDING':
@@ -144,7 +143,7 @@ def infer_clues_job_state(state):
 
 class lrms(clueslib.platform.LRMS):
 
-    # Metodo encargado de monitorizar la cola de trabajos de Marathon
+    # Method in charge of monitoring the job queue of Marathon
     def _get_marathon_jobinfolist(self):
         exit = " "
         jobinfolist = []
@@ -155,7 +154,7 @@ class lrms(clueslib.platform.LRMS):
             _LOGGER.error("could not obtain information about Marathon status %s (%s)" % (self._server_ip, exit))
             return None
                     
-        # procesado de la salida del comando de estado del sistema de mesos 
+        # process the exit of the marathon command
         if json_data:
             for details in json_data.items():
                 if details[0] == "apps":
@@ -178,10 +177,9 @@ class lrms(clueslib.platform.LRMS):
                                 state = clueslib.request.Request.PENDING
                             if len(tasks) != 0:
                                 for t in tasks:
-                                    # tambien esta disponible "slaveId", por si no va con el nombre
                                     nodes.append(t['host'])
                                                 
-                            # Usamos la cola ficticia
+                            # Use the fake queue
                             queue = '"default" in queues'
 
                             resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
@@ -222,7 +220,7 @@ class lrms(clueslib.platform.LRMS):
     def get_nodeinfolist(self): 
         nodeinfolist = {}
         
-        '''Ejemplo de salida /usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/slaves
+        '''Exit example of /usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/slaves
         {
             "slaves": [
                 {
@@ -257,13 +255,13 @@ class lrms(clueslib.platform.LRMS):
             name = line.rstrip('\n')
             #name = line
             state = NodeInfo.OFF
-            #Valores orientativos para CLUES, hasta que no este el nodo encendido, no se conocen los valores exactos
+            # Illustrative values for Clues, since the node is not running, we cannot know the real values
             slots_count = 1
             memory_total = 1572864000
             slots_free = 1
             memory_free = 1572864000
 
-            # Creamos una cola ficticia
+            # Create a fake queue
             keywords = {}
             queues = ["default"]
             keywords['hostname'] = TypedClass.auto(name)
@@ -289,7 +287,7 @@ class lrms(clueslib.platform.LRMS):
                             slots_free = slots_count - used_cpu
                             memory_free = memory_total - used_mem
 
-                            # Creamos una cola ficticia
+                            # Create a fake queue
                             keywords = {}
                             queues = ["default"]
                             keywords['hostname'] = TypedClass.auto(name)
@@ -302,12 +300,12 @@ class lrms(clueslib.platform.LRMS):
 
         return nodeinfolist
 
-    # Metodo encargado de monitorizar la cola de trabajos
-    # La info hay que obtenerla desde los frameworks y no desde los tasks, 
-    # porque si no hay recursos disponibles los task no se crean pero si los frameworks
+    # Method in charge of monitoring the job queue of Mesos plus Marathon
+    # The Mesos info about jobs has to be obtained from frameworks and not from tasks, 
+    # because if there are not available resources to execute new tasks, Mesos do not create them but frameworks are created
     def get_jobinfolist(self):
 
-        '''Ejemplo de salida con /usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json:
+        '''Exit example of /usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json:
         {
             "tasks": [
                 {
@@ -348,25 +346,8 @@ class lrms(clueslib.platform.LRMS):
         except:
             _LOGGER.error("could not obtain information about MESOS status %s (%s)" % (self._server_ip, exit))
             return None
-
-        # procesado de la salida del comando de chronos
-        '''if json_data:
-            for job, details in json_data.items():
-                    job_id = details['name']
-                    state = clueslib.request.Request.PENDING
-                    nodes = []
-                    numnodes = 1;
-                    memory = _translate_mem_value(str(details['mem']) + ".MB")
-                    cpus_per_task = float(details['cpus'])
-                    # Usamos la cola ficticia
-                    queue = '"default" in queues'
-                    
-                    resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
-                    j = clueslib.request.JobInfo(resources, job_id, nodes)
-                    j.set_state(state)
-                    jobinfolist.append(j)'''
         
-        # procesado de la salida del comando de trabajos de mesos
+        # process the exit of the mesos job command 
         '''if json_data:
             for job, details in json_data.items():
                 for element in details:
@@ -385,7 +366,7 @@ class lrms(clueslib.platform.LRMS):
                     j.set_state(state)
                     jobinfolist.append(j)'''
                     
-        # procesado de la salida del comando de estado del sistema de mesos 
+        # process the exit of the mesos state of the system command 
         if json_data:
             for details in json_data.items():
                 if details[0] == "frameworks":
@@ -407,8 +388,6 @@ class lrms(clueslib.platform.LRMS):
                                 if len(tasks) != 0:
                                     for t in tasks:
                                         state = infer_clues_job_state(str(t['state']))
-                                        #para el nodo, aqui solo tenemos info del id, nos hace falta el hostname (CREO)
-                                        #nodes.append(str(t['slave_id']))
                                         node_id = str(t['slave_id'])
                                         try:
                                             exit2 = run_command(self._nodes)
@@ -423,7 +402,7 @@ class lrms(clueslib.platform.LRMS):
                                                     if element['id'] == node_id:
                                                         nodes.append(element['hostname'])
                                                     
-                                # Usamos la cola ficticia
+                                # Use the fake queue
                                 queue = '"default" in queues'
 
                                 resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
@@ -431,8 +410,8 @@ class lrms(clueslib.platform.LRMS):
                                 j.set_state(state)
                                 jobinfolist.append(j)
 
-        #Obtenemos los trabajos de marathon y los anyadimos a los requests para clues
-        #TODO: hacer un metodo equivalente para CHRONOS
+        # Obtain Marathon jobs and add to the jobinfolist of Mesos
+        # TODO: create an equivalent method for CHRONOS
         jobinfolist2 = self._get_marathon_jobinfolist();
         if(jobinfolist2 != None and len(jobinfolist2) > 0):
             jobinfolist = list(set(jobinfolist + self._get_marathon_jobinfolist()))
