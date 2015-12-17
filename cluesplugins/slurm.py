@@ -69,7 +69,7 @@ def run_command(command):
     except Exception as e:
         raise Exception("Error executing '%s': %s" % (" ".join(command), str(e)))
 
-#Funcion para facilitar el parseo de la salida del comando scontrol
+# This function facilitates the parsing of the scontrol command exit
 def parse_scontrol(out):
     if out.find("=") < 0: return []
     r = []
@@ -83,12 +83,12 @@ def parse_scontrol(out):
             s = not s
     return r
 
-#TODO: acabar de hacer matching con los estados de la segunda linea
-#Funcion que pasa del estado de los nodos SLURM al equivalente estado CLUES2
+# TODO: consider states in the second line of slurm
+# Function that translates the slurm node state into a valid clues2 node state
 def infer_clues_node_state(self, state):
-    # Estados SLURM: "NoResp", "ALLOC", "ALLOCATED", "COMPLETING", "DOWN", "DRAIN", "ERROR, "FAIL", "FAILING", "FUTURE" "IDLE", 
+    # SLURM node states: "NoResp", "ALLOC", "ALLOCATED", "COMPLETING", "DOWN", "DRAIN", "ERROR, "FAIL", "FAILING", "FUTURE" "IDLE", 
     #                "MAINT", "MIXED", "PERFCTRS/NPC", "RESERVED", "POWER_DOWN", "POWER_UP", "RESUME" or "UNDRAIN".
-    # Estados CLUES2: ERROR, UNKNOWN, IDLE, USED, OFF
+    # CLUES2 node states: ERROR, UNKNOWN, IDLE, USED, OFF
     res_state = ""
 
     if state == 'IDLE':
@@ -105,11 +105,11 @@ def infer_clues_node_state(self, state):
 
     return res_state
 
-#Funcion que pasa del estado de los trabajos SLURM al equivalente estado CLUES2
+# Function that translates the slurm job state into a valid clues2 job state
 def infer_clues_job_state(state):
-    # un nodo puede estar en varios estados
-    # Estados SLURM: CANCELLED, COMPLETED, CONFIGURING, COMPLETING, FAILED, NODE_FAIL, PENDING, PREEMPTED, RUNNING, SUSPENDED, TIMEOUT
-    # Estados CLUES: ATTENDED o PENDING
+    # a job can be in several states
+    # SLURM job states: CANCELLED, COMPLETED, CONFIGURING, COMPLETING, FAILED, NODE_FAIL, PENDING, PREEMPTED, RUNNING, SUSPENDED, TIMEOUT
+    # CLUES2 job states: ATTENDED o PENDING
     res_state = ""
 
     if state == 'PENDING':
@@ -119,11 +119,11 @@ def infer_clues_job_state(state):
 
     return res_state
 
-#Funcion que recupera las colas (partitions) en las que esta el nodo
-# un nodo puede estar en varias colas: SLURM has supported configuring nodes in more than one partition since version 0.7.0
+# Function that recovers the partitions of a node
+# A node can be in several queues: SLURM has supported configuring nodes in more than one partition since version 0.7.0
 def get_partition(self, node_name):
 
-    '''Ejemplo de salida scontrol show partitions: 
+    '''Exit example of scontrol show partitions: 
     PartitionName=wn
     AllowGroups=ALL AllowAccounts=ALL AllowQos=ALL
     AllocNodes=ALL Default=NO
@@ -143,12 +143,11 @@ def get_partition(self, node_name):
         _LOGGER.error("could not obtain information about SLURM partitions %s (%s)" % (self._server_ip, exit))
         return None
     
-    #Tengo que comprobar para cada cola, en cual esta el nodo que me pasan y devolver el nombre de esa/esas cola
     if exit:
         for key in exit:
             queue = key
             nodes = str(key["Nodes"])
-            #nodes es algo como wnone-[0-1]
+            #nodes is like wnone-[0-1]
             pos1 = nodes.find("[")
             pos2 = nodes.find("]")
             if pos1 > -1 and pos2 > -1:
@@ -168,11 +167,6 @@ def get_partition(self, node_name):
 class lrms(clueslib.platform.LRMS):
 
     def __init__(self, SLURM_SERVER = None, SLURM_PARTITION_COMMAND = None, SLURM_NODES_COMMAND = None, SLURM_JOBS_COMMAND = None): 
-        #
-        # NOTE: This fragment provides the support for global config files. It is a bit awful.
-        #       I do not like it because it is like having global vars. But it is managed in
-        #       this way for the sake of using configuration files
-        #
         import cpyutils.config
         config_slurm = cpyutils.config.Configuration(
             "SLURM",
@@ -196,7 +190,7 @@ class lrms(clueslib.platform.LRMS):
     def get_nodeinfolist(self):      
         nodeinfolist = {}
         
-        '''Ejemplo de salida scontrol show nodes
+        '''Exit example of scontrol show nodes
         NodeName=wn0 Arch=x86_64 CoresPerSocket=1
         CPUAlloc=0 CPUErr=0 CPUTot=1 CPULoad=0.02 Features=(null)
         Gres=(null)
@@ -234,10 +228,10 @@ class lrms(clueslib.platform.LRMS):
 
         return nodeinfolist
 
-    # Metodo encargado de monitorizar la cola de trabajos
+    # Method in charge of monitoring the job queue of SLURM
     def get_jobinfolist(self):
 
-        '''Ejemplo de salida con scontrol -o show jobs:
+        '''Exit example of scontrol -o show jobs:
         JobId=3 JobName=pr.sh
         UserId=ubuntu(1000) GroupId=ubuntu(1000)
         Priority=4294901758 Nice=0 Account=(null) QOS=(null)
@@ -276,7 +270,7 @@ class lrms(clueslib.platform.LRMS):
                 job_id = str(job["JobId"])
                 state = infer_clues_job_state(str(job["JobState"]))
                 nodes = []
-                # tambien esta ReqNodeList
+                # ReqNodeList is also available
                 if str(job["NodeList"]) != "(null)":
                     nodes.append(str(job["NodeList"]))
                 numnodes = int(job["NumNodes"])
@@ -284,7 +278,6 @@ class lrms(clueslib.platform.LRMS):
                 cpus_per_task = int(job["CPUs/Task"])
                 partition = '"' + str(job["Partition"]) + '" in queues'
 
-                #TODO: confirmar orden parametros correcto y formato de la cola
                 resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [partition], numnodes)
                 j = clueslib.request.JobInfo(resources, job_id, nodes)
                 j.set_state(state)
