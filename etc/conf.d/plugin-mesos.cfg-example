@@ -11,4 +11,5 @@ MESOS_NODES_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master
 MESOS_JOBS_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json
 MESOS_STATE_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/state.json
 MESOS_MARATHON_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:8080/v2/apps?embed=tasks
-#MESOS_CHRONOS_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:4400/scheduler/jobs
+MESOS_CHRONOS_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:4400/scheduler/jobs
+MESOS_CHRONOS_STATE_COMMAND=/usr/bin/curl -L -X GET http://mesosserverpublic:4400/scheduler/graph/csv
