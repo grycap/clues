@@ -61,12 +61,13 @@ class Job:
         Job.__current_id += 1
         return Job.__current_id
 
-    def __init__(self, cores, memory, seconds, name = None):
+    def __init__(self, cores, memory, seconds, nodecount = 1, name = None):
         if name is None:
             name = "job%.04d" % Job.get_id()
         self.name = name
         self.cores = cores
         self.memory = memory
+        self.nodecount = nodecount
         self.seconds = seconds
         self.timestamp_creation = cpyutils.eventloop.now()
         self.timestamp_start = None
@@ -74,6 +75,16 @@ class Job:
         self.state = Job.INIT
         self.timestamp_assigned = None
         self.nodes_assigned = []
+        
+    def clone(self):
+        j = Job(self.cores, self.memory, self.seconds, self.nodecount, self.name)
+        j.timestamp_creation = self.timestamp_creation
+        j.timestamp_start = self.timestamp_start
+        j.timestamp_finish = self.timestamp_finish
+        j.timestamp_assigned = self.timestamp_assigned
+        j.state = self.state
+        j.nodes_assigned = self.nodes_assigned[:]
+        return j
         
     def _ensure_started(self):
         if self.timestamp_start is None:
@@ -87,16 +98,19 @@ class Job:
     def _ensure_not_started(self):
         if self.timestamp_start is not None:
             raise Exception("job %s has already been started" % self.name)
+
+    def pending_nodecount(self):
+        return self.nodecount - len(self.nodes_assigned)
         
     def assign(self, node_list):
         self._ensure_not_started()
-        if self.timestamp_assigned is not None:
-            raise Exception("job %s has already been assigned to nodes %s" % (self.name, str(self.nodes_assigned)))
         self.timestamp_assigned = cpyutils.eventloop.now()
         for n_id in node_list:
-            if n_id in self.nodes_assigned:
-                raise Exception("job %s already assigned to node %s" % (self.name, n_id))
             self.nodes_assigned.append(n_id)
+
+    def can_start(self):
+        if len(self.nodes_assigned) < self.nodecount: return False
+        return True
 
     def disassign(self, node_list):
         for n_id in node_list:
@@ -109,6 +123,7 @@ class Job:
         self.timestamp_start = cpyutils.eventloop.now()
         self.state = Job.RUNNING
         cpyutils.eventloop.get_eventloop().add_event(self.seconds, desc = "job %s finished" % self.name)
+        cpyutils.eventloop.get_eventloop().add_event(self.seconds + 1, desc = "job %s finished + sched" % self.name, stealth = True)
         # TODO: add event to finalize the job? maybe is better to wait for the LRMS loop
 
     def finish(self):
@@ -169,21 +184,27 @@ class Node:
         self.total_cores = cores
         self.total_memory = memory
         self.state = Node.ON
-        
         self.cores = cores
         self.memory = memory
-        self.jobs = {}
         
+    def clone(self):
+        n = Node(self.total_cores, self.total_memory, self.name)
+        n.memory = self.memory
+        n.cores = self.cores
+        n.state = self.state
+        return n
+
+    def copy(self):
+        return Node(self.cores, self.memory)
+
     def poweroff(self):
         self.state = Node.POW_OFF
         cpyutils.eventloop.get_eventloop().add_event(5, desc = "node %s powered off" % self.name, callback = self._poweroff)
-        # TODO: what happens to the jobs?
         
     def _poweroff(self):
         self.state = Node.OFF
         
-    def can_assign(self, j):
-        print self.state
+    def meets_requirements(self, j):
         if self.state != Node.ON: return False
         if self.cores < j.cores: return False
         if self.memory < j.memory: return False
@@ -192,37 +213,35 @@ class Node:
     def assign_job(self, j):
         if self.state != Node.ON:
             raise Exception("cannot assign job %s node %s because node is off" % (j.name, self.name))
-        if j.name in self.jobs:
-            raise Exception("job %s already assigned to node %s" % (j.name, self.name))
-        self.jobs[j.name] = j
         self.memory -= j.memory
         self.cores -= j.cores
-        j.assign([self.name])
         
-    def remove_job(self, j):
-        if j.name not in self.jobs:
-            raise Exception("job %s is not assigned to node %s" % (j.name, self.name))
-        del self.jobs[j.name]
+    def disassign_job(self, j):
         self.memory += j.memory
         self.cores += j.cores
-        j.disassign([self.name])
+        # j.disassign([self.name])
         
     def __str__(self):
         return "[NODE (%s)] %.1f cores, %.1f memory" % (self.name, self.cores, self.memory)
     
-    def duplicate(self):
-        return Node(self.cores, self.memory)
-
 class NodePool():
     @staticmethod
     def create_pool(node, count):
         np = NodePool()
         for n in range(0, count):
-            np.add(node.duplicate())
+            np.add(node.copy())
         return np
     
     def __init__(self):
         self.nodes = {}
+
+    def clone(self):
+        n_dict = {}
+        for n_id, n in self.nodes.items():
+            n_dict[n_id] = n.clone()
+        np = NodePool()
+        np.nodes = n_dict
+        return np
 
     def __iter__(self):
         for _,item in self.nodes.items():
@@ -291,8 +310,9 @@ class LRMS_FIFO(clueslib.platform.LRMS):
         for j_id, nodelist in self.job2nodes.items():
             j = self.jobs[j_id]
             if j.state == Job.INIT:
-                j.start()
-                _LOGGER.debug("job %s started" % j.name)
+                if j.can_start():
+                    j.start()
+                    _LOGGER.debug("job %s started" % j.name)
     
     def purge_jobs(self):
         for j_id, nodelist in self.job2nodes.items():
@@ -301,35 +321,53 @@ class LRMS_FIFO(clueslib.platform.LRMS):
                 _LOGGER.debug("job %s has finished its execution" % j.name)
                 j.finish()
                 for n_id in nodelist:
-                    self.nodepool[n_id].remove_job(j)
+                    self.nodepool[n_id].disassign_job(j)
+                    _LOGGER.debug("job %s dissasigned from node %s" % (j.name, n_id))
                 del self.job2nodes[j_id]
                 self.jobs_ended.append(j)
                 self.jobs_running.remove(j_id)
     
     def sched(self):
         for j_id in self.jobs_queue[:]:
-            assigned = False
-            for n in self.nodepool:
-                j = self.jobs[j_id]
-                if n.can_assign(j):
-                    assigned = True
+            j = self.jobs[j_id]
+            j_clone = j.clone()
+            nodepool = self.nodepool.clone()
+            nodes_assigned = []
+            while j_clone.pending_nodecount() > 0:
+                assigned = False
+                for n in nodepool:
+                    if n.meets_requirements(j_clone):
+                        n.assign_job(j_clone)
+                        j_clone.assign([n.name])
+                        nodes_assigned.append(n.name)
+                        assigned = True
+                        _LOGGER.debug("job %s can be assigned to node %s" % (j_id, n.name))
+                        break
+                if not assigned:
+                    _LOGGER.debug("could not find enough nodes for job %s" % j_id)
+                    return
                     
-                    n.assign_job(j)
-                    self.job2nodes[j_id] = [n.name]
-                    _LOGGER.debug("job %s assigned to node %s" % (j_id, n.name))
-                    break
-            if not assigned: return
-            self.jobs_queue.remove(j_id)
-            self.jobs_running.append(j_id)
+            if j_clone.pending_nodecount() == 0:
+                for n_id in nodes_assigned:
+                    self.nodepool[n_id].assign_job(j)
+                self.job2nodes[j_id] = nodes_assigned
+                j.assign(nodes_assigned)
+
+                _LOGGER.debug("job %s assigned to nodes %s" % (j_id, nodes_assigned))
+                self.jobs_queue.remove(j_id)
+                self.jobs_running.append(j_id)
+            else:
+                _LOGGER.debug("could not assign job %s to nodes" % (j_id))
+                return
     
-    def lifecycle(self):
-        print self.qstat()
+    def lifecycle(self, force_sched = False):
         t = cpyutils.eventloop.now()
-        self.purge_jobs()
-        if (t - self.sched_last) > self.sched_period:
+        if force_sched or ((t - self.sched_last) >= self.sched_period):
+            self.purge_jobs()
             self.sched_last = t
             self.sched()
-        self.start_jobs()
+            self.start_jobs()
+        print self.qstat()
         
     def job2str(self, j):
         j2s = {Job.INIT:'Q', Job.RUNNING:'R', Job.ABORT: 'A', Job.END:'F', Job.ERR:'E'}
@@ -339,18 +377,19 @@ class LRMS_FIFO(clueslib.platform.LRMS):
         return retval
 
 if __name__ == '__main__':
-    cpyutils.eventloop.create_eventloop(True)
+    # cpyutils.eventloop.create_eventloop(True)
+    cpyutils.eventloop.create_eventloop(False)
     np = NodePool.create_pool(Node(4,4096), 4)
     np['node01'].poweroff()
     np['node02'].poweroff()
-    np['node03'].poweroff()
+    # np['node03'].poweroff()
     # np['node04'].poweroff()
     
     lrms = LRMS_FIFO(np)
     lrms.qsub(Job(2, 512, 3))
-    lrms.qsub(Job(2, 512, 6))
+    lrms.qsub(Job(2, 512, 6, 2))
     lrms.qsub(Job(2, 512, 2))
-    print lrms
+    # print lrms
     
     #np = NodePool()
     #n1 = Node(2,1024)
