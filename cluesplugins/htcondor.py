@@ -73,7 +73,7 @@ class lrms(clueslib.platform.LRMS):
                 keywords = {}
                 queues = []
                 try:
-                    activity =worker_node["Activity"]
+                    activity = worker_node["Activity"]
                 except:
                     activity = "undefined"
                 if activity == "Idle":
@@ -96,7 +96,7 @@ class lrms(clueslib.platform.LRMS):
                     keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
                     nodeinfolist[name] = NodeInfo(name, slots, slots_free, memory, memory_free, keywords)
                     nodeinfolist[name].state = NodeInfo.IDLE
-                elif activity != "undefined" :
+                elif activity != "undefined":
                     try:
                         name = worker_node["Name"]
                     except:
@@ -177,18 +177,18 @@ class lrms(clueslib.platform.LRMS):
                         try:
                             cpus_per_task = job_scheduled_attributes["RequestCpus"]
                         except: 
-                                cpus_per_task =  0
+                            cpus_per_task =  0
                         memory = ""
                         try:
                             memory =  (job_scheduled_attributes["ImageSize"] + 1023)/1024
                         except: 
-                                memory =  0
+                            memory =  0
                         cluster_id = ""
                         queue = []
                         try:
                             cluster_id = str(job_scheduled_attributes["ClusterId"])
                         except: 
-                                cluster_id = "undefined"
+                            cluster_id = "undefined"
                         queue.append(cluster_id)
                         nodes = []
                         numnodes = ""
@@ -208,7 +208,7 @@ class lrms(clueslib.platform.LRMS):
                             proc_id = job_scheduled_attributes["ProcId"]
                             job_id += str(proc_id)
                         except: 
-                                job_id += "undefined"
+                            job_id += "undefined"
                         job_st = ""
                         state = "" 
                         try: 
