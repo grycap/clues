@@ -224,3 +224,6 @@ class lrms(clueslib.platform.LRMS):
             _LOGGER.warning("could not obtain information about jobs.")
             return None
         return jobinfolist
+
+if __name__ == '__main__':
+    pass
