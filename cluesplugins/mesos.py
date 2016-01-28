@@ -310,7 +310,7 @@ class lrms(clueslib.platform.LRMS):
         self._chronos = _chronos_cmd.split(" ")
         _chronos_state_cmd = clueslib.helpers.val_default(MESOS_CHRONOS_STATE_COMMAND, config_mesos.MESOS_CHRONOS_STATE_COMMAND)
         self._chronos_state = _chronos_state_cmd.split(" ")
-        clueslib.platform.LRMS.__init__(self, "SLURM_%s" % self._server_ip)
+        clueslib.platform.LRMS.__init__(self, "MESOS_%s" % self._server_ip)
 
     def get_nodeinfolist(self): 
         nodeinfolist = {}
