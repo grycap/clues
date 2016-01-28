@@ -56,8 +56,13 @@ def infer_clues_job_state(state):
         return clueslib.request.Request.ATTENDED
 
 
-class lrms(clueslib.platform.LRMS): 
+class lrms(clueslib.platform.LRMS):
     
+    def __init__(self, HTCONDOR_SERVER = None):
+        config_htcondor = cpyutils.config.Configuration("HTCONDOR", {"HTCONDOR_SERVER": "htcondoreserver"})
+        self._server_ip = clueslib.helpers.val_default(HTCONDOR_SERVER, config_htcondor.HTCONDOR_SERVER)
+        clueslib.platform.LRMS.__init__(self, "HTCONDOR_%s" % self._server_ip)
+         
     def get_nodeinfolist(self):
         nodeinfolist = {}
         collector = htcondor.Collector()
@@ -157,12 +162,32 @@ class lrms(clueslib.platform.LRMS):
                             memory_free = 0
                         nodeinfolist[name] = NodeInfo(name , slots , slots_free , memory , memory_free, keywords)
                         nodeinfolist[name].state = NodeInfo.USED
+                else:
+                    _LOGGER.warning("could not obtain information about nodes.")
+                    return None
         else:
-            _LOGGER.warning("could not obtain information about nodes.")
-            return None
+            try:
+                infile = open('/tmp/vnodes.info', 'r')
+                for line in infile:
+                    name = line.rstrip('\n')
+                    # Illustrative values for Clues, since the node is not running, we cannot know the real values
+                    slots_count = 1
+                    slots_free = 1
+                    memory_total = 1572864000
+                    memory_free = 1572864000
+                    # Create a fake queue
+                    keywords = {}
+                    keywords['hostname'] = TypedClass.auto(name)
+                    queues = ["default"]
+                    keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                    nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
+                    nodeinfolist[name].state = NodeInfo.OFF
+                infile.close()
+            except:
+                _LOGGER.warning("could not obtain information about nodes.")
+                return None
         return nodeinfolist
-
-
+    
     def get_jobinfolist(self):
         jobinfolist = []
         collector = htcondor.Collector()
