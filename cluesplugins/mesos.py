@@ -340,7 +340,7 @@ class lrms(clueslib.platform.LRMS):
         try:
             exit = run_command(self._nodes)
             json_data = json.loads(exit)
-            infile = open('/tmp/vnodes.info', 'r')
+            infile = open('/etc/clues2/mesos_vnodes.info', 'r')
         except:
             _LOGGER.error("could not obtain information about MESOS nodes %s (%s)" % (self._server_ip, exit))
             return None
