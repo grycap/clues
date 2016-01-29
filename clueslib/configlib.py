@@ -22,7 +22,7 @@ try:
 except:
     _CONFIGURATION_CLUES = cpyutils.config.Configuration("general",
         {
-            "LOGGER_MARK": 1800,
+            "LOGGER_MARK": 1800.0,
             "DB_CONNECTION_STRING": "sqlite:///var/lib/clues2/clues.db",
             "DISABLED_HOSTS": "",
             "RETRIEVE_NODES_FROM_DB_ON_STARTUP": True
@@ -33,19 +33,19 @@ try:
 except:
     _CONFIGURATION_MONITORING = cpyutils.config.Configuration("monitoring",
         {
-            "MAX_WAIT_POWERON": 300,
-            "MAX_WAIT_POWEROFF": 300,
-            "PERIOD_MONITORING_NODES": 5,
-            "PERIOD_MONITORING_JOBS": 0,                    # Deactivated by default
-            "PERIOD_LIFECYCLE": 5,
-            "PERIOD_MONITORING_NODES_FAIL_GRACE": 120,
-            "PERIOD_MONITORING_JOBS_FAIL_GRACE": 120,
+            "MAX_WAIT_POWERON": 300.0,
+            "MAX_WAIT_POWEROFF": 300.0,
+            "PERIOD_MONITORING_NODES": 5.0,
+            "PERIOD_MONITORING_JOBS": 0.0,                    # Deactivated by default
+            "PERIOD_LIFECYCLE": 5.0,
+            "PERIOD_MONITORING_NODES_FAIL_GRACE": 120.0,
+            "PERIOD_MONITORING_JOBS_FAIL_GRACE": 120.0,
             "NEGATIVE_RESOURCES_MEANS_INFINITE": True,
-            "DELAY_POWON": 10,
-            "DELAY_POWOFF": 10,
+            "DELAY_POWON": 10.0,
+            "DELAY_POWOFF": 10.0,
             # "COOLDOWN_DISSAPEARED_JOBS": 120,
-            "COOLDOWN_SERVED_JOBS": 120,
-            "COOLDOWN_SERVED_REQUESTS": 120,
+            "COOLDOWN_SERVED_JOBS": 120.0,
+            "COOLDOWN_SERVED_REQUESTS": 120.0,
         })
 
 class ConfigGeneral(cpyutils.config.Configuration):
@@ -72,7 +72,7 @@ except:
     _CONFIGURATION_GENERAL = ConfigGeneral(
         "general",
         {
-            "TIMEOUT_COMMANDS":10,
+            "TIMEOUT_COMMANDS":10.0,
             "CLUES_SECRET_TOKEN": "",
             "CLUES_PORT": 8000,
             # "CLUES_HOST": "localhost",

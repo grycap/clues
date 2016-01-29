@@ -23,7 +23,8 @@ import request
 import schedulers
 from schedulers import CLUES_Scheduler
 
-_LOGGER = logging.getLogger("[SCHED]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("SCHED")
 
 class CLUES_Scheduler_Recover_OFF_ERR(CLUES_Scheduler):
     def schedule(self, requests_queue, monitoring_info, candidates_on, candidates_off):

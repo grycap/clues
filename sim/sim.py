@@ -2,11 +2,13 @@ import sys
 
 sys.path.append("/home/calfonso/Programacion/git/")
 sys.path.append("/home/calfonso/Programacion/git/clues/")
+import clues.configserver as configserver
 
 import cpyutils.eventloop
 import clueslib.platform
 import cpyutils.log
 
+cpyutils.log.include_timestamp(True)
 _LOGGER = cpyutils.log.Log("SIM")
 cpyutils.log.Log.setup()
 
@@ -122,8 +124,8 @@ class Job:
         self._ensure_not_started()
         self.timestamp_start = cpyutils.eventloop.now()
         self.state = Job.RUNNING
-        cpyutils.eventloop.get_eventloop().add_event(self.seconds, desc = "job %s finished" % self.name)
-        cpyutils.eventloop.get_eventloop().add_event(self.seconds + 1, desc = "job %s finished + sched" % self.name, stealth = True)
+        cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(self.seconds, description = "job %s finished" % self.name))
+        # cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(self.seconds + 1, description = "job %s finished + sched" % self.name, mute = True))
         # TODO: add event to finalize the job? maybe is better to wait for the LRMS loop
 
     def finish(self):
@@ -164,6 +166,8 @@ class Job:
             r_str = "%.2f" % r
         return "[JOB (%s)](%8s) %.1f cores, %.1f memory, %.1f seconds (remaining: %s)" % (self.name, self.STR2STATE[self.state], self.cores, self.memory, self.seconds, r_str)
 
+import random
+
 class Node:
     __current_id = -1
     ON = 0
@@ -197,11 +201,24 @@ class Node:
     def copy(self):
         return Node(self.cores, self.memory)
 
-    def poweroff(self):
+    def power_off(self):
         self.state = Node.POW_OFF
-        cpyutils.eventloop.get_eventloop().add_event(5, desc = "node %s powered off" % self.name, callback = self._poweroff)
+        cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(5.0 + random.random()* 5.0, description = "node %s powered off" % self.name, callback = self._power_off))
+        return True
         
-    def _poweroff(self):
+    def _power_off(self):
+        self.state = Node.OFF
+
+    def power_on(self):
+        if self.state in [ Node.POW_OFF ]:
+            return False
+        if self.state in [ Node.ON, Node.POW_ON ]:
+            return True
+        self.state = Node.POW_ON
+        cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(5, description = "node %s powered on" % self.name, callback = self._power_on))
+        return True
+        
+    def _power_on(self):
         self.state = Node.OFF
         
     def meets_requirements(self, j):
@@ -266,16 +283,83 @@ class NodePool():
             n = self.nodes[n_id]
             retval = "%s%s\n" % (retval, str(n))
         return retval
+    def nodenames(self):
+        return self.nodes.keys()
+
+class PowerManager_dummy(clueslib.platform.PowerManager):
+    def __init__(self, nodepool):
+        clueslib.platform.PowerManager.__init__(self)
+        self.nodepool = nodepool
+    def power_on(self, nname):
+        # print nname
+        if nname in self.nodepool:
+            return self.nodepool[nname].power_on(), nname
+        return False, nname
+    def power_off(self, nname):
+        if nname in self.nodepool.nodenames():
+            return self.nodepool[nname].power_off(), nname
+        return False, nname
+
 
 class LRMS_FIFO(clueslib.platform.LRMS):
+    '''
+    class LRMS:
+        def get_nodeinfolist(self):
+            node_list = {}
+            return {}
+        def get_jobinfolist(self):
+            return []    
+        def power_off(self, nname):
+            return True
+        def power_on(self, nname):
+            return True
+    '''
+    
+    @staticmethod
+    def _host_to_nodeinfo(h):
+        if (h.state != 'free') and (h.total_slots == 0):
+            h.total_slots = -1
+        if (h.state != 'free') and (h.memory_total== 0):
+            h.memory_total = -1
+        
+        ni = NodeInfo(h.NAME, h.total_slots, h.free_slots, h.memory_total, h.memory_free, h.keywords)
+        if h.state in [ 'free' ]:
+            if h.free_slots == h.total_slots:
+                ni.state = Node.IDLE
+            else:
+                ni.state = Node.USED
+        if h.state in [ 'busy' ]:
+            ni.state = Node.USED
+        if h.state in [ 'down', 'error' ]:
+            ni.state = Node.OFF
+        return ni
+    def get_nodeinfolist(self):
+        from clueslib.node import NodeInfo
+        nodeinfolist = {}
+        for node in self.nodepool:
+            n_info = NodeInfo(node.name, node.total_cores, node.cores, node.total_memory, node.memory, {})
+            # self._host_to_nodeinfo(host)
+            nodeinfolist[n_info.name] = n_info
+            if node.state in [ Node.OFF, Node.ERR ]:
+                n_info.state = NodeInfo.OFF
+            elif node.state in [ Node.ON ]:
+                if node.cores != node.total_cores or node.memory != node.total_memory:
+                    n_info.state = NodeInfo.USED
+                else:
+                    n_info.state = NodeInfo.IDLE
+            elif node.state in [ Node.POW_ON, Node.POW_OFF ]:
+                n_info.state = NodeInfo.OFF
+        return nodeinfolist
+    
     def __init__(self, nodepool):
+        clueslib.platform.LRMS.__init__(self, "LRMS-FIFO")
         self.nodepool = nodepool
         self.jobs = {}
         self.jobs_queue = []
         self.jobs_running = []
         self.job2nodes = {}
         self.sched_period = 1
-        self.sched_last = cpyutils.eventloop.now()
+        self.sched_last = 0 # cpyutils.eventloop.now()
         self.jobs_ended = []
 
     def qsub(self, job):
@@ -294,40 +378,40 @@ class LRMS_FIFO(clueslib.platform.LRMS):
         for j in jobs:
             retval = "%s%s\n" % (retval, self.job2str(j))
         
-        #for j in self.jobs_ended:
-        #    retval = "%s%s\n" % (retval, self.job2str(j))
-        #for j in self.jobs_running:
-        #    retval = "%s%s\n" % (retval, self.job2str(self.jobs[j]))
-        #for j in self.jobs_queue:
-        #    retval = "%s%s\n" % (retval, self.job2str(self.jobs[j]))
-        #    # retval = "%s%s\n" % (retval, str(self.jobs[j]))
         return retval
     
     def start_jobs(self):
         ''' this function checks whether the jobs have start or not
             * this simmulates the 'stage in' and other phases.
         '''
+        n_started = 0
         for j_id, nodelist in self.job2nodes.items():
             j = self.jobs[j_id]
             if j.state == Job.INIT:
                 if j.can_start():
                     j.start()
-                    _LOGGER.debug("job %s started" % j.name)
+                    _LOGGER.info("job %s started" % (j.name))
+                    n_started += 1
+        return n_started
     
     def purge_jobs(self):
+        n_purged = 0
         for j_id, nodelist in self.job2nodes.items():
             j = self.jobs[j_id]
             if j.execution_finished():
-                _LOGGER.debug("job %s has finished its execution" % j.name)
+                _LOGGER.info("job %s has finished its execution" % (j.name))
                 j.finish()
                 for n_id in nodelist:
                     self.nodepool[n_id].disassign_job(j)
-                    _LOGGER.debug("job %s dissasigned from node %s" % (j.name, n_id))
+                    # _LOGGER.debug("job %s dissasigned from node %s" % (j.name, n_id))
                 del self.job2nodes[j_id]
                 self.jobs_ended.append(j)
                 self.jobs_running.remove(j_id)
+                n_purged += 1
+        return n_purged
     
     def sched(self):
+        n_assigned = 0
         for j_id in self.jobs_queue[:]:
             j = self.jobs[j_id]
             j_clone = j.clone()
@@ -341,11 +425,10 @@ class LRMS_FIFO(clueslib.platform.LRMS):
                         j_clone.assign([n.name])
                         nodes_assigned.append(n.name)
                         assigned = True
-                        _LOGGER.debug("job %s can be assigned to node %s" % (j_id, n.name))
                         break
                 if not assigned:
-                    _LOGGER.debug("could not find enough nodes for job %s" % j_id)
-                    return
+                    # _LOGGER.debug("could not find enough nodes for job %s" % j_id)
+                    return n_assigned
                     
             if j_clone.pending_nodecount() == 0:
                 for n_id in nodes_assigned:
@@ -353,21 +436,32 @@ class LRMS_FIFO(clueslib.platform.LRMS):
                 self.job2nodes[j_id] = nodes_assigned
                 j.assign(nodes_assigned)
 
-                _LOGGER.debug("job %s assigned to nodes %s" % (j_id, nodes_assigned))
+                _LOGGER.info("job %s assigned to nodes %s" % (j_id, nodes_assigned))
                 self.jobs_queue.remove(j_id)
                 self.jobs_running.append(j_id)
+                n_assigned += 1
             else:
-                _LOGGER.debug("could not assign job %s to nodes" % (j_id))
-                return
+                # _LOGGER.debug("could not assign job %s to nodes" % (j_id))
+                return n_assigned
+            
+        return n_assigned
     
     def lifecycle(self, force_sched = False):
         t = cpyutils.eventloop.now()
+        force_sched = True
         if force_sched or ((t - self.sched_last) >= self.sched_period):
-            self.purge_jobs()
+            jobs_purged = self.purge_jobs()
+            if jobs_purged > 0:
+                _LOGGER.debug("%d jobs purged" % (jobs_purged))
             self.sched_last = t
-            self.sched()
-            self.start_jobs()
-        print self.qstat()
+            jobs_assigned = self.sched()
+            if jobs_assigned > 0:
+                _LOGGER.debug("%d jobs assigned to nodes" % (jobs_assigned))
+            jobs_started = self.start_jobs()
+            #if jobs_started > 0 or jobs_purged > 0:
+            #    _LOGGER.debug("state of the LRMS:\n%s" % self.qstat())
+        return True
+        # print self.qstat()
         
     def job2str(self, j):
         j2s = {Job.INIT:'Q', Job.RUNNING:'R', Job.ABORT: 'A', Job.END:'F', Job.ERR:'E'}
@@ -376,34 +470,68 @@ class LRMS_FIFO(clueslib.platform.LRMS):
         retval = "%s - %2s %5s" % (retval, j.cores, j.memory)
         return retval
 
+#if __name__ == '__main__':
+#    # cpyutils.cpyutils.eventloop.create_eventloop(True)
+#    cpyutils.cpyutils.eventloop.create_eventloop(False)
+#    np = NodePool.create_pool(Node(4,4096), 4)
+#    np['node01'].poweroff()
+#    np['node02'].poweroff()
+#    # np['node03'].poweroff()
+#    # np['node04'].poweroff()
+#    
+#    lrms = LRMS_FIFO(np)
+#    lrms.qsub(Job(2, 512, 3))
+#    lrms.qsub(Job(2, 512, 6, 2))
+#    lrms.qsub(Job(2, 512, 2))
+#    # print lrms
+#    
+#    #np = NodePool()
+#    #n1 = Node(2,1024)
+#    #j1 = Job(1,512,10)
+#    #n1.assign_job(j1)
+#    #np.add(n1)
+#    #np.add(Node(2,1024))
+#    #np.add(Node(2,1024))
+#    #np.add(Node(2,1024))
+#    #print np
+#    #print j1
+#    #
+#    
+#    # lrms = LRMS_FIFO("fifo")
+#    cpyutils.cpyutils.eventloop.get_eventloop().add_periodical_event(1, 0, desc = "lifecycle", callback = lrms.lifecycle, arguments = [], stealth = True)
+#    cpyutils.cpyutils.eventloop.get_eventloop().loop()
+    
+
+def queue_jobs(lrms):
+    cpyutils.eventloop.get_eventloop().limit_walltime(200)
+    # cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(5, description = "submit job", callback = lrms.qsub, parameters = [Job(2,512,10)]))
+    jobs = [
+        Job(2, 512, 10),
+        Job(2, 512, 40, 2),
+        Job(2, 512, 30)
+    ]
+    for j in jobs:
+        cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(random.randint(5,50), description = "submit job", callback = lrms.qsub, parameters = [j]))
+    
+    # lrms.qsub(Job(2, 512, 10))
+    # lrms.qsub(Job(2, 512, 40, 2))
+    # lrms.qsub(Job(2, 512, 30))
+    
+
 if __name__ == '__main__':
-    # cpyutils.eventloop.create_eventloop(True)
-    cpyutils.eventloop.create_eventloop(False)
+    # RT_MODE=False
+    # cpyutils.cpyutils.eventloop.create_eventloop(RT_MODE)
+    import imp
+    cluesserver = imp.load_source('', '/home/calfonso/Programacion/git/clues/cluesserver')
     np = NodePool.create_pool(Node(4,4096), 4)
-    np['node01'].poweroff()
-    np['node02'].poweroff()
-    # np['node03'].poweroff()
-    # np['node04'].poweroff()
+    LRMS = LRMS_FIFO(np)
     
-    lrms = LRMS_FIFO(np)
-    lrms.qsub(Job(2, 512, 3))
-    lrms.qsub(Job(2, 512, 6, 2))
-    lrms.qsub(Job(2, 512, 2))
-    # print lrms
+    POW_MGR = PowerManager_dummy(np)
+    #np['node01'].power_off()
     
-    #np = NodePool()
-    #n1 = Node(2,1024)
-    #j1 = Job(1,512,10)
-    #n1.assign_job(j1)
-    #np.add(n1)
-    #np.add(Node(2,1024))
-    #np.add(Node(2,1024))
-    #np.add(Node(2,1024))
-    #print np
-    #print j1
-    #
+    # cpyutils.eventloop.get_eventloop().add_control_event(100)
+    print "-"*100, "\n", cpyutils.eventloop.get_eventloop()
     
-    # lrms = LRMS_FIFO("fifo")
-    cpyutils.eventloop.get_eventloop().add_periodical_event(1, 0, desc = "lifecycle", callback = lrms.lifecycle, arguments = [], stealth = True)
-    cpyutils.eventloop.get_eventloop().loop()
-    
+    cluesserver.main_loop(LRMS, POW_MGR, queue_jobs, [LRMS])
+
+    sys.exit()    

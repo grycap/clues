@@ -23,7 +23,8 @@ import cpyutils.evaluate
 import sys
 import types
 
-_LOGGER = logging.getLogger("[HELPERS]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("HELPERS")
 
 def read_hosts_file(filename):
     _nname_2_ip = {}

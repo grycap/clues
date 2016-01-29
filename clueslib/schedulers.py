@@ -36,7 +36,8 @@ except:
         })
     
 
-_LOGGER = logging.getLogger("[SCHED]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("SCHED")
 
 def _allocate_nodes(resources, nodelist, node_ids, count):
     n_nodes = len(node_ids)
