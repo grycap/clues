@@ -372,6 +372,16 @@ def request_wait(sec_info, req_id, timeout):
     
     return True, True
 
+def request_pending(sec_info, req_id):
+    global AUTH_ENGINE
+
+    succeed, explain = AUTH_ENGINE.check_secret(sec_info)
+    if not succeed:
+        return False, explain
+
+    global CLUES_DAEMON
+    return True, CLUES_DAEMON.request_in_queue(req_id)
+
 def get_node_description(sec_info, nname, xml = True):
     global AUTH_ENGINE
 
@@ -622,6 +632,7 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
     server.register_function(reset_node_state)
     server.register_function(request_create)
     server.register_function(request_wait)
+    server.register_function(request_pending)
     server.register_function(get_requests)
     server.register_function(get_node_description)
 

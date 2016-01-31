@@ -7,6 +7,7 @@ import clues.configserver as configserver
 import cpyutils.eventloop
 import clueslib.platform
 import cpyutils.log
+import clues.configcli as configcli
 
 cpyutils.log.include_timestamp(True)
 _LOGGER = cpyutils.log.Log("SIM")
@@ -48,15 +49,20 @@ class PowerManager:
         return False
 '''
 
+def float2str(value):
+    if value is None: return "None"
+    return "%.2f" % value
+
 class Job:
     __current_id = 0
+    CREATED = 5
     INIT = 0
     RUNNING = 1
     END = 2
     ERR = 3
     ABORT = 4
     
-    STR2STATE = { INIT : 'init', RUNNING: 'running', END: 'finish', ERR: 'error', ABORT: 'abort'}
+    STR2STATE = { CREATED: 'creat', INIT : 'init', RUNNING: 'running', END: 'finish', ERR: 'error', ABORT: 'abort'}
     
     @staticmethod
     def get_id():
@@ -71,10 +77,11 @@ class Job:
         self.memory = memory
         self.nodecount = nodecount
         self.seconds = seconds
+        self.timestamp_queued = None
         self.timestamp_creation = cpyutils.eventloop.now()
         self.timestamp_start = None
         self.timestamp_finish = None
-        self.state = Job.INIT
+        self.state = Job.CREATED
         self.timestamp_assigned = None
         self.nodes_assigned = []
         
@@ -119,6 +126,11 @@ class Job:
             if n_id not in self.nodes_assigned:
                 raise Exception("job %s not assigned to node %s" % (self.name, n_id))
             self.nodes_assigned.remove(n_id)
+        
+    def queue(self):
+        self._ensure_not_started()
+        self.timestamp_queued = cpyutils.eventloop.now()
+        self.state = Job.INIT
         
     def start(self):
         self._ensure_not_started()
@@ -165,6 +177,10 @@ class Job:
         else:
             r_str = "%.2f" % r
         return "[JOB (%s)](%8s) %.1f cores, %.1f memory, %.1f seconds (remaining: %s)" % (self.name, self.STR2STATE[self.state], self.cores, self.memory, self.seconds, r_str)
+    
+    def summary(self):
+        return "%s, %s, %s, %s, %s" % (str(self), float2str(self.timestamp_creation), float2str(self.timestamp_queued), float2str(self.timestamp_start), float2str(self.timestamp_finish))
+    
 
 import random
 
@@ -175,6 +191,8 @@ class Node:
     POW_ON = 2
     POW_OFF = 3
     ERR = 4
+    
+    STATE2STR = {ON:'on', OFF:'off', POW_ON:'p-on', POW_OFF: 'p-off', ERR:'err'}
     
     @staticmethod
     def get_id():
@@ -187,7 +205,7 @@ class Node:
         self.name = name
         self.total_cores = cores
         self.total_memory = memory
-        self.state = Node.ON
+        self.state = Node.OFF
         self.cores = cores
         self.memory = memory
         
@@ -219,7 +237,7 @@ class Node:
         return True
         
     def _power_on(self):
-        self.state = Node.OFF
+        self.state = Node.ON
         
     def meets_requirements(self, j):
         if self.state != Node.ON: return False
@@ -239,7 +257,7 @@ class Node:
         # j.disassign([self.name])
         
     def __str__(self):
-        return "[NODE (%s)] %.1f cores, %.1f memory" % (self.name, self.cores, self.memory)
+        return "[NODE (%s)] %.1f cores, %.1f memory - %s" % (self.name, self.cores, self.memory, self.STATE2STR[self.state])
     
 class NodePool():
     @staticmethod
@@ -292,14 +310,13 @@ class PowerManager_dummy(clueslib.platform.PowerManager):
         self.nodepool = nodepool
     def power_on(self, nname):
         # print nname
-        if nname in self.nodepool:
+        if nname in self.nodepool.nodenames():
             return self.nodepool[nname].power_on(), nname
         return False, nname
     def power_off(self, nname):
         if nname in self.nodepool.nodenames():
             return self.nodepool[nname].power_off(), nname
         return False, nname
-
 
 class LRMS_FIFO(clueslib.platform.LRMS):
     '''
@@ -333,6 +350,7 @@ class LRMS_FIFO(clueslib.platform.LRMS):
         if h.state in [ 'down', 'error' ]:
             ni.state = Node.OFF
         return ni
+    
     def get_nodeinfolist(self):
         from clueslib.node import NodeInfo
         nodeinfolist = {}
@@ -365,6 +383,7 @@ class LRMS_FIFO(clueslib.platform.LRMS):
     def qsub(self, job):
         if job.name in self.jobs:
             raise Exception("job %s already in the queue" % job.name)
+        job.queue()
         self.jobs[job.name] = job
         self.jobs_queue.append(job.name)
         
@@ -399,50 +418,53 @@ class LRMS_FIFO(clueslib.platform.LRMS):
         for j_id, nodelist in self.job2nodes.items():
             j = self.jobs[j_id]
             if j.execution_finished():
-                _LOGGER.info("job %s has finished its execution" % (j.name))
                 j.finish()
+                _LOGGER.info("job %s has finished its execution\n%s" % (j.name, j.summary()))
+
                 for n_id in nodelist:
                     self.nodepool[n_id].disassign_job(j)
-                    # _LOGGER.debug("job %s dissasigned from node %s" % (j.name, n_id))
+
                 del self.job2nodes[j_id]
                 self.jobs_ended.append(j)
                 self.jobs_running.remove(j_id)
                 n_purged += 1
+
         return n_purged
     
     def sched(self):
         n_assigned = 0
         for j_id in self.jobs_queue[:]:
             j = self.jobs[j_id]
-            j_clone = j.clone()
-            nodepool = self.nodepool.clone()
-            nodes_assigned = []
-            while j_clone.pending_nodecount() > 0:
-                assigned = False
-                for n in nodepool:
-                    if n.meets_requirements(j_clone):
-                        n.assign_job(j_clone)
-                        j_clone.assign([n.name])
-                        nodes_assigned.append(n.name)
-                        assigned = True
-                        break
-                if not assigned:
-                    # _LOGGER.debug("could not find enough nodes for job %s" % j_id)
+            if j.state == Job.INIT:
+                j_clone = j.clone()
+                nodepool = self.nodepool.clone()
+                nodes_assigned = []
+                while j_clone.pending_nodecount() > 0:
+                    assigned = False
+                    for n in nodepool:
+                        if n.meets_requirements(j_clone):
+                            n.assign_job(j_clone)
+                            j_clone.assign([n.name])
+                            nodes_assigned.append(n.name)
+                            assigned = True
+                            break
+                    if not assigned:
+                        # _LOGGER.debug("could not find enough nodes for job %s" % j_id)
+                        return n_assigned
+                        
+                if j_clone.pending_nodecount() == 0:
+                    for n_id in nodes_assigned:
+                        self.nodepool[n_id].assign_job(j)
+                    self.job2nodes[j_id] = nodes_assigned
+                    j.assign(nodes_assigned)
+    
+                    _LOGGER.info("job %s assigned to nodes %s" % (j_id, nodes_assigned))
+                    self.jobs_queue.remove(j_id)
+                    self.jobs_running.append(j_id)
+                    n_assigned += 1
+                else:
+                    # _LOGGER.debug("could not assign job %s to nodes" % (j_id))
                     return n_assigned
-                    
-            if j_clone.pending_nodecount() == 0:
-                for n_id in nodes_assigned:
-                    self.nodepool[n_id].assign_job(j)
-                self.job2nodes[j_id] = nodes_assigned
-                j.assign(nodes_assigned)
-
-                _LOGGER.info("job %s assigned to nodes %s" % (j_id, nodes_assigned))
-                self.jobs_queue.remove(j_id)
-                self.jobs_running.append(j_id)
-                n_assigned += 1
-            else:
-                # _LOGGER.debug("could not assign job %s to nodes" % (j_id))
-                return n_assigned
             
         return n_assigned
     
@@ -464,7 +486,7 @@ class LRMS_FIFO(clueslib.platform.LRMS):
         # print self.qstat()
         
     def job2str(self, j):
-        j2s = {Job.INIT:'Q', Job.RUNNING:'R', Job.ABORT: 'A', Job.END:'F', Job.ERR:'E'}
+        j2s = {Job.CREATED: '-', Job.INIT:'Q', Job.RUNNING:'R', Job.ABORT: 'A', Job.END:'F', Job.ERR:'E'}
         retval = "%10s" % (j.name)
         retval = "%s - %s" % (retval, j2s[j.state])
         retval = "%s - %2s %5s" % (retval, j.cores, j.memory)
@@ -500,23 +522,59 @@ class LRMS_FIFO(clueslib.platform.LRMS):
 #    # lrms = LRMS_FIFO("fifo")
 #    cpyutils.cpyutils.eventloop.get_eventloop().add_periodical_event(1, 0, desc = "lifecycle", callback = lrms.lifecycle, arguments = [], stealth = True)
 #    cpyutils.cpyutils.eventloop.get_eventloop().loop()
+
+class JobLauncher():
+    def __init__(self, t, job, lrms):
+        self.timeout = 20
+        self.job = job
+        self.t = t
+        self.lrms = lrms
+        self.proxy = configcli.get_clues_proxy_from_config()
+        self.req_id = None
+        self.sec_info = configcli.config_client.CLUES_SECRET_TOKEN
+        cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(t, description = "submit job", callback = self.launch_job, parameters = [], threaded_callback = False))
+
+    def launch_job(self):
+        succeed, req_id = self.proxy.request_create(self.sec_info, self.job.cores, self.job.memory, self.job.nodecount, "")
+        if succeed:
+            self.req_id = req_id
+            self._wait_job_and_launch()
+        else:
+            _LOGGER.error("could not launch job %s" % self.job)
     
+    def _wait_job_and_launch(self):
+        succeed, req_in_queue = self.proxy.request_pending(self.sec_info, self.req_id)
+        if not succeed:
+            raise Exception(_LOGGER.error("could check the state of the request %s" % req_in_queue))
+        else:
+            if (not req_in_queue) or (self.timeout <= 0):
+                self.lrms.qsub(self.job)
+            else:
+                self.timeout -= 0.5
+                cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(0.5, description = "wait for request %s" % self.req_id, callback = self._wait_job_and_launch, parameters = [], mute = True))
+
+def create_random_jobs(count):
+    jobs = []
+    print "["
+    for i in range(0, count):
+        j = Job(random.choice([1,2,4]),random.choice([512,1024,2048,4096]),random.randint(50,100))
+        t = random.randint(5,50)
+        jobs.append((t,j))
+        print "(%s, Job(%s, %s, %s, %s))," % (t, j.cores, j.memory, j.seconds, j.nodecount)
+    print "]"
+    return jobs
 
 def queue_jobs(lrms):
-    cpyutils.eventloop.get_eventloop().limit_walltime(200)
-    # cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(5, description = "submit job", callback = lrms.qsub, parameters = [Job(2,512,10)]))
-    jobs = [
-        Job(2, 512, 10),
-        Job(2, 512, 40, 2),
-        Job(2, 512, 30)
-    ]
-    for j in jobs:
-        cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(random.randint(5,50), description = "submit job", callback = lrms.qsub, parameters = [j]))
+    cpyutils.eventloop.get_eventloop().limit_walltime(100)
     
-    # lrms.qsub(Job(2, 512, 10))
-    # lrms.qsub(Job(2, 512, 40, 2))
-    # lrms.qsub(Job(2, 512, 30))
-    
+    #jobs = [
+    #    (1, Job(2, 512, 10)),
+    #    (20, Job(2, 512, 40, 2)),
+    #    (10, Job(2, 512, 30))
+    #]
+    jobs = create_random_jobs(5)
+    for t, j in jobs:
+        JobLauncher(t, j, lrms)
 
 if __name__ == '__main__':
     # RT_MODE=False
@@ -533,5 +591,6 @@ if __name__ == '__main__':
     print "-"*100, "\n", cpyutils.eventloop.get_eventloop()
     
     cluesserver.main_loop(LRMS, POW_MGR, queue_jobs, [LRMS])
+    print np
 
     sys.exit()    
