@@ -22,7 +22,8 @@ import helpers
 import cpyutils.runcommand
 import configlib
 
-_LOGGER = logging.getLogger("[PLATFORM]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("PLATFORM")
 
 class Platform(object):
     def __init__(self, lrms, power_manager):

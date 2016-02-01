@@ -2,9 +2,13 @@
 clues
 cluesd
 cluesserver
-configcli.py
-configserver.py
 setup.py
+./__init__.py
+./configcli.py
+./configserver.py
+./lextab.py
+./parsetab.py
+./version.py
 addons/one/clues-one-wrapper
 addons/pbs/clues-pbs-wrapper
 addons/sge/clues-sge-wrapper
@@ -18,7 +22,6 @@ clueslib/platform.py
 clueslib/request.py
 clueslib/schedulers.py
 clueslib/schedulers_extra.py
-clueslib/schedulersold.py
 cluesplugins/__init__.py
 cluesplugins/im.py
 cluesplugins/ipmi.py

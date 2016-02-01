@@ -25,7 +25,8 @@ from clueslib.node import NodeInfo
 from cpyutils.evaluate import TypedClass, TypedList
 
 
-_LOGGER = logging.getLogger("[PLUGIN-SLURM]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("PLUGIN-SLURM")
 
 def _translate_mem_value(memval):
     memval = memval.lower().rstrip(".").strip()

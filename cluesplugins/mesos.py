@@ -26,7 +26,8 @@ from clueslib.node import NodeInfo
 from cpyutils.evaluate import TypedClass, TypedList
 
 
-_LOGGER = logging.getLogger("[PLUGIN-MESOS]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("PLUGIN-MESOS")
 
 '''def _translate_mem_value(memval):
     memval = memval.lower().rstrip(".").strip()

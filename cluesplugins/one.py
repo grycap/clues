@@ -26,7 +26,8 @@ from clueslib.platform import PowerManager_with_IPs
 from clueslib.node import Node, NodeInfo, NodeList
 
 
-_LOGGER = logging.getLogger("[PLUGIN-ONE]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("PLUGIN-ONE")
 
 class powermanager(PowerManager_with_IPs):
     class VM_Node:

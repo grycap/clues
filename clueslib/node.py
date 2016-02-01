@@ -26,7 +26,8 @@ import sys
 import helpers
 import cpyutils.eventloop
 
-_LOGGER = logging.getLogger("[NODE]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("NODE")
 
 try:
     _annie
@@ -214,7 +215,7 @@ class Node(NodeInfo, helpers.SerializableXML):
             
         return info_updated
     
-    def set_state(self, state):
+    def set_state(self, state, force = False):
         # Updates the state of the node and updates the timestamp, in case that the state varies
         changed = False
 
@@ -292,7 +293,7 @@ class Node(NodeInfo, helpers.SerializableXML):
                 if state in [ Node.ON_ERR ]:
                     pass
 
-            if accept_change:
+            if accept_change or force:
                 if unexpected:
                     _LOGGER.warning("node %s was unexpectedly changed from state %s to state %s" % (self.name, self.state2str[self.state], self.state2str[state]))
                 

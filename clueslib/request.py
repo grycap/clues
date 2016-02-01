@@ -19,7 +19,8 @@ import cpyutils.eventloop
 import logging
 import time
 
-_LOGGER = logging.getLogger("[NODE]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("REQ")
 
 class Resources:
     def __init__(self, slots, memory, requests_expressions = []):

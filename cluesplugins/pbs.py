@@ -33,7 +33,8 @@ except:
     _annie = cpyutils.evaluate.Analyzer()
 
 # TODO: check if information about nodes is properly set (check properties, queues and so on)
-_LOGGER = logging.getLogger("[PLUGIN-PBS]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("PLUGIN-PBS")
 
 def _translate_mem_value(memval):
     memval = memval.lower().rstrip(".").strip()

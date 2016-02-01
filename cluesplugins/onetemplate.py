@@ -18,7 +18,8 @@
 import logging
 import one
 
-_LOGGER = logging.getLogger("[PLUGIN-ONE]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("PLUGIN-ONE")
 
 class powermanager(one.powermanager):
     def power_on(self, nname):

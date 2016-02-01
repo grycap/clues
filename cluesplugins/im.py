@@ -32,7 +32,8 @@ import cpyutils.eventloop
 from clueslib.node import Node
 from clueslib.platform import PowerManager
 
-_LOGGER = logging.getLogger("[PLUGIN-IM]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("PLUGIN-IM")
 
 class powermanager(PowerManager):
 

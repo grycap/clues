@@ -174,7 +174,8 @@ except Exception, e:
     _ERROR_IMPORTING = e
     pass
 
-_LOGGER = logging.getLogger("[SERVER]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("SERVER")
 _LOGGER.level = logging.DEBUG
 
 def GET_CLUES_DAEMON():
@@ -294,6 +295,21 @@ def recover_node(sec_info, node):
     else:
         return True, msg
 
+def reset_node_state(sec_info, node):
+    global AUTH_ENGINE
+
+    succeed, explain = AUTH_ENGINE.check_secret(sec_info)
+    if not succeed:
+        return False, explain
+
+    global CLUES_DAEMON
+    success, msg = CLUES_DAEMON.reset_node_state(node)
+    
+    if not success:
+        return False, "could not reset the node %s (%s)" % (node, msg)
+    else:
+        return True, msg
+
 def enable_node(sec_info, nname, enable):
     global AUTH_ENGINE
 
@@ -355,6 +371,16 @@ def request_wait(sec_info, req_id, timeout):
         time.sleep(0.5)
     
     return True, True
+
+def request_pending(sec_info, req_id):
+    global AUTH_ENGINE
+
+    succeed, explain = AUTH_ENGINE.check_secret(sec_info)
+    if not succeed:
+        return False, explain
+
+    global CLUES_DAEMON
+    return True, CLUES_DAEMON.request_in_queue(req_id)
 
 def get_node_description(sec_info, nname, xml = True):
     global AUTH_ENGINE
@@ -439,11 +465,11 @@ def cluesd_info():
     global CLUES_DAEMON
     return str(CLUES_DAEMON)
 
+'''
 def generate_activity(t):
     cpyutils.eventloop.get_eventloop().add_event(t, "FAKE Event - like a ping", stealth = False)
     return True
 
-'''
 def request_create(cpu, memory):
     global CLUES_DAEMON
     r = request.Request(request.ResourcesNeeded(cpu, memory, nodecount = 1))
@@ -478,7 +504,7 @@ def status():
     # return True
 '''
 
-def main_loop():
+def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop = None, args_to_callback_before_loop = []):
     from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("-s", "--simmulated-time", dest="RT_MODE", action="store_false", default=True, help="runs app in real time")
@@ -501,6 +527,7 @@ def main_loop():
         sys.exit(-1)
 
     cpyutils.eventloop.create_eventloop(options.RT_MODE)
+        
     global AUTH_ENGINE
     AUTH_ENGINE = Authentication_secret(configserver._CONFIGURATION_GENERAL.CLUES_SECRET_TOKEN)
 
@@ -533,43 +560,51 @@ def main_loop():
         configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS = None
     
     import importlib
-    try:
-        LRMS_CLASS=importlib.import_module(configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
-        _LOGGER.info("activating lrms: \"%s\"" % configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
-    except Exception, e:
-	logging.error(e)
-        logging.error("could not import the LRMS class stated in LRMS_CLASS (%s) from the clues2.cfg file" % configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
-        exit(-1)
-
-    if configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS is not None:
+    if custom_lrms is None:
         try:
-            POWERMANAGER_CLASS=importlib.import_module(configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
-            _LOGGER.info("activating powermanager: \"%s\"" % configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
+            LRMS_CLASS=importlib.import_module(configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
+            _LOGGER.info("activating lrms: \"%s\"" % configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
         except Exception, e:
             logging.error(e)
-            logging.error("could not import the POWERMANAGER class stated in POWERMANAGER_CLASS (%s) from the clues2.cfg file" % configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
+            logging.error("could not import the LRMS class stated in LRMS_CLASS (%s) from the clues2.cfg file" % configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
             exit(-1)
-    else:
-        logging.warning("it is not defined any POWERMANAGER class in the configuration file. CLUES will not be able to power on or off the nodes")
+
+    if custom_power_mgr is None:
+        if configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS is not None:
+            try:
+                POWERMANAGER_CLASS=importlib.import_module(configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
+                _LOGGER.info("activating powermanager: \"%s\"" % configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
+            except Exception, e:
+                logging.error(e)
+                logging.error("could not import the POWERMANAGER class stated in POWERMANAGER_CLASS (%s) from the clues2.cfg file" % configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
+                exit(-1)
+        else:
+            logging.warning("it is not defined any POWERMANAGER class in the configuration file. CLUES will not be able to power on or off the nodes")
 
     global LRMS
-    try:
-        LRMS=LRMS_CLASS.lrms()
-    except Exception, e:
-	logging.error(e)
-        logging.error("cannot use %s as a plugin for LRMS in CLUES, because the 'lrms' class is not defined" % configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
-        exit(-1)
+    if custom_lrms is None:
+        try:
+            LRMS=LRMS_CLASS.lrms()
+        except Exception, e:
+            logging.error(e)
+            logging.error("cannot use %s as a plugin for LRMS in CLUES, because the 'lrms' class is not defined" % configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
+            exit(-1)
+    else:
+        LRMS = custom_lrms
 
     logging.debug("LRMS %s initialized" % LRMS.get_id())
 
     POW_MGR = None
-    if configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS is not None:
-        try:
-            POW_MGR=POWERMANAGER_CLASS.powermanager()
-        except Exception, e:
-            logging.error(e)
-            logging.error("cannot use %s as a plugin for POWERMANAGER in CLUES, because the 'powermanager' class is not defined" % configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
-            exit(-1)
+    if custom_power_mgr is None:
+        if configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS is not None:
+            try:
+                POW_MGR=POWERMANAGER_CLASS.powermanager()
+            except Exception, e:
+                logging.error(e)
+                logging.error("cannot use %s as a plugin for POWERMANAGER in CLUES, because the 'powermanager' class is not defined" % configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
+                exit(-1)
+    else:
+        POW_MGR = custom_power_mgr
     
     import clueslib.platform
     server = cpyutils.rpcweb.get_dispatcher()
@@ -594,8 +629,10 @@ def main_loop():
     server.register_function(poweroff)
     server.register_function(enable_node)
     server.register_function(recover_node)
+    server.register_function(reset_node_state)
     server.register_function(request_create)
     server.register_function(request_wait)
+    server.register_function(request_pending)
     server.register_function(get_requests)
     server.register_function(get_node_description)
 
@@ -633,6 +670,9 @@ def main_loop():
     CLUES_DAEMON = CluesDaemon(PLATFORM, active_schedulers)
     _LOGGER.debug("CLUES server starting")
 
+
+    if callback_before_loop is not None:
+        callback_before_loop(*args_to_callback_before_loop)
     CLUES_DAEMON.loop(options.RT_MODE)
 
 if __name__ == '__main__':

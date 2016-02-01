@@ -25,7 +25,8 @@ from xml.dom.minidom import parseString
 import os
 
 # TODO: check if information about nodes is properly set (check properties, queues and so on)
-_LOGGER = logging.getLogger("[PLUGIN-SGE]")
+import cpyutils.log
+_LOGGER = cpyutils.log.Log("PLUGIN-SGE")
 
 class lrms(clueslib.platform.LRMS):
 	def __init__(self, SGE_QHOST_COMMAND = None, SGE_QCONF_COMMAND = None, SGE_QSTAT_COMMAND = None, SGE_ROOT = None, SGE_DEFAULT_QUEUE = None):
