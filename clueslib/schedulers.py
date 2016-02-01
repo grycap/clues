@@ -34,10 +34,10 @@ except:
             "RETRIES_POWER_ON": 3,
             "PERIOD_RECOVERY_NODES": 30
         })
-    
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("SCHED")
+_LOGGER.setup_log(cpyutils.log.logging.DEBUG)
 
 def _allocate_nodes(resources, nodelist, node_ids, count):
     n_nodes = len(node_ids)

@@ -20,7 +20,7 @@ import logging
 import time
 
 import cpyutils.log
-_LOGGER = cpyutils.log.Log("NODE")
+_LOGGER = cpyutils.log.Log("REQ")
 
 class Resources:
     def __init__(self, slots, memory, requests_expressions = []):

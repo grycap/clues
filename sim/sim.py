@@ -12,6 +12,8 @@ import clues.configcli as configcli
 cpyutils.log.include_timestamp(True)
 _LOGGER = cpyutils.log.Log("SIM")
 cpyutils.log.Log.setup()
+_LOGGER.setup_log(cpyutils.log.logging.DEBUG)
+
 
 '''
 class LRMS:
@@ -419,7 +421,7 @@ class LRMS_FIFO(clueslib.platform.LRMS):
             j = self.jobs[j_id]
             if j.execution_finished():
                 j.finish()
-                _LOGGER.info("job %s has finished its execution\n%s" % (j.name, j.summary()))
+                # _LOGGER.info("job %s has finished its execution\n%s" % (j.name, j.summary()))
 
                 for n_id in nodelist:
                     self.nodepool[n_id].disassign_job(j)
@@ -490,6 +492,12 @@ class LRMS_FIFO(clueslib.platform.LRMS):
         retval = "%10s" % (j.name)
         retval = "%s - %s" % (retval, j2s[j.state])
         retval = "%s - %2s %5s" % (retval, j.cores, j.memory)
+        return retval
+    
+    def summary(self):
+        retval = ""
+        for j in self.jobs_ended:
+            retval = "%s%s\n" % (retval, j.summary())
         return retval
 
 #if __name__ == '__main__':
@@ -565,14 +573,15 @@ def create_random_jobs(count):
     return jobs
 
 def queue_jobs(lrms):
-    cpyutils.eventloop.get_eventloop().limit_walltime(100)
+    # cpyutils.eventloop.get_eventloop().limit_walltime(100)
+    cpyutils.eventloop.get_eventloop().set_endless_loop(False)
     
-    #jobs = [
-    #    (1, Job(2, 512, 10)),
-    #    (20, Job(2, 512, 40, 2)),
-    #    (10, Job(2, 512, 30))
-    #]
-    jobs = create_random_jobs(5)
+    jobs = [
+        (1, Job(2, 512, 10)),
+        (20, Job(2, 512, 40, 2)),
+        (10, Job(2, 512, 30))
+    ]
+    # jobs = create_random_jobs(5)
     for t, j in jobs:
         JobLauncher(t, j, lrms)
 
@@ -592,5 +601,6 @@ if __name__ == '__main__':
     
     cluesserver.main_loop(LRMS, POW_MGR, queue_jobs, [LRMS])
     print np
+    print LRMS.summary()
 
     sys.exit()    
