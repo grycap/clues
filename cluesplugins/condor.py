@@ -167,7 +167,7 @@ class lrms(clueslib.platform.LRMS):
                     return None
         else:
             try:
-                infile = open('/etc/clues2/vnodes.info', 'r')
+                infile = open('/etc/clues2/condor_vnodes.info', 'r')
                 for line in infile:
                     name = line.rstrip('\n')
                     # Illustrative values for Clues, since the node is not running, we cannot know the real values
