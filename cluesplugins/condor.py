@@ -65,8 +65,12 @@ class lrms(clueslib.platform.LRMS):
          
     def get_nodeinfolist(self):
         nodeinfolist = {}
+        worker_nodes = []
         collector = htcondor.Collector()
-        worker_nodes = collector.locateAll(htcondor.DaemonTypes.Startd)
+        try: 
+            worker_nodes = collector.locateAll(htcondor.DaemonTypes.Startd)
+        except: 
+            worker_nodes = []
         if len(worker_nodes) > 0:
             for worker_node in worker_nodes:
                 activity = ""
@@ -190,8 +194,12 @@ class lrms(clueslib.platform.LRMS):
     
     def get_jobinfolist(self):
         jobinfolist = []
+        schedulers = []
         collector = htcondor.Collector()
-        schedulers = collector.locateAll(htcondor.DaemonTypes.Schedd)
+        try: 
+            schedulers = collector.locateAll(htcondor.DaemonTypes.Schedd)
+        except: 
+            schedulers = []
         if len(schedulers) > 0:
             for scheduler in schedulers:
                 jobs_scheduled = htcondor.Schedd(scheduler)
