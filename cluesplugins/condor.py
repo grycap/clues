@@ -75,10 +75,10 @@ class lrms(clueslib.platform.LRMS):
             for worker_node in worker_nodes:
                 activity = ""
                 name = ""
-                slots = ""
-                slots_free = ""
-                memory = ""
-                memory_free = ""
+                slots = 0
+                slots_free = 0
+                memory = 0
+                memory_free = 0
                 keywords = {}
                 queues = []
                 try:
@@ -89,7 +89,7 @@ class lrms(clueslib.platform.LRMS):
                     try:
                         name = worker_node["Name"]
                     except:
-                        name = "undefined"
+                        name = ""
                     try:
                         slots = worker_node["TotalSlots"]
                     except:
@@ -109,7 +109,7 @@ class lrms(clueslib.platform.LRMS):
                     try:
                         name = worker_node["Name"]
                     except:
-                        name = "undefined"
+                        name = ""
                     try:
                         slots = worker_node["TotalSlots"]
                     except:
@@ -135,7 +135,7 @@ class lrms(clueslib.platform.LRMS):
                                         try: 
                                             nodes = [job_scheduled_attributes["RemoteHost"]]
                                         except:
-                                            nodes = ["undefined"]
+                                            nodes = []
                                     if name in nodes:
                                         cpus = ""
                                         try:
@@ -206,25 +206,19 @@ class lrms(clueslib.platform.LRMS):
                 jobs_scheduled_attributes = jobs_scheduled.query()
                 if len(jobs_scheduled_attributes) > 0:
                     for job_scheduled_attributes in jobs_scheduled_attributes:
-                        cpus_per_task = ""
+                        cpus_per_task = 0.0
                         try:
-                            cpus_per_task = job_scheduled_attributes["RequestCpus"]
+                            cpus_per_task = float(job_scheduled_attributes["RequestCpus"])
                         except: 
-                            cpus_per_task =  0
-                        memory = ""
+                            cpus_per_task =  0.0
+                        memory = 0
                         try:
                             memory =  (job_scheduled_attributes["ImageSize"] + 1023)/1024
                         except: 
                             memory =  0
-                        cluster_id = ""
-                        queue = []
-                        try:
-                            cluster_id = str(job_scheduled_attributes["ClusterId"])
-                        except: 
-                            cluster_id = "undefined"
-                        queue.append(cluster_id)
+                        queue = '"default" in queues'
                         nodes = []
-                        numnodes = ""
+                        numnodes = 0
                         try:
                             nodes = job_scheduled_attributes["AllRemoteHosts"].split(",")
                             numnodes = len(nodes)
@@ -233,23 +227,22 @@ class lrms(clueslib.platform.LRMS):
                                 nodes = [job_scheduled_attributes["RemoteHost"]]
                                 numnodes = 1
                             except:
-                                nodes = ["undefined"]
-                                numnodes = 0    
-                        job_id = cluster_id + "."
-                        proc_id = ""
+                                nodes = []
+                                numnodes = job_scheduled_attributes["MinHosts"]    
+                        job_id = ""
                         try:
+                            cluster_id = job_scheduled_attributes["ClusterId"]
                             proc_id = job_scheduled_attributes["ProcId"]
-                            job_id += str(proc_id)
+                            job_id = str(cluster_id) + "." + str(proc_id)
                         except: 
-                            job_id += "undefined"
-                        job_st = ""
+                            job_id = ""
                         state = "" 
                         try: 
                             job_st = job_scheduled_attributes["JobStatus"]
                             state = infer_clues_job_state(job_st)
                         except:
                             state = clueslib.request.Request.PENDING
-                        resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, queue, numnodes)
+                        resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
                         j = clueslib.request.JobInfo(resources, job_id, nodes)
                         j.set_state(state) 
                         jobinfolist.append(j)
