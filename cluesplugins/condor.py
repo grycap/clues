@@ -121,7 +121,10 @@ class lrms(clueslib.platform.LRMS):
                         memory =  0
                     memory_free = memory
                     keywords['hostname'] = TypedClass.auto(name)
-                    schedulers = collector.locateAll(htcondor.DaemonTypes.Schedd)
+                    try:
+                        schedulers = collector.locateAll(htcondor.DaemonTypes.Schedd)
+                    except: 
+                        schedulers = []
                     if len(schedulers) > 0:
                         for scheduler in schedulers:
                             jobs_scheduled = htcondor.Schedd(scheduler)
@@ -137,38 +140,30 @@ class lrms(clueslib.platform.LRMS):
                                         except:
                                             nodes = []
                                     if name in nodes:
-                                        cpus = ""
+                                        cpus = 0
                                         try:
                                             cpus = job_scheduled_attributes["RequestCpus"]
                                         except: 
                                             cpus =  0
                                         slots_free -= cpus
-                                        mem = ""
+                                        mem = 0
                                         try:
                                             mem =  (job_scheduled_attributes["ImageSize"] + 1023)/1024
                                         except: 
                                             mem =  0
                                         memory_free -= mem
-                                        cluster_id = ""
-                                        try:
-                                            cluster_id = str(job_scheduled_attributes["ClusterId"])
-                                        except:
-                                            cluster_id = "undefined"
-                                        queues.append(cluster_id)
-                        if len(queues) > 0:
-                            keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
-                        else:
-                            queues = ["default"]
-                            keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
-                        if slots_free < 0:
-                            slots_free = 0
-                        if memory_free < 0:
-                            memory_free = 0
-                        nodeinfolist[name] = NodeInfo(name , slots , slots_free , memory , memory_free, keywords)
-                        nodeinfolist[name].state = NodeInfo.USED
+                    queues = ["default"]
+                    if len(queues) > 0:
+                        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                    if slots_free < 0:
+                        slots_free = 0
+                    if memory_free < 0:
+                        memory_free = 0
+                    nodeinfolist[name] = NodeInfo(name , slots , slots_free , memory , memory_free, keywords)
+                    nodeinfolist[name].state = NodeInfo.USED
                 else:
                     _LOGGER.warning("could not obtain information about nodes.")
-                    return None
+                    return None                    
         else:
             try:
                 infile = open('/etc/clues2/condor_vnodes.info', 'r')
