@@ -247,7 +247,7 @@ if __name__ == '__main__':
     for ns in nodespec:
     	ns.queue = queue
         req_str = ns.to_request()
-        success, r_id = clues_server.request_create(sec_info, ns.nodecount, 0, jobcount, req_str)
+        success, r_id = clues_server.request_create(sec_info, ns.nodecount, 0, jobcount, jobcount, req_str)
         if success:
             logging.info("a request for %d nodes of %d CPU with requirements %s" % (jobcount, ns.nodecount, req_str))
             pending_requests.append(r_id)

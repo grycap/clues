@@ -175,6 +175,7 @@ except Exception, e:
     pass
 
 import cpyutils.log
+cpyutils.log.include_timestamp()
 _LOGGER = cpyutils.log.Log("SERVER")
 _LOGGER.level = logging.DEBUG
 
@@ -330,7 +331,7 @@ def enable_node(sec_info, nname, enable):
     else:
         return False, "could not %s node %s (%s)" % (opres[1], nname, explain)
 
-def request_create(sec_info, cpu, memory, nodes, request_string, job_id = -1, job_nodes = []):
+def request_create(sec_info, cpu, memory, taskcount, maxtaskspernode = -1, request_string = "", job_id = -1, job_nodes = []):
     global AUTH_ENGINE
 
     succeed, explain = AUTH_ENGINE.check_secret(sec_info)
@@ -345,7 +346,11 @@ def request_create(sec_info, cpu, memory, nodes, request_string, job_id = -1, jo
         job_id = None
         job_nodes = []
         
-    r = clueslib.request.Request(clueslib.request.ResourcesNeeded(cpu, memory, [ request_string ], nodecount = nodes), job_id, job_nodes)
+    if maxtaskspernode <= 0:
+        maxtaskspernode = taskcount
+        
+    # r = clueslib.request.Request(clueslib.request.ResourcesNeeded(cpu, memory, [ request_string ], nodecount = nodes), job_id, job_nodes)
+    r = clueslib.request.Request(clueslib.request.ResourcesNeeded0(cpu, memory, [ request_string ], taskcount, taskcount), job_id, job_nodes)
     r_id = CLUES_DAEMON.request(r)
 
     return True, r_id
@@ -465,44 +470,8 @@ def cluesd_info():
     global CLUES_DAEMON
     return str(CLUES_DAEMON)
 
-'''
-def generate_activity(t):
-    cpyutils.eventloop.get_eventloop().add_event(t, "FAKE Event - like a ping", stealth = False)
-    return True
-
-def request_create(cpu, memory):
-    global CLUES_DAEMON
-    r = request.Request(request.ResourcesNeeded(cpu, memory, nodecount = 1))
-    r_id = CLUES_DAEMON.request(r)
-
-    # TODO 5: event-driven
-    # cpyutils.eventloop.get_eventloop().add_event(0, "Scheduling due to new request", CLUES_DAEMON.schedule)
-    return r_id
-
-def request_wait(req_id, timeout):
-    global CLUES_DAEMON
-    start_time = cpyutils.eventloop.now()
-    
-    while CLUES_DAEMON.request_in_queue(req_id):
-        current_time = cpyutils.eventloop.now()
-        if (timeout > 0) and ((current_time - start_time) > timeout):
-            return False
-        
-        time.sleep(0.1)
-    
-    return True
-'''
-
 def get_events():
     return str(cpyutils.eventloop.get_eventloop())
-
-'''
-def status():
-    global PLATFORM
-    nodelist = PLATFORM.get_nodelist()
-    return str(nodelist)
-    # return True
-'''
 
 def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop = None, args_to_callback_before_loop = []):
     from optparse import OptionParser

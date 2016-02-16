@@ -151,7 +151,7 @@ class CluesParameters(cpyutils.parameters.CmdLineParser):
         else:
             nodecount = r.values['--count'][0]
         
-        succeed, text = self._proxy.request_create(self._sec_info, cpu, memory, nodecount, extra)
+        succeed, text = self._proxy.request_create(self._sec_info, cpu, memory, nodecount, nodecount, extra)
         if not succeed:
             return False, "request could not be created (%s)" % (text)
         else:

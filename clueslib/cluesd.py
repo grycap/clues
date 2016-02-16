@@ -247,23 +247,6 @@ class CluesDaemon:
 
     def _update_disabled_nodes(self):
         _update_enable_status_for_nodes(self._lrms_nodelist, self._node_data.get_hosts())
-        '''
-        for n_id, node in self._lrms_nodelist.items():
-            node.enabled = True
-            
-        # We will disable the nodes that are configured to not to be treated by CLUES
-        disabled_nodes = _CONFIGURATION_CLUES.DISABLED_HOSTS.split(" ")
-        for nname in disabled_nodes:
-            if nname in self._lrms_nodelist:
-                # _LOGGER.warning("disabling node %s due to configuration" % nname)
-                self._lrms_nodelist[nname].enabled = False
-                
-        disabled_nodes_db = [ nname for nname, n_enabled in self._node_data.get_hosts().items() if n_enabled == False ]
-        for nname in disabled_nodes_db:
-            if nname in self._lrms_nodelist:
-                # _LOGGER.warning("disabling node %s due to database info" % nname)
-                self._lrms_nodelist[nname].enabled = False
-        '''
 
     def request(self, request):
         self._requests_queue.append(request)
@@ -374,14 +357,6 @@ class CluesDaemon:
             self._lrms_joblist = JobList()
             for job in lrms_jobinfolist:
                 self._lrms_joblist.append(Request.create_from_jobinfo(job))
-
-        '''
-        if self._lrms_nodelist is None:
-            _LOGGER.debug("first monitorisation of LRMS\n")
-            self._lrms_nodelist = {}
-            for n_id, node in lrms_nodelist.items():
-                self._lrms_nodelist[n_id] = Node.create_from_nodeinfo(node.get_nodeinfo())
-        '''
 
         stored_j_ids = self._lrms_joblist.get_ids()
         for job_info in lrms_jobinfolist:
@@ -586,11 +561,11 @@ class CluesDaemon:
                 _LOGGER.error("failed to schedule with scheduler %s" % str(scheduler))
 
         if len(candidates_off) > 0:
-            _LOGGER.debug("nodes %s are considered to be powered off" % str(candidates_off))            
+            _LOGGER.info("nodes %s are considered to be powered off" % str(candidates_off))            
             for n_id in candidates_off:
                 self.power_off(n_id)                    
         if len(candidates_on) > 0:
-            _LOGGER.debug("nodes %s are considered to be powered on" % str(candidates_on.keys()))
+            _LOGGER.info("nodes %s are considered to be powered on" % str(candidates_on.keys()))
             for n_id in candidates_on:
                 self.power_on(n_id)
 
@@ -600,18 +575,6 @@ class CluesDaemon:
             retval = "%s%s\n" % (retval, str(scheduler))
         return retval
         
-        '''
-        retval = ""
-        if self._lrms_nodelist is None:
-            return ""
-        
-        for n_id, node in self._lrms_nodelist.items():
-            retval = "%s%s\n" % (retval, str(node))
-            
-        retval = "%s%s\n" % (retval, str(self._lrms_joblist))
-        return retval
-        '''
-
     def _auto_recover_nodes(self):
         if self._lrms_nodelist is None:
             return
@@ -635,22 +598,17 @@ class CluesDaemon:
             if _CONFIGURATION_MONITORING.PERIOD_MONITORING_JOBS == _CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES:
                 should_monitor_nodes = False
                 _LOGGER.debug("monitoring jobs and nodes at the same time")
-                # cpyutils.eventloop.get_eventloop().add_periodical_event(_CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, -_CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, "monitoring nodes and jobs", callback = self._monitor_lrms_nodes_and_jobs, arguments = [], stealth = True)
                 cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, _CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, description = "monitoring nodes and jobs", callback = self._monitor_lrms_nodes_and_jobs, parameters = [], mute = True))
             else:
-                # cpyutils.eventloop.get_eventloop().add_periodical_event(_CONFIGURATION_MONITORING.PERIOD_MONITORING_JOBS, -_CONFIGURATION_MONITORING.PERIOD_MONITORING_JOBS, "monitoring jobs", callback = self._monitor_lrms_jobs, arguments = [], stealth = True)
                 cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, _CONFIGURATION_MONITORING.PERIOD_MONITORING_JOBS, description = "monitoring jobs", callback = self._monitor_lrms_jobs, parameters = [], mute = True))
         else:
             _LOGGER.info("not monitoring jobs due to configuration (var PERIOD_MONITORING_JOBS)")
             
         if should_monitor_nodes:
-            # cpyutils.eventloop.get_eventloop().add_periodical_event(_CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, -_CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, "monitoring nodes", callback = self._monitor_lrms_nodes, arguments = [], stealth = True)
             cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, _CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, description = "monitoring nodes", callback = self._monitor_lrms_nodes, parameters = [], mute = True))
-        # cpyutils.eventloop.get_eventloop().add_periodical_event(schedulers.config_scheduling.PERIOD_SCHEDULE, 0, "scheduling", callback = self._schedulers_pipeline, arguments = [], stealth = True)
+
         cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, schedulers.config_scheduling.PERIOD_SCHEDULE, description = "scheduling", callback = self._schedulers_pipeline, parameters = [], mute = True))
-        # cpyutils.eventloop.get_eventloop().add_periodical_event(_CONFIGURATION_MONITORING.PERIOD_LIFECYCLE, 0, "lifecycle", callback = self._platform.lifecycle, arguments = [], stealth = True)
         cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, _CONFIGURATION_MONITORING.PERIOD_LIFECYCLE, description = "lifecycle", callback = self._platform.lifecycle, parameters = [], mute = True))
-        # cpyutils.eventloop.get_eventloop().add_periodical_event(schedulers.config_scheduling.PERIOD_RECOVERY_NODES, 0, "recovery of nodes", callback = self._auto_recover_nodes, arguments = [], stealth = True)
         cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, schedulers.config_scheduling.PERIOD_RECOVERY_NODES, description = "recovery of nodes", callback = self._auto_recover_nodes, parameters = [], mute = True))
 
         cpyutils.eventloop.get_eventloop().loop()
