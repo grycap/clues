@@ -49,9 +49,11 @@ class ResourcesNeeded:
         return retval
     
 class ResourcesNeeded0:
-    def __init__(self, slots, memory, requests_expressions = [], taskcount = 1, maxtaskspernode = 1):
+    def __init__(self, slots, memory, requests_expressions = [], taskcount = 1, maxtaskspernode = 0):
         self.resources = Resources(slots, memory, requests_expressions)
         self.taskcount = taskcount
+        if maxtaskspernode <= 0:
+            maxtaskspernode = taskcount
         self.maxtaskspernode = maxtaskspernode
 
     def __str__(self):

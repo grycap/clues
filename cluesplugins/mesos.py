@@ -229,7 +229,7 @@ class lrms(clueslib.platform.LRMS):
                     _LOGGER.warning("could not obtain information about CHRONOS job state %s (%s)" % (self._server_ip, exit))
                     return None
                     
-                resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
+                resources = clueslib.request.ResourcesNeeded0(cpus_per_task, memory, [queue], numnodes)
                 j = clueslib.request.JobInfo(resources, job_id, nodes)
                 j.set_state(state)
                 jobinfolist.append(j)
@@ -275,7 +275,7 @@ class lrms(clueslib.platform.LRMS):
                             # Use the fake queue
                             queue = '"default" in queues'
 
-                            resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
+                            resources = clueslib.request.ResourcesNeeded0(cpus_per_task, memory, [queue], numnodes)
                             j = clueslib.request.JobInfo(resources, job_id, nodes)
                             j.set_state(state)
                             jobinfolist.append(j)
@@ -457,7 +457,7 @@ class lrms(clueslib.platform.LRMS):
                     # Usamos la cola ficticia
                     queue = '"default" in queues'
 
-                    resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
+                    resources = clueslib.request.ResourcesNeeded0(cpus_per_task, memory, [queue], numnodes)
                     j = clueslib.request.JobInfo(resources, job_id, nodes)
                     j.set_state(state)
                     jobinfolist.append(j)'''
@@ -501,7 +501,7 @@ class lrms(clueslib.platform.LRMS):
                                 # Use the fake queue
                                 queue = '"default" in queues'
 
-                                resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
+                                resources = clueslib.request.ResourcesNeeded0(cpus_per_task, memory, [queue], numnodes)
                                 j = clueslib.request.JobInfo(resources, job_id, nodes)
                                 j.set_state(state)
                                 jobinfolist.append(j)

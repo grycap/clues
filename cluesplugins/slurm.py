@@ -279,7 +279,7 @@ class lrms(clueslib.platform.LRMS):
                 cpus_per_task = int(job["CPUs/Task"])
                 partition = '"' + str(job["Partition"]) + '" in queues'
 
-                resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [partition], numnodes)
+                resources = clueslib.request.ResourcesNeeded0(cpus_per_task, memory, [partition], numnodes)
                 j = clueslib.request.JobInfo(resources, job_id, nodes)
                 j.set_state(state)
                 jobinfolist.append(j)

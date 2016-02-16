@@ -241,7 +241,7 @@ class lrms(clueslib.platform.LRMS):
                             state = infer_clues_job_state(job_st)
                         except:
                             state = clueslib.request.Request.PENDING
-                        resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, queue, numnodes)
+                        resources = clueslib.request.ResourcesNeeded0(cpus_per_task, memory, queue, numnodes)
                         j = clueslib.request.JobInfo(resources, job_id, nodes)
                         j.set_state(state) 
                         jobinfolist.append(j)
