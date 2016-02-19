@@ -171,7 +171,7 @@ class Node:
         self.name = name
         self.total_cores = cores
         self.total_memory = memory
-        self.state = Node.ON
+        self.state = Node.OFF
         self.cores = cores
         self.memory = memory
         self.min_poweron = 5
@@ -200,7 +200,8 @@ class Node:
 
     def power_off(self):
         self.state = Node.POW_OFF
-        cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(self.min_poweroff + random.random()* (self.max_poweroff - self.min_poweroff), description = "node %s powered off" % self.name, callback = self._power_off))
+        elapsed = self.min_poweroff + random.random()* (self.max_poweroff - self.min_poweroff)
+        cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(elapsed, description = "node %s powered off (event set in %s, to happen %s later)" % (self.name, cpyutils.eventloop.now(), elapsed), callback = self._power_off))
         _LOGGER.debug("powering off node %s" % self.name)
         return True
         
@@ -213,11 +214,17 @@ class Node:
         if self.state in [ Node.ON, Node.POW_ON ]:
             return True
         self.state = Node.POW_ON
-        cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(self.min_poweron + random.random()* (self.max_poweron - self.min_poweron), description = "node %s powered on" % self.name, callback = self._power_on))
+        elapsed = self.min_poweron + random.random()* (self.max_poweron - self.min_poweron)
+        _LOGGER.debug("node %s will power on in %s" % (self.name, elapsed))
+        cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(elapsed, description = "node %s powered on (event set in %s, to happen %s later)" % (self.name, cpyutils.eventloop.now(), elapsed), callback = self._power_on))
         return True
         
     def _power_on(self):
-        self.state = Node.ON
+        if random.random() > 0.95:
+            _LOGGER.error("node %s failed to power on" % self.name)
+            self.state = Node.OFF
+        else:
+            self.state = Node.ON
         
     def meets_requirements(self, j):
         if self.state != Node.ON: return False
@@ -542,7 +549,7 @@ def create_random_jobs(count):
 def queue_jobs(lrms):
     # cpyutils.eventloop.get_eventloop().limit_walltime(100)
     cpyutils.eventloop.get_eventloop().set_endless_loop(False)
-    cpyutils.eventloop.get_eventloop().limit_time_without_new_events(100)
+    cpyutils.eventloop.get_eventloop().limit_time_without_new_events(500)
     
     jobs = [
         (1, Job(2, 512, 10)),
@@ -563,8 +570,61 @@ def queue_jobs(lrms):
 (27, Job(4, 1024, 57, 1)),
 ]
 
+
+    jobs = [
+(18, Job(2, 512, 79, 1)),
+(43, Job(2, 1024, 59, 1)),
+(8, Job(2, 512, 97, 1)),
+(21, Job(4, 2048, 89, 1)),
+(50, Job(2, 512, 65, 1)),
+(6, Job(4, 2048, 70, 1)),
+(13, Job(1, 512, 53, 1)),
+(16, Job(1, 2048, 62, 1)),
+(41, Job(4, 2048, 94, 1)),
+(48, Job(1, 1024, 92, 1)),
+(33, Job(1, 512, 82, 1)),
+(18, Job(1, 1024, 61, 1)),
+(38, Job(4, 1024, 85, 1)),
+(49, Job(2, 512, 60, 1)),
+(39, Job(1, 512, 92, 1)),
+(50, Job(1, 2048, 67, 1)),
+(23, Job(1, 512, 50, 1)),
+(35, Job(4, 2048, 68, 1)),
+(38, Job(2, 512, 79, 1)),
+(39, Job(1, 4096, 95, 1)),
+(47, Job(4, 4096, 78, 1)),
+(38, Job(4, 2048, 68, 1)),
+(25, Job(4, 512, 94, 1)),
+(9, Job(4, 4096, 77, 1)),
+(26, Job(1, 512, 74, 1)),
+(48, Job(1, 4096, 81, 1)),
+(38, Job(1, 2048, 96, 1)),
+(48, Job(2, 1024, 90, 1)),
+(30, Job(4, 2048, 60, 1)),
+(12, Job(2, 1024, 58, 1)),
+(5, Job(2, 4096, 60, 1)),
+(33, Job(4, 512, 54, 1)),
+(36, Job(1, 1024, 57, 1)),
+(23, Job(1, 512, 81, 1)),
+(32, Job(1, 1024, 76, 1)),
+(20, Job(1, 2048, 88, 1)),
+(36, Job(4, 4096, 71, 1)),
+(41, Job(4, 512, 52, 1)),
+(13, Job(2, 2048, 56, 1)),
+(47, Job(4, 2048, 77, 1)),
+(29, Job(1, 512, 63, 1)),
+(46, Job(1, 2048, 63, 1)),
+(43, Job(1, 1024, 72, 1)),
+(11, Job(1, 1024, 91, 1)),
+(40, Job(2, 4096, 82, 1)),
+(25, Job(1, 1024, 75, 1)),
+(37, Job(2, 512, 97, 1)),
+(19, Job(2, 4096, 65, 1)),
+(8, Job(1, 1024, 57, 1)),
+(46, Job(1, 512, 93, 1)),
+]
     
-    # jobs = create_random_jobs(10)
+    # jobs = create_random_jobs(50)
     for t, j in jobs:
         JobLauncher(t, j, lrms)
 

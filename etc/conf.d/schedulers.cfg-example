@@ -11,8 +11,8 @@ MAX_BOOTING_NODES=2
 SCHEDULER_CLASSES=clueslib.schedulers.CLUES_Scheduler_PowOn_Requests, CLUES_Scheduler_Reconsider_Jobs, clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE
 
 # Setting for the recovery of nodes
-# * Not working yet...
-RETRIES_POWER_ON=3,
+RETRIES_POWER_ON=3
+RETRIES_POWER_OFF=3
 PERIOD_RECOVERY_NODES=30
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -29,6 +29,7 @@ import cpyutils.eventloop
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("NODE")
 
+
 try:
     _annie
 except:
@@ -107,6 +108,34 @@ class Node(NodeInfo, helpers.SerializableXML):
         self.power_off_operation_failed = 0                     
         self.enabled = True
 
+        # NEW: try to implement a mechanism to avoid glitches in ON->OFF or OFF->ON
+        self._store_prev()
+
+    def _store_prev(self):
+        # PS Issue
+        self.prev_state = self.state
+        self.prev_timestamp_state = self.timestamp_state
+        self.prev_timestamp_poweredon = self.timestamp_poweredon
+        self.prev_timestamp_poweredoff = self.timestamp_poweredoff
+        self.prev_power_on_operation_failed = self.power_on_operation_failed
+        self.prev_power_off_operation_failed = self.power_off_operation_failed
+
+    def _restore_prev_if_needed(self, state, now):
+        # PS Issue:
+        # Tries to address the following scenario: the monitoring system is restarted and the nodes change to "off" or to "not monitorized" (usually equivalent to off),
+        #   and then the system monitorizes the nodes again and the nodes are in the same state (in fact, they never got off) so the values are restored.
+        #   It is implemented in a general way, but it is actually limited to the case of the glitch to "OFF".
+        if (_CONFIGURATION_MONITORING.TIME_OFF_GLITCH_DETECTION > 0) and (self.state == Node.OFF) and (state == self.prev_state) and (now - self.prev_timestamp_state <= _CONFIGURATION_MONITORING.TIME_OFF_GLITCH_DETECTION):
+            _LOGGER.info("restoring node %s to the previous state" % (self.name))
+            self.state = self.prev_state
+            self.timestamp_state = self.prev_timestamp_state
+            self.timestamp_poweredon = self.prev_timestamp_poweredon
+            self.timestamp_poweredoff = self.prev_timestamp_poweredoff
+            self.power_on_operation_failed = self.prev_power_on_operation_failed
+            self.power_off_operation_failed = self.prev_power_off_operation_failed
+            return True
+        return False
+
     def mark_poweredon(self):
         _LOGGER.debug("node %s has been powered on" % self.name)
         self.power_on_operation_failed = 0
@@ -168,11 +197,20 @@ class Node(NodeInfo, helpers.SerializableXML):
         new.power_on_operation_failed = self.power_on_operation_failed
         new.power_off_operation_failed = self.power_off_operation_failed
         new.enabled = self.enabled
+        
+        # PS Issue
+        new.prev_state = self.prev_state
+        new.prev_timestamp_state = self.prev_timestamp_state
+        new.prev_timestamp_poweredon = self.prev_timestamp_poweredon
+        new.prev_timestamp_poweredoff = self.prev_timestamp_poweredoff
+        new.prev_power_on_operation_failed = self.prev_power_on_operation_failed
+        new.prev_power_off_operation_failed = self.prev_power_off_operation_failed
         return new
 
     def update_info(self, other):
         # Updates the information of the node according to a new observation. It updates the timestamps in case that the information varies
         info_updated = False
+        state_changed = False
         if self.slots_count != other.slots_count:
             info_updated = True
         if self.slots_free != other.slots_free:
@@ -196,6 +234,7 @@ class Node(NodeInfo, helpers.SerializableXML):
 
         current_time = cpyutils.eventloop.now()
         if self.set_state(other.state):
+            state_changed = True
             info_updated = True
             current_time = self.timestamp_state
 
@@ -213,7 +252,7 @@ class Node(NodeInfo, helpers.SerializableXML):
         if info_updated:
             self.timestamp_info = current_time
             
-        return info_updated
+        return info_updated, state_changed
     
     def set_state(self, state, force = False):
         # Updates the state of the node and updates the timestamp, in case that the state varies
@@ -221,6 +260,10 @@ class Node(NodeInfo, helpers.SerializableXML):
 
         if state != self.state:
             # Let's check the possible states
+            now = cpyutils.eventloop.now()
+            if self._restore_prev_if_needed(state, now):
+                return True
+            
             unexpected = False
             accept_change = True
             if self.state == Node.IDLE:
@@ -258,14 +301,14 @@ class Node(NodeInfo, helpers.SerializableXML):
                     unexpected = True
                 if state in [ Node.OFF ]:
                     # We cannot accept the state immediately
-                    now = cpyutils.eventloop.now()
+                    #now = cpyutils.eventloop.now()
                     if (now - self.timestamp_state) < _CONFIGURATION_MONITORING.MAX_WAIT_POWERON:
                         accept_change = False
                     else:
                         _LOGGER.warning("node was tried to be powered on, but it is still off")
                         state = Node.OFF_ERR
                 if state in [ Node.IDLE, Node.USED ]:
-                    now = cpyutils.eventloop.now()
+                    #now = cpyutils.eventloop.now()
                     if (now - self.timestamp_state) < _CONFIGURATION_MONITORING.DELAY_POWON:
                         accept_change = False
                     else:
@@ -278,14 +321,14 @@ class Node(NodeInfo, helpers.SerializableXML):
                     unexpected = True
                 if state in [ Node.IDLE, Node.USED ]:
                     # We cannot accept the state immediately
-                    now = cpyutils.eventloop.now()
+                    #now = cpyutils.eventloop.now()
                     if (now - self.timestamp_state) < _CONFIGURATION_MONITORING.MAX_WAIT_POWEROFF:
                         accept_change = False
                     else:
                         _LOGGER.warning("node was tried to be powered off, but it is still on")
                         state = Node.ON_ERR
                 if state in [ Node.OFF ]:
-                    now = cpyutils.eventloop.now()
+                    #now = cpyutils.eventloop.now()
                     if (now - self.timestamp_state) < _CONFIGURATION_MONITORING.DELAY_POWOFF:
                         accept_change = False
                     else:
@@ -309,10 +352,12 @@ class Node(NodeInfo, helpers.SerializableXML):
                 if state == Node.ON_ERR:
                     self.power_off_operation_failed += 1
                     _LOGGER.debug("failed to power off node %s (%d fails)" % (self.name, self.power_off_operation_failed))
+
+                self._store_prev()                    
                 self.state = state
                 self.timestamp_state = cpyutils.eventloop.now()
-                if self.state == Node.IDLE:
-                    _LOGGER.debug("node %s is set to idle @%.0f" % (self.name, self.timestamp_state))
+                #if self.state == Node.IDLE:
+                #    _LOGGER.debug("node %s is set to idle @%.0f" % (self.name, self.timestamp_state))
             else:
                 pass
         return changed

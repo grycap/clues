@@ -32,6 +32,7 @@ except:
             "MAX_BOOTING_NODES": 0,
             "SCHEDULER_CLASSES": "",
             "RETRIES_POWER_ON": 3,
+            "RETRIES_POWER_OFF": 3,
             "PERIOD_RECOVERY_NODES": 30
         })
 

@@ -25,7 +25,6 @@ except:
             "LOGGER_MARK": 1800.0,
             "DB_CONNECTION_STRING": "sqlite:///var/lib/clues2/clues.db",
             "DISABLED_HOSTS": "",
-            "RETRIEVE_NODES_FROM_DB_ON_STARTUP": True
         })
 
 try:
@@ -40,6 +39,7 @@ except:
             "PERIOD_LIFECYCLE": 5.0,
             "PERIOD_MONITORING_NODES_FAIL_GRACE": 120.0,
             "PERIOD_MONITORING_JOBS_FAIL_GRACE": 120.0,
+            "TIME_OFF_GLITCH_DETECTION" : 120.0,
             "NEGATIVE_RESOURCES_MEANS_INFINITE": True,
             "DELAY_POWON": 10.0,
             "DELAY_POWOFF": 10.0,
