@@ -343,7 +343,7 @@ class lrms_general(clueslib.platform.LRMS):
                     if len(vm.HISTORY_RECORDS.HISTORY) > 0:
                         current_host = vm.HISTORY_RECORDS.HISTORY[-1].HOSTNAME
                 
-                resources = clueslib.request.ResourcesNeeded0(vm.TEMPLATE.CPU * 100, vm.TEMPLATE.MEMORY * 1024)
+                resources = clueslib.request.ResourcesNeeded(vm.TEMPLATE.CPU * 100, vm.TEMPLATE.MEMORY * 1024)
                 nodes = []
                 if current_host is not None:
                     nodes.append(current_host)

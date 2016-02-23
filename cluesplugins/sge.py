@@ -454,7 +454,7 @@ class lrms(clueslib.platform.LRMS):
 
 			nodes = []
 	
-			resources = clueslib.request.ResourcesNeeded0(slots_pn, memory, [req_str], slots)
+			resources = clueslib.request.ResourcesNeeded(slots_pn, memory, [req_str], slots)
 			job = clueslib.request.JobInfo(resources, job_id, nodes)
 			job.set_state(state)
 			jobinfolist.append(job)

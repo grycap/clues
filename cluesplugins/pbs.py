@@ -333,7 +333,7 @@ class _Job(XMLObject):
             req_str.append(ns.to_request())
         if not req_str:
             req_str.append("")
-        resources = clueslib.request.ResourcesNeeded0(ns.nodecount, 0, req_str, nodecount = 1)
+        resources = clueslib.request.ResourcesNeeded(ns.nodecount, 0, req_str, taskcount = 1)
         ji = JobInfo(resources, self.Job_Id, [])
         if self.job_state == "Q":
             ji.set_state(Request.PENDING)

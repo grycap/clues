@@ -332,8 +332,7 @@ def request_create(sec_info, cpu, memory, taskcount, maxtaskspernode = -1, reque
     if maxtaskspernode <= 0:
         maxtaskspernode = taskcount
         
-    # r = clueslib.request.Request(clueslib.request.ResourcesNeeded(cpu, memory, [ request_string ], nodecount = nodes), job_id, job_nodes)
-    r = clueslib.request.Request(clueslib.request.ResourcesNeeded0(cpu, memory, [ request_string ], taskcount, taskcount), job_id, job_nodes)
+    r = clueslib.request.Request(clueslib.request.ResourcesNeeded(cpu, memory, [ request_string ], taskcount, taskcount), job_id, job_nodes)
     r_id = CLUES_DAEMON.request(r)
 
     return True, r_id
