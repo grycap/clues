@@ -36,9 +36,6 @@ DB_CONNECTION_STRING=sqlite:///var/lib/clues2/clues.db
 # Space separated list of hosts that will not be considered by CLUES (e.g. node1 node2)
 DISABLED_HOSTS=
 
-# True to load the state of the nodes from the database on startup. Otherwise CLUES will not have any information until the infrastructure is monitorized
-RETRIEVE_NODES_FROM_DB_ON_STARTUP=True
-
 # Seconds to wait for the execution of commands e.g. command to power on a node or to monitorize a lrms
 TIMEOUT_COMMANDS=10
 
@@ -104,6 +101,10 @@ COOLDOWN_SERVED_JOBS=120
 # Period of time while the request will remain in the monitoring system even if they have been served
 COOLDOWN_SERVED_REQUESTS=120
 
+# Time in which a glitch to "off" state is accepted. I.e. a failure in the monitoring system makes that a node is considered OFF and it is back to ON again in the next monitorization. This is the maximum time that can pass to consider it a glitch and then restore the idle counters
+# * tip: set it to a multiple of the period of monitorization
+TIME_OFF_GLITCH_DETECTION=30
+
 [scheduling]
 
 # Seconds between calls to the schedulers pipeline
@@ -117,8 +118,8 @@ MAX_BOOTING_NODES=2
 SCHEDULER_CLASSES=clueslib.schedulers.CLUES_Scheduler_PowOn_Requests, clueslib.schedulers.CLUES_Scheduler_Reconsider_Jobs, clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE
 
 # Setting for the recovery of nodes
-# * Not working yet...
 RETRIES_POWER_ON=3
+RETRIES_POWER_OFF=3
 PERIOD_RECOVERY_NODES=30
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------

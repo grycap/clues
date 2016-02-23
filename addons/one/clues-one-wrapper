@@ -63,7 +63,7 @@ if __name__ == '__main__':
             except:
                 hosts = []
  
-            success, r_id = clues_server.request_create(clues.configcli.config_client.CLUES_SECRET_TOKEN, vm.TEMPLATE.CPU * 100, vm.TEMPLATE.MEMORY * 1024, 1, "", vm.ID, hosts)
+            success, r_id = clues_server.request_create(clues.configcli.config_client.CLUES_SECRET_TOKEN, vm.TEMPLATE.CPU * 100, vm.TEMPLATE.MEMORY * 1024, 1, 1, "", vm.ID, hosts)
             if success:
                 logging.info("a request for %d CPU and %d memory has been created, with id %s" % (vm.TEMPLATE.CPU * 100, vm.TEMPLATE.MEMORY * 1024, r_id))
                 

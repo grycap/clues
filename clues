@@ -37,16 +37,6 @@ class CluesParameters(cpyutils.parameters.CmdLineParser):
         else:
             return False, "Could not get the status of CLUES (%s)" % text
             
-    def recover(self, r, error):
-        failed = False
-        lines = []
-        for node in r.values['nodes']:
-            succeed, text = self._proxy.recover_node(self._sec_info, node)
-            if not succeed:
-                failed = True
-            lines.append(text)
-        return (not failed), "\n".join(lines)
-
     def resetstate(self, r, error):
         failed = False
         lines = []
@@ -151,7 +141,7 @@ class CluesParameters(cpyutils.parameters.CmdLineParser):
         else:
             nodecount = r.values['--count'][0]
         
-        succeed, text = self._proxy.request_create(self._sec_info, cpu, memory, nodecount, extra)
+        succeed, text = self._proxy.request_create(self._sec_info, cpu, memory, nodecount, nodecount, extra)
         if not succeed:
             return False, "request could not be created (%s)" % (text)
         else:
@@ -191,9 +181,6 @@ def main_function():
 
     p = CluesParameters(proxy, "clues", desc = "The CLUES command line utility", arguments = [
             Operation("status", desc = "Show the status of the platform"),
-            Operation("recover", desc = "Recover one or more nodes from an error state", arguments = [
-                Argument("nodes", "names of the nodes that want to be recovered", mandatory = True, count = -1)
-            ]),
             Operation("resetstate", desc = "Reset the state of one or more nodes to idle", arguments = [
                 Argument("nodes", "names of the nodes whose state want to be reset", mandatory = True, count = -1)
             ]),

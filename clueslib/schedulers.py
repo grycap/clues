@@ -32,6 +32,7 @@ except:
             "MAX_BOOTING_NODES": 0,
             "SCHEDULER_CLASSES": "",
             "RETRIES_POWER_ON": 3,
+            "RETRIES_POWER_OFF": 3,
             "PERIOD_RECOVERY_NODES": 30
         })
 
@@ -48,6 +49,37 @@ def _allocate_nodes(resources, nodelist, node_ids, count):
         allocated_nodes.append(node_ids[i])
         count -= 1
     return count, allocated_nodes
+
+
+def _nodes_meet_resources(resources, _nodelist, node_ids):
+    
+    # First we duplicate the list to check whether we can meet the resources or not
+    nodelist = _nodelist.duplicate()
+    
+    taskcount = resources.taskcount
+    nodes_allocated = []
+    
+    for n_id in node_ids:
+        node = nodelist.get_node(n_id)
+        taskspernode = resources.maxtaskspernode
+        while node.meets_resources(resources.resources) and taskcount > 0 and taskspernode > 0:
+            node.allocate(resources.resources)
+            nodes_allocated.append(n_id)
+            taskspernode -= 1
+            taskcount -= 1
+    
+    if taskcount == 0:
+        return True, nodes_allocated
+    else:
+        return False, []
+
+def _allocate_nodes0(resources, nodelist, node_ids):
+    taskcount = resources.taskcount
+    for n_id in node_ids:
+        node = nodelist.get_node(n_id)
+        node.allocate(resources.resources)
+        taskcount -= 1
+    return taskcount
 
 class CLUES_Scheduler():
     def __init__(self, name = ""):
@@ -360,7 +392,9 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                 nodes_on = nodelist.get_nodelist_filtered().keys()
                 
                 # Case 1: are there enough resources with those that are ON?
-                if node_count_on >= current_req.resources.nodecount:
+                resources_met, nodes_meeting_resources = _nodes_meet_resources(current_req.resources, nodelist, nodes_on)
+                if resources_met:
+                # if node_count_on >= current_req.resources.nodecount:
                     
                     if requests_alive > 0:
                         # The request is blocked by the scheduler, because even it has resources to be served we want that the jobs get the queue in the same order
@@ -387,7 +421,9 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     nodes_powon = nodelist.get_nodelist_filtered().keys()
     
                     node_pool = node_pool + nodes_powon # The nodes that are powering on are likely to be used to serve the request
-                    if node_count_on + node_count_powon >= current_req.resources.nodecount:
+                    resources_met, nodes_meeting_resources = _nodes_meet_resources(current_req.resources, nodelist, node_pool)
+                    if resources_met:
+                    # if node_count_on + node_count_powon >= current_req.resources.nodecount:
                         # _LOGGER.debug("#2. there are nodes that are powering on that will serve request %s" % (current_req.id))
                         self.debug(current_req, "#2. there are nodes that are powering on that will serve request %s" % (current_req.id))
                         current_req.set_state(request.Request.ATTENDED)
@@ -413,7 +449,9 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     node_count_off_but_powon = len(nodes_off_but_powon)
     
                     node_pool = node_pool + nodes_off_but_powon # The nodes that we already want to power on are likely to be used to serve the request
-                    if node_count_on + node_count_powon + node_count_off_but_powon >= current_req.resources.nodecount:
+                    resources_met, nodes_meeting_resources = _nodes_meet_resources(current_req.resources, nodelist, node_pool)
+                    if resources_met:
+                    # if node_count_on + node_count_powon + node_count_off_but_powon >= current_req.resources.nodecount:
                         self.debug(current_req, "#3. we have requested to power on nodes that will serve %s (%s)" % (current_req.id, str(nodes_off_but_powon)))
                         current_req.set_state(request.Request.ATTENDED)
 
@@ -425,7 +463,9 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     node_count_off_off = len(nodes_off_off)
     
                     node_pool = node_pool + nodes_off_off   # The nodes off are likely to be used to serve the request
-                    if node_count_on + node_count_powon + node_count_off_but_powon + node_count_off_off >= current_req.resources.nodecount:
+                    resources_met, nodes_meeting_resources = _nodes_meet_resources(current_req.resources, nodelist, node_pool)
+                    if resources_met:
+                    # if node_count_on + node_count_powon + node_count_off_but_powon + node_count_off_off >= current_req.resources.nodecount:
                         self.debug(current_req, "#4. we need to power on some nodes that are off to serve %s (%s)" % (current_req.id, str(nodes_off_off)))
                         current_req.set_state(request.Request.ATTENDED)
 
@@ -440,7 +480,9 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
     
                     
                     node_pool = node_pool + nodes_powoff    # The nodes that are being powered off are likely to be used to serve the request
-                    if node_count_on + node_count_powon + node_count_off_but_powon + node_count_off_off + node_count_powoff >= current_req.resources.nodecount:
+                    resources_met, nodes_meeting_resources = _nodes_meet_resources(current_req.resources, nodelist, node_pool)
+                    if resources_met:
+                    # if node_count_on + node_count_powon + node_count_off_but_powon + node_count_off_off + node_count_powoff >= current_req.resources.nodecount:
                         self.debug(current_req, "#5. we need to wait for some nodes that are being powered off to serve %s (%s)" % (current_req.id, str(nodes_powoff)))
                         current_req.set_state(request.Request.ATTENDED)
 
@@ -462,6 +504,8 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                         
                         # node_pool = []
                         request_held = False
+                        
+                        # WARNING TODO: Importante... comprobar que esto es correcto y esta funcionando correctamente!!! Seguro que se deben reservar recursos en este caso?
 
                 if request_held:
                     # If we cannot do anything with this request, we'll wait to the next schedule
@@ -476,22 +520,23 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                 # -----------------------------------
 
                 # We have to allocate the resources
-                still_needed, allocated_nodes = _allocate_nodes(current_req.resources.resources, nodelist, node_pool, current_req.resources.nodecount)
-                self.debug(current_req, "nodes allocated for %s: %s" % (current_req.id, str(allocated_nodes)))
+                # still_needed, allocated_nodes = _allocate_nodes(current_req.resources.resources, nodelist, node_pool, current_req.resources.nodecount)
+                still_needed = _allocate_nodes0(current_req.resources, nodelist, nodes_meeting_resources)
+                self.debug(current_req, "nodes allocated for %s: %s" % (current_req.id, str(nodes_meeting_resources)))
                 if still_needed > 0:
-                    self.debug(current_req, "%d allocated nodes, but still need %d more nodes to serve the request" % (len(allocated_nodes), still_needed))
+                    self.debug(current_req, "%d allocated nodes, but still need %d more nodes to serve the request" % (len(nodes_meeting_resources), still_needed))
 
-                nodes_off = [ x for x in allocated_nodes if (x in nodes_off) or (x in nodes_powoff) ]
+                nodes_off = [ x for x in nodes_meeting_resources if (x in nodes_off) or (x in nodes_powoff) ]
                 for n_id in nodes_off:
                     if n_id not in candidates_on:
                         local_candidates_on[n_id] = []
                     local_candidates_on[n_id].append(current_req)
 
-                self._booking_system.book(current_req, allocated_nodes)
+                self._booking_system.book(current_req, nodes_meeting_resources)
 
             if current_req.state in [ Request.PENDING, Request.ATTENDED ]:
                 requests_alive += 1
-                _LOGGER.debug("request %s still alive (%d)" % (current_req.id, requests_alive))
+                # _LOGGER.debug("request %s still alive (%d)" % (current_req.id, requests_alive))
 
         candidates_on.update(local_candidates_on)
         return True

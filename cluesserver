@@ -31,14 +31,13 @@ try:
     # import clueslib.schedulers_extra    
     # import clueslib.evaluate
     
-    class clues_web_server(cpyutils.rpcweb.web_server):
+    class clues_web_server(cpyutils.rpcweb.web_class):
         def _access_page(self):
             return "<html><body><form method=get>secret token<input type=text name=\"secret\" id=\"secret\"><input type=submit></body></html>"
         
             # <style>body {font-family: arial;} </style>\
         def _mainpage(self):
-            import web
-            query = web.ctx.query
+            query = self.query
             return "<html><head>\
             <link rel=\"stylesheet\" href=\"http://csszengarden.com/examples/style.css\">\
             <script src=\"http://code.jquery.com/jquery-latest.min.js\" type=\"text/javascript\"></script>\
@@ -98,10 +97,9 @@ try:
             return "Not available"
     
         def _get_var(self, varname):
-            import web
             secret = ""
             
-            for vv in web.ctx.query.lstrip("?").split("&"):
+            for vv in self.query.lstrip("?").split("&"):
                 va = vv.split("=")
                 key = None
                 val = None
@@ -118,30 +116,31 @@ try:
                 import clueslib.cluesd
                 import clueslib.node
                 import time
-                db = clueslib.cluesd.NodeData()
-                changes = db.retrieve_node_state_history(hostname, True)
+                #db = clueslib.cluesd.NodeData()
+                #changes = db.retrieve_node_state_history(hostname, True)
                 
                 changes_str = ""
-                for (state, timestamp) in changes:
-                    if changes_str == "":
-                        change_str = "began in state '%s' @ %s" % (clueslib.node.Node.state2str[int(state)], time.strftime("%b %d %Y %H:%M:%S", time.gmtime(long(timestamp))))
-                    else:
-                        change_str = "changed to state '%s' @ %s" % (clueslib.node.Node.state2str[int(state)], time.strftime("%b %d %Y %H:%M:%S", time.gmtime(long(timestamp))))
-                    changes_str="%s%s<BR>" % (changes_str, change_str)
+                #for (state, timestamp) in changes:
+                #    if changes_str == "":
+                #        change_str = "began in state '%s' @ %s" % (clueslib.node.Node.state2str[int(state)], time.strftime("%b %d %Y %H:%M:%S", time.gmtime(long(timestamp))))
+                #    else:
+                #        change_str = "changed to state '%s' @ %s" % (clueslib.node.Node.state2str[int(state)], time.strftime("%b %d %Y %H:%M:%S", time.gmtime(long(timestamp))))
+                #    changes_str="%s%s<BR>" % (changes_str, change_str)
                 
                 return changes_str + result.replace(";","<BR>")
             return "Could not get info"
         
         def GET(self, url):
-            import web
-            path = web.ctx.path.lstrip("/").split("/")
+            self.query = "?"+"?".join(url.split("?")[1:])
+            url = url.split("?")[0]
+            path = url.lstrip("/").split("/")
             
             secret = self._get_var("secret")
             if (secret == "") or (secret is None):
                 return self._access_page()
             
             if len(path) > 1 and path[0] == 'status':
-                return self._status("/".join(path[1:]), secret, web.ctx.query)
+                return self._status("/".join(path[1:]), secret, self.query)
             
             if path[0]=='host':
                 # print web.ctx.path
@@ -152,7 +151,7 @@ try:
             
             pass
                     
-            vv = web.ctx.path.lstrip("/").split("/")
+            vv = url.lstrip("/").split("/")
             hdetail = None
             if len(vv) == 2:
                 if vv[0] == 'host':
@@ -175,6 +174,7 @@ except Exception, e:
     pass
 
 import cpyutils.log
+cpyutils.log.include_timestamp()
 _LOGGER = cpyutils.log.Log("SERVER")
 _LOGGER.level = logging.DEBUG
 
@@ -279,22 +279,6 @@ def poweroff(sec_info, node):
     else:
         return True, "node %s powered off" % nname
 
-def recover_node(sec_info, node):
-    global AUTH_ENGINE
-
-    succeed, explain = AUTH_ENGINE.check_secret(sec_info)
-    # _LOGGER.debug("recover_node result: %s" % succeed)
-    if not succeed:
-        return False, explain
-
-    global CLUES_DAEMON
-    success, msg = CLUES_DAEMON.recover_node(node)
-    
-    if not success:
-        return False, "could not recover the node %s (%s)" % (node, msg)
-    else:
-        return True, msg
-
 def reset_node_state(sec_info, node):
     global AUTH_ENGINE
 
@@ -330,7 +314,7 @@ def enable_node(sec_info, nname, enable):
     else:
         return False, "could not %s node %s (%s)" % (opres[1], nname, explain)
 
-def request_create(sec_info, cpu, memory, nodes, request_string, job_id = -1, job_nodes = []):
+def request_create(sec_info, cpu, memory, taskcount, maxtaskspernode = -1, request_string = "", job_id = -1, job_nodes = []):
     global AUTH_ENGINE
 
     succeed, explain = AUTH_ENGINE.check_secret(sec_info)
@@ -345,7 +329,10 @@ def request_create(sec_info, cpu, memory, nodes, request_string, job_id = -1, jo
         job_id = None
         job_nodes = []
         
-    r = clueslib.request.Request(clueslib.request.ResourcesNeeded(cpu, memory, [ request_string ], nodecount = nodes), job_id, job_nodes)
+    if maxtaskspernode <= 0:
+        maxtaskspernode = taskcount
+        
+    r = clueslib.request.Request(clueslib.request.ResourcesNeeded(cpu, memory, [ request_string ], taskcount, taskcount), job_id, job_nodes)
     r_id = CLUES_DAEMON.request(r)
 
     return True, r_id
@@ -413,96 +400,6 @@ def get_requests(sec_info):
     return True, str(CLUES_DAEMON.get_requests_list())
 
 #--------------------
-
-def qsub(cpu, memory, duration):
-    global LRMS
-    j_id = LRMS.submit_job(duration, cpu, memory)
-    return j_id
-
-def qstat():
-    global LRMS
-    return str(LRMS)
-
-def pbsnodes():
-    global LRMS
-    nodelist = node.NodeList(LRMS.get_nodeinfolist())
-    return str(nodelist)
-
-def cluesnodes():
-    global CLUES_DAEMON
-    nodelist = CLUES_DAEMON.get_nodelist()
-    return str(nodelist)
-
-def hardpoweron(node):
-    global POW_MGR
-    if not POW_MGR.power_on(node):
-        return "could not power on the node %s" % node
-    else:
-        return "node %s powered on" % node
-
-def hardpoweroff(node):
-    global POW_MGR
-    if not POW_MGR.power_off(node):
-        return "could not power off the node %s" % node
-    else:
-        return "node %s powered off" % node
-
-def remove_node(node):
-    global LRMS
-    if not LRMS.delete_node(node):
-        return "could not remove the node %s (perhaps it does not exist?)" % node
-    else:
-        return "node %s has been removed from the infrastructure" % node
-
-def create_node(node, slots, memory):
-    global LRMS
-    if not LRMS.create_node(node, slots, memory):
-        return "could not create the node %s (prehaps already exists a node with this name?)" % node
-    else:
-        return "node %s has been created" % node
-
-def cluesd_info():
-    global CLUES_DAEMON
-    return str(CLUES_DAEMON)
-
-'''
-def generate_activity(t):
-    cpyutils.eventloop.get_eventloop().add_event(t, "FAKE Event - like a ping", stealth = False)
-    return True
-
-def request_create(cpu, memory):
-    global CLUES_DAEMON
-    r = request.Request(request.ResourcesNeeded(cpu, memory, nodecount = 1))
-    r_id = CLUES_DAEMON.request(r)
-
-    # TODO 5: event-driven
-    # cpyutils.eventloop.get_eventloop().add_event(0, "Scheduling due to new request", CLUES_DAEMON.schedule)
-    return r_id
-
-def request_wait(req_id, timeout):
-    global CLUES_DAEMON
-    start_time = cpyutils.eventloop.now()
-    
-    while CLUES_DAEMON.request_in_queue(req_id):
-        current_time = cpyutils.eventloop.now()
-        if (timeout > 0) and ((current_time - start_time) > timeout):
-            return False
-        
-        time.sleep(0.1)
-    
-    return True
-'''
-
-def get_events():
-    return str(cpyutils.eventloop.get_eventloop())
-
-'''
-def status():
-    global PLATFORM
-    nodelist = PLATFORM.get_nodelist()
-    return str(nodelist)
-    # return True
-'''
 
 def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop = None, args_to_callback_before_loop = []):
     from optparse import OptionParser
@@ -607,18 +504,13 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
         POW_MGR = custom_power_mgr
     
     import clueslib.platform
-    server = cpyutils.rpcweb.get_dispatcher()
+    server = cpyutils.rpcweb.XMLRPCServer("localhost", configserver._CONFIGURATION_GENERAL.CLUES_PORT, web_class = clues_web_server)
+    
     '''
     server.register_function(qsub)
     server.register_function(qstat)
     server.register_function(pbsnodes)
     server.register_function(cluesnodes)
-    server.register_function(hardpoweron)
-    server.register_function(hardpoweroff)
-    server.register_function(create_node)
-    server.register_function(remove_node)
-    server.register_function(cluesd_info)
-    server.register_function(generate_activity)
     '''
 
     # Production
@@ -628,7 +520,6 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
     server.register_function(poweron)
     server.register_function(poweroff)
     server.register_function(enable_node)
-    server.register_function(recover_node)
     server.register_function(reset_node_state)
     server.register_function(request_create)
     server.register_function(request_wait)
@@ -636,8 +527,7 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
     server.register_function(get_requests)
     server.register_function(get_node_description)
 
-    # rpcweb.start_server(clues_web_server, port=8000)
-    cpyutils.rpcweb.start_server_in_thread(clues_web_server, port = configserver._CONFIGURATION_GENERAL.CLUES_PORT)
+    server.start_in_thread()
 
     global PLATFORM
     PLATFORM = clueslib.platform.Platform(LRMS, POW_MGR)

@@ -200,7 +200,7 @@ def new_job(cpus_per_task, mem, nodes, queue):
 
     pending_requests = []
 
-    success, r_id = clues_server.request_create(clues.configcli.config_client.CLUES_SECRET_TOKEN, nodes, mem, cpus_per_task, req_str)
+    success, r_id = clues_server.request_create(clues.configcli.config_client.CLUES_SECRET_TOKEN, cpus_per_task, mem, nodes, nodes, req_str)
     if success:
         logging.info("a request for %d nodes of %d CPU and %d of RAM with requirements %s" % (nodes, mem, cpus_per_task, req_str))
         pending_requests.append(r_id)

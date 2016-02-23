@@ -29,68 +29,93 @@ from request import JobList, RequestList, Request
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("CLUES")
 
-class NodeData():
-    def __init__(self, connection_string = None):
+class DBSystem_dummy(object):
+    def __init__(self):
+        self._hosts = {}
+
+    def enable_host(self, host, enable = True):
+        self._hosts[host]=enable
+        
+    def store_node_info(self, host_data):
+        if host_data.name not in self._hosts:
+            self.enable_host(host_data.name, True)
+    
+    def retrieve_latest_monitoring_data(self):
+        return None
+    
+    def get_hosts(self):
+        return self._hosts
+
+class DBSystem(DBSystem_dummy):
+    @staticmethod
+    def create_from_connection_string(connection_string = None):
         if connection_string is None:
             connection_string = _CONFIGURATION_CLUES.DB_CONNECTION_STRING
+        if connection_string.strip() == "":
+            return DBSystem_dummy()
+        else:
+            return DBSystem(connection_string)
+    
+    def __init__(self, connection_string):
         self._connection_string = connection_string
         self._db = cpyutils.db.DB.create_from_string(connection_string)
-        self._rows = {}
         self._create_db()
-        self._nodes_to_append = []
-        
-    def _create_db(self):
-        result1, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS hostdata(name varchar(128) PRIMARY KEY, enabled bool)", True)
-        result2, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS hostmonitoring(name varchar(128), timestamp INTEGER, slots_count INTEGER, slots_free INTEGER, memory_total INTEGER, memory_free INTEGER, state INTEGER, x INTEGER PRIMARY KEY)", True)
-        return (result1 and result2)
+        self._hosts = {}
+        self._get_hosts()
 
-    def retrieve_prev_node_state(self, nname, state):
-        result, row_count, rows = self._db.sql_query("select max(timestamp), * from hostmonitoring where name=\"%s\" and state<>%d" % (nname, state))
+    def _get_hosts(self):
+        result, row_count, rows = self._db.sql_query("SELECT name, enabled from hostdata")
+        _hosts = {}
         if result:
-            if row_count > 0:
-                (timestamp, name, _, slots_count, slots_free, memory_total, memory_free, prev_state, _) = rows[0]
-                return prev_state
-        return None
-
-    def retrieve_node_state_history(self, nname, brief = False):
-        # brief: only on and off
-        result, row_count, rows = self._db.sql_query("select state, timestamp from hostmonitoring where name=\"%s\" order by timestamp asc" % (nname))
-        if result:
-            current_state = -1
-            changes = []
-            if brief:
-                current_brief_state = -1
-                for (state, timestamp) in rows:
-                    if state != current_state:
-                        if state in [ Node.POW_ON, Node.IDLE, Node.USED, Node.ON_ERR ]:
-                            new_brief_state = Node.IDLE
-                        elif state in [ Node.POW_OFF, Node.OFF, Node.OFF_ERR ]:
-                            new_brief_state = Node.OFF
-                        else:
-                            new_brief_state = state
-                        if new_brief_state != current_brief_state:
-                            changes.append((new_brief_state, timestamp))
-                            current_brief_state = new_brief_state
-                        current_state = state
-            else:
-                for (state, timestamp) in rows:
-                    if state != current_state:
-                        changes.append((state, timestamp))
-                        current_state = state
-            return changes
+            for (name, enabled) in rows:
+                _hosts[ name ] = helpers.str_to_bool(enabled)
         else:
             _LOGGER.error("could not obtain hostdata from database")
-            return None
+        self._hosts = _hosts
+        return True
 
-    def retrieve_monitoring_data(self):
-        # result, row_count, rows = self._db.sql_query("select max(timestamp), m.*, d.enabled from hostmonitoring as m left join hostdata as d on m.name=d.name where m.lrms_id=\"%s\" group by m.name" % lrms_id)
-        result, row_count, rows = self._db.sql_query("select max(timestamp), m.*, d.enabled from hostmonitoring as m left join hostdata as d on m.name=d.name group by m.name")
+    def _create_db(self):
+        result1, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS hostdata(name varchar(128) PRIMARY KEY, enabled bool)", True)
+        result2, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS host_monitoring(name varchar(128), timestamp_state INTEGER, slots_count INTEGER, slots_free INTEGER, memory_total INTEGER, memory_free INTEGER, state INTEGER, timestamp INTEGER, x INTEGER PRIMARY KEY)", True)
+        return (result1 and result2)
+
+    def enable_host(self, host, enable = True):
+        if not self._get_hosts(): return False
+        
+        if host in self._hosts:
+            result, _, _ = self._db.sql_query("UPDATE hostdata SET enabled = '%s' WHERE name = '%s'" % (helpers.bool_to_str(enable), host), True)
+        else:
+            result, _, _ = self._db.sql_query("INSERT INTO hostdata VALUES (\"%s\", \"%s\")" % (host, helpers.bool_to_str(enable)), True)
+
+        if result:
+            self._hosts[ host ] = enable
+        return result
+
+    def store_node_info(self, host_data):
+        now = cpyutils.eventloop.now()
+        result, _, _ = self._db.sql_query("INSERT INTO host_monitoring(name, timestamp_state, slots_count, slots_free, memory_total, memory_free, state, timestamp) VALUES (\"%s\", %s, %s, %s, %s, %s, %s, %s)" % \
+                                          ( host_data.name, \
+                                           host_data.timestamp_state, \
+                                           host_data.slots_count, \
+                                           host_data.slots_free, \
+                                           host_data.memory_total, \
+                                           host_data.memory_free, \
+                                           host_data.state, \
+                                           now \
+                                           )\
+                                          , True)
+        
+        if host_data.name not in self._hosts:
+            self.enable_host(host_data.name, True)
+        
+    def retrieve_latest_monitoring_data(self):
+        result, row_count, rows = self._db.sql_query("select max(timestamp), m.*, d.enabled from host_monitoring as m left join hostdata as d on m.name=d.name group by m.name")
         _nodes = {}
         if result:
-            for (timestamp, name, _, slots_count, slots_free, memory_total, memory_free, state, _, enabled) in rows:
+            for (timestamp, name, timestamp_state, slots_count, slots_free, memory_total, memory_free, state, _, _, enabled) in rows:
                 n = Node(name, slots_count, slots_free, memory_total, memory_free)
                 n.state = state
-                n.timestamp_state = long(timestamp)
+                n.timestamp_state = long(timestamp_state)
                 n.enabled = helpers.str_to_bool(enabled)
                 _nodes[name] = n
         else:
@@ -98,69 +123,7 @@ class NodeData():
             return None
         return _nodes
 
-    def begin_append_host_monitoring_data(self):
-        self._nodes_to_append = []
-
-    def end_append_host_monitoring_data(self):
-        if len(self._nodes_to_append) <= 0:
-            return True
-        result, _, _ = self._db.sql_query("INSERT INTO hostmonitoring(name, timestamp, slots_count, slots_free, memory_total, memory_free, state) %s" % " UNION ".join(self._nodes_to_append), True)
-        return result
-
-    def append_host_monitoring_data(self, host_data):
-        self._nodes_to_append.append("SELECT \"%s\", %d, %d, %d, %d, %d, %d" % (host_data.name, host_data.timestamp_state, host_data.slots_count, host_data.slots_free, host_data.memory_total, host_data.memory_free, host_data.state))
-
-    def _get_hosts(self):
-        result, row_count, rows = self._db.sql_query("SELECT name, enabled from hostdata")
-        _rows = {}
-        if result:
-            for (name, enabled) in rows:
-                _rows[ name ] = helpers.str_to_bool(enabled)
-        else:
-            _LOGGER.error("could not obtain hostdata from database")
-        self._rows = _rows
-        return True
-    
-    def get_hosts(self):
-        return self._rows
-    
-    def is_host_enabled(self, host):
-        if not self._get_hosts(): return False
-        
-        if host in self._rows:
-            return self._rows['host']
-        return False
-        
-    def add_hostdata(self, host, enable = True):
-        if not self._get_hosts(): return False
-        
-        result = True
-        if host not in self._rows:
-            result, _, _ = self._db.sql_query("INSERT INTO hostdata VALUES (\"%s\", \"%s\")" % (host, helpers.bool_to_str(enable)), True)
-
-        if result:
-            self._rows[ host ] = enable
-        return result
-        
-    def enable_host(self, host, enable = True):
-        if not self._get_hosts(): return False
-        
-        if host in self._rows:
-            result, _, _ = self._db.sql_query("UPDATE hostdata SET enabled = '%s' WHERE name = '%s'" % (helpers.bool_to_str(enable), host), True)
-        else:
-            result, _, _ = self._db.sql_query("INSERT INTO hostdata VALUES (\"%s\", \"%s\")" % (host, helpers.bool_to_str(enable)), True)
-
-        if result:
-            self._rows[ host ] = enable
-        return result
-    
-    def disable_host(self, host):
-        return self.enable_host(host, False)
-
-def _update_enable_status_for_nodes(_lrms_nodelist, _host_enable_status):
-    for n_id, node in _lrms_nodelist.items():
-        node.enabled = True
-        
+def _update_enable_status_for_nodes(_lrms_nodelist, _hosts_state):
     # We will disable the nodes that are configured to not to be treated by CLUES
     disabled_nodes = _CONFIGURATION_CLUES.DISABLED_HOSTS.split(" ")
     for nname in disabled_nodes:
@@ -168,12 +131,11 @@ def _update_enable_status_for_nodes(_lrms_nodelist, _host_enable_status):
             # _LOGGER.warning("disabling node %s due to configuration" % nname)
             _lrms_nodelist[nname].enabled = False
             
-    disabled_nodes_db = [ nname for nname, n_enabled in _host_enable_status.items() if n_enabled == False ]
-    for nname in disabled_nodes_db:
+    disabled = [ x for x, state in _hosts_state.items() if state == False ]
+    for nname in disabled:
         if nname in _lrms_nodelist:
-            # _LOGGER.warning("disabling node %s due to database info" % nname)
             _lrms_nodelist[nname].enabled = False
-
+            
 class MonitoringInfo():
     def __init__(self, nodelist, timestamp_nodelist, joblist, timestamp_joblist):
         self.nodelist = nodelist
@@ -220,21 +182,13 @@ class CluesDaemon:
         self._timestamp_joblist = -1
         self._timestamp_mark = cpyutils.eventloop.now()
         
-        # This is created here in order to enable to create different flavours of usage (e.g. in memory or db backed)
-        self._node_data = NodeData()
-
-        if _CONFIGURATION_CLUES.RETRIEVE_NODES_FROM_DB_ON_STARTUP:
-            nodes_in_db = self._node_data.retrieve_monitoring_data()
-            if nodes_in_db is not None:
-                self._lrms_nodelist = nodes_in_db
-
+        self._db_system = DBSystem.create_from_connection_string()
 
     def get_nodelist(self):
         if self._lrms_nodelist is not None:
             return NodeList(self._lrms_nodelist)
-        _LOGGER.debug("retrieving node list from database")
-        return NodeList(self._node_data.retrieve_monitoring_data())
-    
+        return NodeList({})
+
     def get_node(self, nname):
         if self._lrms_nodelist is None:
             return None
@@ -246,24 +200,7 @@ class CluesDaemon:
         return MonitoringInfo(NodeList(self._lrms_nodelist), self._timestamp_nodelist, self._lrms_joblist, self._timestamp_joblist)
 
     def _update_disabled_nodes(self):
-        _update_enable_status_for_nodes(self._lrms_nodelist, self._node_data.get_hosts())
-        '''
-        for n_id, node in self._lrms_nodelist.items():
-            node.enabled = True
-            
-        # We will disable the nodes that are configured to not to be treated by CLUES
-        disabled_nodes = _CONFIGURATION_CLUES.DISABLED_HOSTS.split(" ")
-        for nname in disabled_nodes:
-            if nname in self._lrms_nodelist:
-                # _LOGGER.warning("disabling node %s due to configuration" % nname)
-                self._lrms_nodelist[nname].enabled = False
-                
-        disabled_nodes_db = [ nname for nname, n_enabled in self._node_data.get_hosts().items() if n_enabled == False ]
-        for nname in disabled_nodes_db:
-            if nname in self._lrms_nodelist:
-                # _LOGGER.warning("disabling node %s due to database info" % nname)
-                self._lrms_nodelist[nname].enabled = False
-        '''
+        _update_enable_status_for_nodes(self._lrms_nodelist, self._db_system.get_hosts())
 
     def request(self, request):
         self._requests_queue.append(request)
@@ -284,7 +221,7 @@ class CluesDaemon:
         if req.state in [ Request.SERVED, Request.NOT_SERVED, Request.DISSAPEARED ]:
             return False
         return True
-    
+
     def _monitor_lrms_nodes(self):
         lrms_nodelist = self._platform.get_nodeinfolist()
         now = cpyutils.eventloop.now()
@@ -297,64 +234,70 @@ class CluesDaemon:
             
             _LOGGER.warning("could not obtain the node list from the platform in the last %s seconds" % err_time)
             lrms_nodelist = {}
-        
-        # Now we are updating the information about the nodes in the monitor
-        info_updated = False
-        self._node_data.begin_append_host_monitoring_data()
+
         if self._lrms_nodelist is None:
-            _LOGGER.debug("first monitorisation of LRMS\n")
-            info_updated = True
             self._lrms_nodelist = {}
+
+            node_str = ""
             for n_id, node in lrms_nodelist.items():
                 self._lrms_nodelist[n_id] = Node.create_from_nodeinfo(node.get_nodeinfo())
-                self._node_data.append_host_monitoring_data(self._lrms_nodelist[n_id])
+                node_str = "%s%s\n" % (node_str, str(self._lrms_nodelist[n_id]))
                 
+            # Now we'll get all the remaining nodes in the BD
+            
+            existing_hosts = self._db_system.get_hosts()
+            latest_monitoring_data = self._db_system.retrieve_latest_monitoring_data()
+            for h_id in existing_hosts:
+                if h_id not in self._lrms_nodelist:
+                    if h_id in latest_monitoring_data:
+                        ni = latest_monitoring_data[h_id].get_nodeinfo()
+                    else:
+                        ni = NodeInfo(h_id, -1, -1, -1, -1)
+                    unknown_node = Node.create_from_nodeinfo(ni)
+                    unknown_node.set_state(Node.UNKNOWN)
+                    self._lrms_nodelist[h_id] = unknown_node
+
+            _LOGGER.debug("\nFirst monitorization of LRMS:\nList of nodes:\n%s" % node_str)
+
+        # Now we are updating OUR information from the information that we got from the nodelist
+        nodes_new = []
+        nodes_changed = []
+        
         for n_id, node in lrms_nodelist.items():
             nodeinfo = node.get_nodeinfo()
 
-            should_store_monitoring_data = False
-            
             if n_id in self._lrms_nodelist:
-                should_store_monitoring_data = self._lrms_nodelist[n_id].update_info(nodeinfo)
-                if should_store_monitoring_data:
-                    info_updated = True
+                _, state_changed = self._lrms_nodelist[n_id].update_info(nodeinfo)
+                if state_changed:
+                    nodes_changed.append(n_id)
             else:
                 _LOGGER.warning("node %s has just appeared" % n_id)
                 self._lrms_nodelist[n_id] = Node.create_from_nodeinfo(nodeinfo)
-                info_updated = True
-                should_store_monitoring_data = True
+                nodes_new.append(n_id)
                 
-            self._node_data.add_hostdata(n_id, True)
-
-            if should_store_monitoring_data:
-                _LOGGER.debug("storing monitoring info about node %s" % n_id)
-                self._node_data.append_host_monitoring_data(self._lrms_nodelist[n_id])
-        
         for n_id, node in self._lrms_nodelist.items():
             if (node.state != Node.UNKNOWN) and (n_id not in lrms_nodelist):
                 _LOGGER.warning("node %s has dissapeared!" % n_id)
                 # TODO: should delete the node?
                 node.set_state(Node.UNKNOWN)
-                info_updated = True
+                nodes_changed.append(n_id)
                 
-            if (node.state == Node.UNKNOWN) and (n_id in lrms_nodelist):
-                node.update_info(lrms_nodelist[n_id].get_nodeinfo())
-
-        # This is done here in order to get the list of nodes ready to be used (and avoid calling DB each time the list is retrieved)
         self._update_disabled_nodes()
         self._timestamp_nodelist = now
-        self._node_data.end_append_host_monitoring_data()
 
         for n_id, node in self._lrms_nodelist.items():
             if (node.state == Node.POW_ON) and ((now - node.timestamp_state) > _CONFIGURATION_MONITORING.MAX_WAIT_POWERON):
                 node.set_state(Node.OFF_ERR)
+                nodes_changed.append(n_id)
             if (node.state == Node.POW_OFF) and ((now - node.timestamp_state) > _CONFIGURATION_MONITORING.MAX_WAIT_POWEROFF):
                 node.set_state(Node.ON_ERR)
-
-        # TODO: this is to make a event-driven scheduling
-        # if info_updated:
-        #    cpyutils.eventloop.get_eventloop().add_event(schedulers.config_scheduling.PERIOD_SCHEDULE, "CONTROL - the state of the nodes has changed so let's schedule according to it", stealth = True)
-            
+                nodes_changed.append(n_id)
+                
+        # Now we should update the DB
+        for n_id in nodes_changed + nodes_new:
+            _LOGGER.debug("node %s changed its state" % n_id)
+            self._db_system.store_node_info(self._lrms_nodelist[n_id])
+                        
     def _monitor_lrms_jobs(self):
         lrms_jobinfolist = self._platform.get_jobinfolist()
         now = cpyutils.eventloop.now()
@@ -374,14 +317,6 @@ class CluesDaemon:
             self._lrms_joblist = JobList()
             for job in lrms_jobinfolist:
                 self._lrms_joblist.append(Request.create_from_jobinfo(job))
-
-        '''
-        if self._lrms_nodelist is None:
-            _LOGGER.debug("first monitorisation of LRMS\n")
-            self._lrms_nodelist = {}
-            for n_id, node in lrms_nodelist.items():
-                self._lrms_nodelist[n_id] = Node.create_from_nodeinfo(node.get_nodeinfo())
-        '''
 
         stored_j_ids = self._lrms_joblist.get_ids()
         for job_info in lrms_jobinfolist:
@@ -465,10 +400,9 @@ class CluesDaemon:
     #    # TODO: mirar tambien las requests?
                 
     def enable_host(self, n_id, enable = True):
-        if n_id in self._node_data.get_hosts():
-            self._node_data.enable_host(n_id, enable)
-            
-            # This is done here in order to get the list of nodes ready to be used (and avoid calling DB each time the list is retrieved)
+        # TODO: currently we do not allow to enable or disable a host that has not been monitored, but if one node dissapears, it will be enabled (or disabled) forever in the DB
+        if n_id in self._lrms_nodelist:
+            self._db_system.enable_host(n_id, enable)
             self._update_disabled_nodes()
             return True, ""
         else:
@@ -482,25 +416,6 @@ class CluesDaemon:
 
             node.set_state(Node.IDLE, True)
             return True, "Node %s reset to %s" % (n_id, node.state2str[node.state])
-        else:
-            return False, "Node is not managed by CLUES"
-
-    def recover_node(self, n_id):
-        if n_id in self._lrms_nodelist:
-            node = self._lrms_nodelist[n_id]
-            
-            if node.state not in [ Node.OFF_ERR, Node.ON_ERR, Node.UNKNOWN ]:
-                return False, "Node %s is in a state not allowed for recovering" % n_id
-            
-            prev_state = self._node_data.retrieve_prev_node_state(n_id, node.state)
-            
-            if prev_state is None:
-                return False, "Could not get any previous state"
-            
-            _LOGGER.debug("Recovering node %s to state %s" % (n_id, node.state2str[node.state]))
-            node.set_state(prev_state)
-            
-            return True, "Node %s recovered to state %s" % (n_id, node.state2str[node.state])
         else:
             return False, "Node is not managed by CLUES"
 
@@ -586,11 +501,11 @@ class CluesDaemon:
                 _LOGGER.error("failed to schedule with scheduler %s" % str(scheduler))
 
         if len(candidates_off) > 0:
-            _LOGGER.debug("nodes %s are considered to be powered off" % str(candidates_off))            
+            _LOGGER.info("nodes %s are considered to be powered off" % str(candidates_off))            
             for n_id in candidates_off:
                 self.power_off(n_id)                    
         if len(candidates_on) > 0:
-            _LOGGER.debug("nodes %s are considered to be powered on" % str(candidates_on.keys()))
+            _LOGGER.info("nodes %s are considered to be powered on" % str(candidates_on.keys()))
             for n_id in candidates_on:
                 self.power_on(n_id)
 
@@ -600,18 +515,6 @@ class CluesDaemon:
             retval = "%s%s\n" % (retval, str(scheduler))
         return retval
         
-        '''
-        retval = ""
-        if self._lrms_nodelist is None:
-            return ""
-        
-        for n_id, node in self._lrms_nodelist.items():
-            retval = "%s%s\n" % (retval, str(node))
-            
-        retval = "%s%s\n" % (retval, str(self._lrms_joblist))
-        return retval
-        '''
-
     def _auto_recover_nodes(self):
         if self._lrms_nodelist is None:
             return
@@ -622,12 +525,15 @@ class CluesDaemon:
         
         for n_id, node in self._lrms_nodelist.items():
             if (node.state in [ Node.OFF_ERR ]) and (node.power_on_operation_failed < schedulers.config_scheduling.RETRIES_POWER_ON):
+                node.set_state(Node.OFF, True)
+                recoverable_nodes.append(n_id)
+
+            if (node.state in [ Node.ON_ERR ]) and (node.power_off_operation_failed < schedulers.config_scheduling.RETRIES_POWER_OFF):
+                node.set_state(Node.ON, True)
                 recoverable_nodes.append(n_id)
 
         if len(recoverable_nodes) > 0:
-            _LOGGER.debug("would try to recover nodes %s" % recoverable_nodes)
-            
-        # TODO: ver como se recupera!
+            _LOGGER.debug("have tried to recover nodes %s" % recoverable_nodes)
 
     def loop(self, real_time_mode = True):
         should_monitor_nodes = True
@@ -635,22 +541,17 @@ class CluesDaemon:
             if _CONFIGURATION_MONITORING.PERIOD_MONITORING_JOBS == _CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES:
                 should_monitor_nodes = False
                 _LOGGER.debug("monitoring jobs and nodes at the same time")
-                # cpyutils.eventloop.get_eventloop().add_periodical_event(_CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, -_CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, "monitoring nodes and jobs", callback = self._monitor_lrms_nodes_and_jobs, arguments = [], stealth = True)
                 cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, _CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, description = "monitoring nodes and jobs", callback = self._monitor_lrms_nodes_and_jobs, parameters = [], mute = True))
             else:
-                # cpyutils.eventloop.get_eventloop().add_periodical_event(_CONFIGURATION_MONITORING.PERIOD_MONITORING_JOBS, -_CONFIGURATION_MONITORING.PERIOD_MONITORING_JOBS, "monitoring jobs", callback = self._monitor_lrms_jobs, arguments = [], stealth = True)
                 cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, _CONFIGURATION_MONITORING.PERIOD_MONITORING_JOBS, description = "monitoring jobs", callback = self._monitor_lrms_jobs, parameters = [], mute = True))
         else:
             _LOGGER.info("not monitoring jobs due to configuration (var PERIOD_MONITORING_JOBS)")
             
         if should_monitor_nodes:
-            # cpyutils.eventloop.get_eventloop().add_periodical_event(_CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, -_CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, "monitoring nodes", callback = self._monitor_lrms_nodes, arguments = [], stealth = True)
             cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, _CONFIGURATION_MONITORING.PERIOD_MONITORING_NODES, description = "monitoring nodes", callback = self._monitor_lrms_nodes, parameters = [], mute = True))
-        # cpyutils.eventloop.get_eventloop().add_periodical_event(schedulers.config_scheduling.PERIOD_SCHEDULE, 0, "scheduling", callback = self._schedulers_pipeline, arguments = [], stealth = True)
+
         cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, schedulers.config_scheduling.PERIOD_SCHEDULE, description = "scheduling", callback = self._schedulers_pipeline, parameters = [], mute = True))
-        # cpyutils.eventloop.get_eventloop().add_periodical_event(_CONFIGURATION_MONITORING.PERIOD_LIFECYCLE, 0, "lifecycle", callback = self._platform.lifecycle, arguments = [], stealth = True)
         cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, _CONFIGURATION_MONITORING.PERIOD_LIFECYCLE, description = "lifecycle", callback = self._platform.lifecycle, parameters = [], mute = True))
-        # cpyutils.eventloop.get_eventloop().add_periodical_event(schedulers.config_scheduling.PERIOD_RECOVERY_NODES, 0, "recovery of nodes", callback = self._auto_recover_nodes, arguments = [], stealth = True)
         cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, schedulers.config_scheduling.PERIOD_RECOVERY_NODES, description = "recovery of nodes", callback = self._auto_recover_nodes, parameters = [], mute = True))
 
         cpyutils.eventloop.get_eventloop().loop()

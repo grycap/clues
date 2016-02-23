@@ -40,12 +40,15 @@ class Resources:
         return retval
 
 class ResourcesNeeded:
-    def __init__(self, slots, memory, requests_expressions = [], nodecount = 1):
+    def __init__(self, slots, memory, requests_expressions = [], taskcount = 1, maxtaskspernode = 0):
         self.resources = Resources(slots, memory, requests_expressions)
-        self.nodecount = nodecount
+        self.taskcount = taskcount
+        if maxtaskspernode <= 0:
+            maxtaskspernode = taskcount
+        self.maxtaskspernode = maxtaskspernode
 
     def __str__(self):
-        retval = "%d nodes: %s" % (self.nodecount, str(self.resources))
+        retval = "%d tasks (%d per node max.): %s" % (self.taskcount, self.maxtaskspernode, str(self.resources))
         return retval
 
 class _Request():
