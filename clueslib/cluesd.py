@@ -529,7 +529,7 @@ class CluesDaemon:
                 recoverable_nodes.append(n_id)
 
             if (node.state in [ Node.ON_ERR ]) and (node.power_off_operation_failed < schedulers.config_scheduling.RETRIES_POWER_OFF):
-                node.set_state(Node.ON, True)
+                node.set_state(Node.IDLE, True)
                 recoverable_nodes.append(n_id)
 
         if len(recoverable_nodes) > 0:
