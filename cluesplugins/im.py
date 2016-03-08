@@ -24,7 +24,7 @@ Created on 26/1/2015
 import logging
 import xmlrpclib
 
-from IM.radl import radl_parse
+from radl import radl_parse
 from IM.VirtualMachine import VirtualMachine
 
 import cpyutils.config
