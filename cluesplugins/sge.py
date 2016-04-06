@@ -210,7 +210,9 @@ class lrms(clueslib.platform.LRMS):
 			else:
 				allocation_rule = self._get_pe_allocation_rule(pe_name)
 				self._allocation_rule_cache[pe_name] = allocation_rule
-			if allocation_rule == "$fill_up":
+			if not allocation_rule:
+				res = None
+			elif allocation_rule == "$fill_up":
 				res = None
 			elif allocation_rule == "$round_robin":
 				res = None
