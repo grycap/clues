@@ -182,7 +182,7 @@ class lrms(clueslib.platform.LRMS):
 				os.environ['SGE_ROOT'] = self._sge_root
 
 			allocation_rule = None
-			command = [ self._qconf, '-spl']
+			command = [ self._qconf, '-sp', pe_name]
 			success, out_command = cpyutils.runcommand.runcommand(command, False, timeout = self._timeout_commands)
 			if not success:
 				_LOGGER.error("could not get information about the parallel environments: %s" % out_command)
