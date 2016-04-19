@@ -79,7 +79,7 @@ class powermanager(PowerManager):
 		self._INDIGO_ORCHESTRATOR_DROP_FAILING_VMS = config_indigo.INDIGO_ORCHESTRATOR_DROP_FAILING_VMS
 		self._INDIGO_ORCHESTRATOR_WN_NAME = config_indigo.INDIGO_ORCHESTRATOR_WN_NAME
 
-		# TODO: to sepcify the auth data to access the orchestrator
+		# TODO: to specify the auth data to access the orchestrator
 		self._auth_data = None
 
 		self._inf_id = None
@@ -123,6 +123,12 @@ class powermanager(PowerManager):
 		for vm_uuid, vm in self._mvs_seen.items():
 			if vm_uuid == uuid:
 				return vm
+		return None
+	
+	def _get_uuid_from_nodename(self, nodename):
+		for vm_uuid, vm in self._mvs_seen.items():
+			if vm == nodename:
+				return vm_uuid
 		return None
 	
 	def _get_master_node_id(self):
@@ -192,6 +198,7 @@ class powermanager(PowerManager):
 					
 					if not node_name:
 						_LOGGER.error("No node name obtained for VM ID: %s" % vm.vm_id)
+						self._power_off("noname", vm.vm_id)
 						break
 					elif node_name not in self._mvs_seen:
 						# This must never happen but ...
@@ -202,7 +209,7 @@ class powermanager(PowerManager):
 					
 					if status in ["CREATE_FAILED", "UPDATE_FAILED", "DELETE_FAILED"]:
 						# This VM is in a "terminal" state remove it from the infrastructure 
-						_LOGGER.error("Node %s in VM with id %s is in state: %s" % (node_name, vm.vm_id, status))
+						_LOGGER.error("Node %s in VM with id %s is in state: %s, msg: %s." % (node_name, vm.vm_id, status, resource['statusReason']))
 						self.recover(node_name)
 					elif status in ["UNKNOWN"]:
 						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
@@ -216,9 +223,9 @@ class powermanager(PowerManager):
 
 		return self._mvs_seen
 	
-	def _recover_ids(self, vms):
-		for vm in vms:
-			self.power_off(vm)
+	def _recover_ids(self, nodenames):
+		for nodename in nodenames:
+			self.power_off(nodename)
 
 	def recover(self, nname):
 		success, nname = self.power_off(nname)
@@ -310,7 +317,7 @@ class powermanager(PowerManager):
 
 		return res
 
-	def _modify_deployment(self, nname, vms, remove_node = None):
+	def _modify_deployment(self, vms, remove_node = None):
 		inf_id = self._get_inf_id()
 
 		conn = self._get_http_connection()
@@ -346,13 +353,13 @@ class powermanager(PowerManager):
 				_LOGGER.debug("There are %d VMs running, we are at the maximum number. Do not power on." % len(vms))
 				return False, nname
 
-			resp_status, output = self._modify_deployment(nname, vms)
+			resp_status, output = self._modify_deployment(vms)
 			
-			if resp_status != 200:
+			if resp_status not in [200, 201, 202, 204]:
 				_LOGGER.error("Error launching node %s: %s" % (nname, output))
 				return False, nname
 			else:
-				nname = self._INDIGO_ORCHESTRATOR_WN_NAME.replace("#N#", len(vms)+1)
+				nname = self._INDIGO_ORCHESTRATOR_WN_NAME.replace("#N#", str(len(vms)+1))
 				_LOGGER.debug("Node %s successfully created" % nname)
 				#res = json.loads(output)
 				
@@ -374,26 +381,30 @@ class powermanager(PowerManager):
 			_LOGGER.exception("Error launching node %s " % nname)
 			return False, nname
 
-	def power_off(self, nname):
-		_LOGGER.debug("Powering off %s" % nname)
+	def _power_off(self, nname, vmid):
 		try:
 			success = False
 	
-			if nname in self._mvs_seen:
-				resp_status, output = self._modify_deployment(nname, self._mvs_seen, nname)
+			resp_status, output = self._modify_deployment(self._mvs_seen, vmid)
 
-				if resp_status != 200:
-					_LOGGER.error("ERROR deleting node: %s: %s" % (nname,output))
-				else:
-					_LOGGER.debug("Node %s successfully deleted." % nname)
-					success = True
+			if resp_status not in [200, 201, 202, 204]:
+				_LOGGER.error("ERROR deleting node: %s: %s" % (nname,output))
 			else:
-				_LOGGER.warning("There is not any VM associated to node %s." % nname)
+				_LOGGER.debug("Node %s successfully deleted." % nname)
+				success = True
 		except:
 			_LOGGER.exception("Error powering off node %s " % nname)
-			success = False
-			
+
 		return success, nname
+
+	def power_off(self, nname):
+		_LOGGER.debug("Powering off %s" % nname)
+		vmid = self._get_uuid_from_nodename(nname)
+		if not vmid:
+			_LOGGER.error("There is not any VM associated to node %s." % nname)
+			return False, nname
+		else:
+			return self._power_off(nname, vmid)
 
 	def _get_template(self, count, remove_node = None):		
 		inf_id = self._get_inf_id()
