@@ -372,7 +372,8 @@ class powermanager(PowerManager):
 						new_uuids.append(resource['uuid']) 
 				
 				if len(new_uuids) != 1:
-					_LOGGER.warn("Trying to get the uuid of the new node and get %d uuids!!" % len(new_uuids))
+					_LOGGER.error("Trying to get the uuid of the new node and get %d uuids!!" % len(new_uuids))
+					return False, nname
 				elif len(new_uuids) > 0: 
 					self._add_mvs_seen(nname, self.VM_Node(new_uuids[0]))
 				
