@@ -133,9 +133,8 @@ class powermanager(PowerManager):
 				return vm_uuid
 		return None
 	
-	def _get_master_node_id(self):
+	def _get_master_node_id(self, resources):
 		if not self._master_node_id:
-			resources = self._get_resources()
 			older_resource = None
 			# if this plugin is used after year 5000 please change this
 			last_time = time.strptime("5000-12-01T00:00", "%Y-%m-%dT%H:%M") 
@@ -201,7 +200,7 @@ class powermanager(PowerManager):
 			_LOGGER.warn("No resources obtained from orchestrator.")
 		else:
 			for resource in resources:
-				if resource['uuid'] != self._get_master_node_id():
+				if resource['uuid'] != self._get_master_node_id(resources):
 					vm = self.VM_Node(resource['uuid'])
 					status  = resource['status']
 					# Possible status
@@ -316,7 +315,7 @@ class powermanager(PowerManager):
 	def _add_mvs_seen(self, nname, vm):
 		self._mvs_seen[nname] = vm
 		try:
-			self._db.sql_query("INSERT INTO orchestrator_vms VALUES (%s, %s)" % (nname, vm.vm_id),True)
+			self._db.sql_query("INSERT INTO orchestrator_vms VALUES ('%s', '%s')" % (nname, vm.vm_id),True)
 		except:
 			_LOGGER.exception("Error trying to save INDIGO orchestrator plugin data.")
 
@@ -379,15 +378,20 @@ class powermanager(PowerManager):
 				#res = json.loads(output)
 				
 				# wait to assure the orchestrator process the operation
-				time.sleep(5)
-
-				# Get the list of resources now to get the new vm added
-				resources = self._get_resources()					
-				current_uuids = [vm.vm_id for vm in vms]
+				delay = 2
+				wait = 0
+				timeout = 30
 				new_uuids = []
-				for resource in resources:
-					if resource['uuid'] != self._get_master_node_id() and resource['uuid'] not in current_uuids:
-						new_uuids.append(resource['uuid']) 
+				while not new_uuids and wait < timeout:
+					# Get the list of resources now to get the new vm added
+					resources = self._get_resources()
+					current_uuids = [vm.vm_id for vm in vms]
+					for resource in resources:
+						if resource['uuid'] != self._get_master_node_id(resources) and resource['uuid'] not in current_uuids:
+							new_uuids.append(resource['uuid'])
+					if len(new_uuids) < 1:
+						time.sleep(delay)
+						wait += delay
 				
 				if len(new_uuids) != 1:
 					_LOGGER.error("Trying to get the uuid of the new node and get %d uuids!!" % len(new_uuids))
