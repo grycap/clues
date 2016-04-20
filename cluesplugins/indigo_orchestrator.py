@@ -443,6 +443,8 @@ class powermanager(PowerManager):
 		else:
 			templateo = yaml.load(output)
 			if remove_node:
+				if count < 1:
+					count = 1
 				templateo['topology_template']['node_templates']['torque_wn']['capabilities']['scalable']['properties']['count'] = count - 1
 				templateo['topology_template']['node_templates']['torque_wn']['capabilities']['scalable']['properties']['removal_list'] = [remove_node]
 			else:
