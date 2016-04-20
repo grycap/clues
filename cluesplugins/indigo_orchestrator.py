@@ -123,7 +123,7 @@ class powermanager(PowerManager):
 	
 	def _get_nodename_from_uuid(self, uuid):
 		for node_name, vm in self._mvs_seen.items():
-			if vm.uuid == uuid:
+			if vm.vm_id== uuid:
 				return node_name
 		return None
 	
