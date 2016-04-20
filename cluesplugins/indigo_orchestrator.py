@@ -123,7 +123,7 @@ class powermanager(PowerManager):
 	
 	def _get_nodename_from_uuid(self, uuid):
 		for node_name, vm in self._mvs_seen.items():
-			if vm.vm_id== uuid:
+			if vm.vm_id == uuid:
 				return node_name
 		return None
 	
@@ -239,7 +239,7 @@ class powermanager(PowerManager):
 	
 	def _recover_ids(self, nodenames):
 		for nodename in nodenames:
-			self.power_off(nodename)
+			self.recover(nodename)
 
 	def recover(self, nname):
 		success, nname = self.power_off(nname)
@@ -325,7 +325,9 @@ class powermanager(PowerManager):
 			result, _, rows = self._db.sql_query("select * from orchestrator_vms")
 			if result:
 				for (node_name, uuid) in rows:
-					self._mvs_seen[node_name] = self.VM_Node(uuid)
+					res[node_name] = self.VM_Node(uuid)
+			else:
+				_LOGGER.error("Error trying to load INDIGO orchestrator plugin data.")
 		except:
 			_LOGGER.exception("Error trying to load INDIGO orchestrator plugin data.")
 
