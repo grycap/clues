@@ -148,31 +148,44 @@ class powermanager(PowerManager):
 
 		return self._master_node_id
 	
+	def _get_resources_page(self, page=0):
+		inf_id = self._get_inf_id()
+		headers = {'Accept': 'application/json', 'Content-Type' : 'application/json', 'Connection':'close'}
+		auth = self._get_auth_header()
+		if auth:
+			headers.update(auth)
+		conn = self._get_http_connection()
+		conn.request('GET', "/orchestrator/deployments/%s/resources?page=%d" % (inf_id, page), headers = headers)
+		resp = conn.getresponse()
+		output = resp.read()
+		conn.close()
+		return resp.status, output
+
 	def _get_resources(self):
 		try:
-			inf_id = self._get_inf_id()
-			headers = {'Accept': 'application/json', 'Content-Type' : 'application/json', 'Connection':'close'}
-			auth = self._get_auth_header()
-			if auth:
-				headers.update(auth)
-			conn = self._get_http_connection()
-			conn.request('GET', "/orchestrator/deployments/%s/resources" % inf_id, headers = headers)
-			resp = conn.getresponse()
-			output = resp.read()
-			conn.close()
+			status, output = self._get_resources_page()
 			
 			resources = []
-			if resp.status != 200:
+			if status != 200:
 				_LOGGER.error("ERROR getting deployment info: %s" % str(output))
 			else:
 				res = json.loads(output)
 				if 'content' in res:
-					resources = res['content']
-					# Only return tosca.nodes.indigo.Compute resources
-					return [resource for resource in res['content'] if resource['toscaNodeType'] == "tosca.nodes.indigo.Compute"]
-				else:
-					_LOGGER.error("ERROR no 'content' in deployment info: %s" % str(output))
-			
+					resources.extend(res['content'])
+
+				if 'page' in res and res['page']['totalPages'] > 1:
+					for page in range(1,res['page']['totalPages']):
+						status, output = self._get_resources_page(page)
+
+						if status != 200:
+							_LOGGER.error("ERROR getting deployment info: %s, page %d" % (str(output), page))
+						else:
+							res = json.loads(output)
+							if 'content' in res:
+								resources.extend(res['content'])
+
+				return [resource for resource in resources if resource['toscaNodeType'] == "tosca.nodes.indigo.Compute"]
+
 			return resources
 		except:
 			_LOGGER.exception("ERROR getting deployment info.")
@@ -363,6 +376,9 @@ class powermanager(PowerManager):
 				_LOGGER.debug("Node %s successfully created" % nname)
 				#res = json.loads(output)
 				
+				# wait to assure the orchestrator process the operation
+				time.sleep(5)
+
 				# Get the list of resources now to get the new vm added
 				resources = self._get_resources()					
 				current_uuids = [vm.vm_id for vm in vms]
@@ -386,7 +402,7 @@ class powermanager(PowerManager):
 		try:
 			success = False
 	
-			resp_status, output = self._modify_deployment(self._mvs_seen, vmid)
+			resp_status, output = self._modify_deployment(self._mvs_seen, str(vmid))
 
 			if resp_status not in [200, 201, 202, 204]:
 				_LOGGER.error("ERROR deleting node: %s: %s" % (nname,output))
