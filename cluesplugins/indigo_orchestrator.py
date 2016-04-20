@@ -122,15 +122,15 @@ class powermanager(PowerManager):
 		return self._INDIGO_ORCHESTRATOR_DEPLOY_ID
 	
 	def _get_nodename_from_uuid(self, uuid):
-		for vm_uuid, vm in self._mvs_seen.items():
-			if vm_uuid == uuid:
-				return vm
+		for node_name, vm in self._mvs_seen.items():
+			if vm.uuid == uuid:
+				return node_name
 		return None
 	
 	def _get_uuid_from_nodename(self, nodename):
-		for vm_uuid, vm in self._mvs_seen.items():
-			if vm == nodename:
-				return vm_uuid
+		for node_name, vm in self._mvs_seen.items():
+			if node_name == nodename:
+				return vm.uuid
 		return None
 	
 	def _get_master_node_id(self, resources):
