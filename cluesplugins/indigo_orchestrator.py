@@ -68,7 +68,8 @@ class powermanager(PowerManager):
 				"INDIGO_ORCHESTRATOR_FORGET_MISSING_VMS": 30,
 				"INDIGO_ORCHESTRATOR_DROP_FAILING_VMS": 30,
 				"INDIGO_ORCHESTRATOR_WN_NAME": "vnode-#N#",
-				"INDIGO_ORCHESTRATOR_DB_CONNECTION_STRING": "sqlite:///var/lib/clues2/clues.db"
+				"INDIGO_ORCHESTRATOR_DB_CONNECTION_STRING": "sqlite:///var/lib/clues2/clues.db",
+				"INDIGO_ORCHESTRATOR_PAGE_SIZE": 20
 			}
 		)
 
@@ -78,6 +79,7 @@ class powermanager(PowerManager):
 		self._INDIGO_ORCHESTRATOR_FORGET_MISSING_VMS = config_indigo.INDIGO_ORCHESTRATOR_FORGET_MISSING_VMS
 		self._INDIGO_ORCHESTRATOR_DROP_FAILING_VMS = config_indigo.INDIGO_ORCHESTRATOR_DROP_FAILING_VMS
 		self._INDIGO_ORCHESTRATOR_WN_NAME = config_indigo.INDIGO_ORCHESTRATOR_WN_NAME
+		self._INDIGO_ORCHESTRATOR_PAGE_SIZE = config_indigo.INDIGO_ORCHESTRATOR_PAGE_SIZE
 
 		# TODO: to specify the auth data to access the orchestrator
 		self._auth_data = None
@@ -155,7 +157,7 @@ class powermanager(PowerManager):
 		if auth:
 			headers.update(auth)
 		conn = self._get_http_connection()
-		conn.request('GET', "/orchestrator/deployments/%s/resources?page=%d" % (inf_id, page), headers = headers)
+		conn.request('GET', "/orchestrator/deployments/%s/resources?size=%d&page=%d" % (inf_id, self._INDIGO_ORCHESTRATOR_PAGE_SIZE, page), headers = headers)
 		resp = conn.getresponse()
 		output = resp.read()
 		conn.close()
