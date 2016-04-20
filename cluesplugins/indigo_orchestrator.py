@@ -130,7 +130,7 @@ class powermanager(PowerManager):
 	def _get_uuid_from_nodename(self, nodename):
 		for node_name, vm in self._mvs_seen.items():
 			if node_name == nodename:
-				return vm.uuid
+				return vm.vm_id
 		return None
 	
 	def _get_master_node_id(self, resources):
