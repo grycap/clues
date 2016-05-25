@@ -274,7 +274,10 @@ class lrms(clueslib.platform.LRMS):
                 # ReqNodeList is also available
                 if str(job["NodeList"]) != "(null)":
                     nodes.append(str(job["NodeList"]))
-                numnodes = int(job["NumNodes"])
+                if len(job["NumNodes"]) > 1:
+                    numnodes = int(job["NumNodes"][:1])
+                else:
+                    numnodes = int(job["NumNodes"])
                 memory = _translate_mem_value(job["MinMemoryNode"] + ".MB")
                 cpus_per_task = int(job["CPUs/Task"])
                 partition = '"' + str(job["Partition"]) + '" in queues'
