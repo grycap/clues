@@ -337,7 +337,7 @@ class powermanager(PowerManager):
 					if not success: 
 						_LOGGER.error("ERROR deleting node: %s: %s" % (nname,vm_ids))
 					elif vm_ids == 0:
-						_LOGGER.error("ERROR deleting node: %. No VM has been deleted." % nname)
+						_LOGGER.error("ERROR deleting node: %s. No VM has been deleted." % nname)
 				else:
 					_LOGGER.debug("Not powering off node %s" % nname)
 					success = False
@@ -388,7 +388,7 @@ class powermanager(PowerManager):
 			for name in vms:
 				vm = vms[name]
 				if name not in node_names:
-					_LOGGER.warning("VM with name %s is detected by the IM but it does not exist in the monitoring system... recovering it.)" % name)
+					_LOGGER.warning("VM with name %s is detected by the IM but it does not exist in the monitoring system... (%s) recovering it.)" % (name, node_names))
 					vm.recovered()
 					recover.append(name)
 	
