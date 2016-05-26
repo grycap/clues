@@ -269,6 +269,8 @@ class powermanager(PowerManager):
 					elif state in [VirtualMachine.OFF, VirtualMachine.UNKNOWN]:
 						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
 						_LOGGER.warning("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
+				else:
+					_LOGGER.warning("VM with id %s does not have dns_name specified: %s" % vm_id)
 
 		# from the nodes that we have powered on, check which of them are still running
 		for nname, node in self._mvs_seen.items():
@@ -388,7 +390,7 @@ class powermanager(PowerManager):
 				if name not in node_names:
 					_LOGGER.warning("VM with name %s is detected by the IM but it does not exist in the monitoring system... recovering it.)" % name)
 					vm.recovered()
-					recover.append(node.name)
+					recover.append(name)
 	
 			self._recover_ids(recover)
 		except:
