@@ -400,6 +400,7 @@ class lrms(clueslib.platform.LRMS):
 			state = j.getAttribute("state")
 			if state == 'running':
 				state = clueslib.request.Request.ATTENDED
+				continue
 			elif state == 'pending':
 				state = clueslib.request.Request.PENDING
 	
