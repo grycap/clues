@@ -461,7 +461,10 @@ class lrms(clueslib.platform.LRMS):
             
             if jobs is not None:
                 for job in jobs.Job:
-                    jobinfolist.append(job.to_jobinfo())
+                    # Do not return running or finished jobs
+                    job_info = job.to_jobinfo()
+                    if job_info.state != Request.SERVED:
+                        jobinfolist.append(job_info)
             else:
                 _LOGGER.warning("an error occurred when monitoring hosts (could not get information from PBS; please check PBS_SERVER and PBS_QSTAT_COMMAND vars)")
 

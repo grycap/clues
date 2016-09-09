@@ -21,7 +21,6 @@ Created on 26/1/2015
 @author: micafer
 '''
 
-import logging
 import xmlrpclib
 
 from radl import radl_parse
@@ -255,6 +254,10 @@ class powermanager(PowerManager):
 					if clues_node_name not in self._mvs_seen:
 						self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
 					else:
+ 						if self._mvs_seen[clues_node_name].vm_id != vm_id:
+ 							# this must not happen ...
+ 							_LOGGER.warning("Node %s in VM with id %s now have a new ID: %s" % (clues_node_name, self._mvs_seen[clues_node_name].vm_id, vm_id))
+ 							self.power_off(clues_node_name)
 						self._mvs_seen[clues_node_name].update(vm_id, radl)
 					
 					self._mvs_seen[clues_node_name].seen()
@@ -265,7 +268,9 @@ class powermanager(PowerManager):
 						self.recover(clues_node_name)
 					elif state in [VirtualMachine.OFF, VirtualMachine.UNKNOWN]:
 						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
-						_LOGGER.warn("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
+						_LOGGER.warning("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
+				else:
+					_LOGGER.warning("VM with id %s does not have dns_name specified: %s" % vm_id)
 
 		# from the nodes that we have powered on, check which of them are still running
 		for nname, node in self._mvs_seen.items():
@@ -284,7 +289,7 @@ class powermanager(PowerManager):
 			vms = self._get_vms()
 			
 			if nname in vms:
-				_LOGGER.warn("Trying to launch an existing node %s. Ignoring it." % nname)
+				_LOGGER.warning("Trying to launch an existing node %s. Ignoring it." % nname)
 				return True, nname
 			
 			server = self._get_server()
@@ -332,7 +337,7 @@ class powermanager(PowerManager):
 					if not success: 
 						_LOGGER.error("ERROR deleting node: %s: %s" % (nname,vm_ids))
 					elif vm_ids == 0:
-						_LOGGER.error("ERROR deleting node: %. No VM has been deleted." % nname)
+						_LOGGER.error("ERROR deleting node: %s. No VM has been deleted." % nname)
 				else:
 					_LOGGER.debug("Not powering off node %s" % nname)
 					success = False
@@ -383,9 +388,9 @@ class powermanager(PowerManager):
 			for name in vms:
 				vm = vms[name]
 				if name not in node_names:
-					_LOGGER.warning("VM with name %s is detected by the IM but it does not exist in the monitoring system... recovering it.)" % name)
+					_LOGGER.warning("VM with name %s is detected by the IM but it does not exist in the monitoring system... (%s) recovering it.)" % (name, node_names))
 					vm.recovered()
-					recover.append(node.name)
+					recover.append(name)
 	
 			self._recover_ids(recover)
 		except:
