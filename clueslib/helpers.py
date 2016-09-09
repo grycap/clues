@@ -183,7 +183,7 @@ class SerializableXML():
                     val = n.__dict__[v].lower()
                     reference_object.__dict__[v] = (( val == "true") or (val == "1"))
                 elif isinstance(reference_object.__dict__[v], int):
-                    reference_object.__dict__[v] = int(n.__dict__[v])
+                    reference_object.__dict__[v] = int(float(n.__dict__[v]))
                 elif isinstance(reference_object.__dict__[v], float):
                     reference_object.__dict__[v] = float(n.__dict__[v])
                 else:
