@@ -92,6 +92,13 @@ setup(name='CLUES',
             ]),
         ('/etc/init.d', [
             'cluesd'
+            ]),
+        # force cluesserver to be in /usr/bin
+        ('/usr/bin', [
+            'cluesserver'
+            ]),
+        ('/etc/systemd/system', [
+            'cluesd.service'
             ])
         ],
       scripts = [ 'clues', 'cluesserver', 'addons/pbs/clues-pbs-wrapper', 'addons/one/clues-one-wrapper', 'addons/sge/clues-sge-wrapper', 'addons/slurm/clues-slurm-wrapper' ],
