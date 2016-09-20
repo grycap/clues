@@ -265,6 +265,12 @@ class powermanager(PowerManager):
 					if state in [VirtualMachine.FAILED, VirtualMachine.UNCONFIGURED]:
 						# This VM is in "terminal" state remove it from the infrastructure 
 						_LOGGER.error("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
+
+						if state == VirtualMachine.UNCONFIGURED:
+							# in case of unconfigured show the log to make easier debug
+							(success, contmsg)  = server.GetVMContMsg(self._get_inf_id(), vm_id, auth_data)
+							_LOGGER.debug("Contextualization msg: %s" % contmsg)
+
 						self.recover(clues_node_name)
 					elif state in [VirtualMachine.OFF, VirtualMachine.UNKNOWN]:
 						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
