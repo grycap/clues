@@ -306,20 +306,21 @@ class powermanager(PowerManager):
 			ec3_reuse_nodes = False
 			if len(self._stopped_vms) > 0:
 				if self._stopped_vms.get(nname):
+					ec3_reuse_nodes = True
 					vm = self._stopped_vms.get(nname)
-					ec3_reuse_nodes = vm.radl.systems[0].getValue('ec3_reuse_nodes', 0)
+					#ec3_reuse_nodes = vm.radl.systems[0].getValue('ec3_reuse_nodes', 0)
 			
 			server = self._get_server()
-			radl_data = self._get_radl(nname)
-			if radl_data:
-				_LOGGER.debug("RADL to launch/restart node %s: %s" % (nname, radl_data))
-				auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
-				if ec3_reuse_nodes:
-					(success, vms_id) = server.StartVM(self._get_inf_id(), vm.vm_id, auth_data)
-				else:
-					(success, vms_id) = server.AddResource(self._get_inf_id(), radl_data, auth_data)
+			auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
+			if ec3_reuse_nodes:
+				(success, vms_id) = server.StartVM(self._get_inf_id(), vm.vm_id, auth_data)
 			else:
-				_LOGGER.error("RADL to launch node %s is empty!!" % nname)
+				radl_data = self._get_radl(nname)
+				if radl_data:
+					_LOGGER.debug("RADL to launch/restart node %s: %s" % (nname, radl_data))
+					(success, vms_id) = server.AddResource(self._get_inf_id(), radl_data, auth_data)
+				else:
+					_LOGGER.error("RADL to launch node %s is empty!!" % nname)
 		except:
 			_LOGGER.exception("Error launching/restarting node %s " % nname)
 			return False, nname
@@ -360,7 +361,7 @@ class powermanager(PowerManager):
 						if not success: 
 							_LOGGER.error("ERROR stopping node: %s: %s" % (nname,vm_ids))
 						elif vm_ids == 0:
-							_LOGGER.error("ERROR stopping node: %s. No VM has been deleted." % nname)
+							_LOGGER.error("ERROR stopping node: %s. No VM has been stopped." % nname)
 					else:
 						(success, vm_ids) = server.RemoveResource(self._get_inf_id(), vm.vm_id, auth_data)
 						if not success: 
