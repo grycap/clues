@@ -221,7 +221,7 @@ class lrms(clueslib.platform.LRMS):
                 keywords = {}
                 queues = get_partition(self, name)
                 keywords['hostname'] = TypedClass.auto(name)
-                if len(queues) > 0:
+                if queues:
                     keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
                     
                 nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
