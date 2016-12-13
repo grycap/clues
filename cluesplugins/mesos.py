@@ -116,7 +116,7 @@ class lrms(clueslib.platform.LRMS):
             json_data = json.loads(output)
         except:
             _LOGGER.error("could not obtain information about MESOS jobs (%s)" % (output))
-            return None
+            return None, None
     
         if json_data:
             for _, details in json_data.items():
@@ -182,7 +182,7 @@ class lrms(clueslib.platform.LRMS):
             json_data = json.loads(output)
         except:
             _LOGGER.warning("could not obtain information about Mesos tasks (%s)" % (output))
-            return None
+            return []
     
         job = "ChronosTask:" + job_id
         if json_data:
@@ -214,7 +214,7 @@ class lrms(clueslib.platform.LRMS):
             json_data = json.loads(output)
         except:
             _LOGGER.warning("could not obtain information about Chronos %s (%s)" % (self._server_ip, output))
-            return None
+            return []
 
         # process the exit of the chronos command 
         if json_data:
@@ -262,7 +262,7 @@ class lrms(clueslib.platform.LRMS):
             json_data = json.loads(exit)
         except:
             _LOGGER.warning("could not obtain information about Marathon status %s (%s)" % (self._server_ip, exit))
-            return None
+            return []
                     
         # process the exit of the marathon command
         if json_data:
