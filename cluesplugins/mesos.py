@@ -71,6 +71,8 @@ def run_command(command):
     except Exception as e:
         raise Exception("Error executing '%s': %s" % (" ".join(command), str(e)))
 
+<<<<<<< HEAD
+=======
 # Obtains the list of jobs and identifies the nodes that are in "USED" state (jobs in state "TASK_RUNNING")
 def obtain_used_nodes():
     exit = " "
@@ -81,122 +83,137 @@ def obtain_used_nodes():
     except:
         _LOGGER.error("could not obtain information about MESOS jobs (%s)" % (exit))
         return []
-
-    if json_data:
-        for job, details in json_data.items():
-            for element in details:
-                state = str(element['state'])
-                if state == "TASK_RUNNING" or state == "TASK_STAGING":
-                    used_nodes.append(str(element['slave_id']))
-    return used_nodes
-
-# Obtains the mem and cpu used by the possible job that is in execution in the node "node_id"
-def obtain_cpu_mem_used(node_id):
-    used_cpu = 0
-    used_mem = 0
-    try:
-        exit = run_command("/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json".split(" "))
-        json_data = json.loads(exit)
-    except:
-        _LOGGER.error("could not obtain information about MESOS jobs (%s)" % (exit))
-        return None
-
-    if json_data:
-        for job, details in json_data.items():
-            for element in details:
-                if str(element['slave_id']) == node_id and str(element['state']) == "TASK_RUNNING":
-                    used_cpu = float(element['resources']['cpus'])
-                    used_mem = element['resources']['mem'] * 1048576
-    
-    return used_cpu, used_mem
-
-        
-# Determines the equivalent state between Mesos slaves and Clues2 possible node states
-def infer_clues_node_state(id, state, used_nodes):
-    # MESOS node states: active=true || active=false
-    # CLUES2 node states: ERROR, UNKNOWN, IDLE, USED, OFF
-
-    res_state = ""
-
-    if state and id not in used_nodes:
-        res_state = NodeInfo.IDLE
-    elif state and id in used_nodes:
-        res_state = NodeInfo.USED
-    elif not state:
-        res_state = NodeInfo.OFF
-    else:
-        res_state = NodeInfo.UNKNOWN
-    
-    return res_state
-
-# Determines the equivalent state between Mesos tasks and Clues2 possible job states
-def infer_clues_job_state(state):
-    # MESOS job states: TASK_RUNNING, TASK_PENDING, TASK_KILLED, TASK_FINISHED (TODO: check if there are more possible states)
-    # CLUES2 job states: ATTENDED o PENDING
-    res_state = ""
-
-    if state == 'TASK_PENDING':
-        res_state = clueslib.request.Request.PENDING
-    else:
-        res_state = clueslib.request.Request.ATTENDED
-
-    return res_state
-
-# Determines the equivalent state between Chronos jobs and Clues2 possible job states
-def infer_chronos_state(state):
-    # CHRONOS job states: idle,running,queued,failed,started,finished,disabled,skipped,expired,removed (TODO: check if there are more possible states)
-    # CLUES2 job states: ATTENDED o PENDING
-    res_state = ""
-    if state == 'queued': # or state == 'idle':
-        res_state = clueslib.request.Request.PENDING
-    else:
-        res_state = clueslib.request.Request.ATTENDED
-    return res_state
-
-# Method to obtain the slave where the chronos job is executed
-def obtain_chronosjob_node(job_id):
-	exit = " "
-	nodes = []
-	try:
-		exit = run_command("/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json".split(" "))
-		json_data = json.loads(exit)
-	except:
-		_LOGGER.warning("could not obtain information about Mesos tasks (%s)" % (exit))
-		return None
-
-	job = "ChronosTask:" + job_id
-	if json_data:
-		for job, details in json_data.items():
-			for element in details:
-				jobname = str(element['name'])
-				if jobname == job:
-					node_id = str(element['slave_id'])
-					try:
-						exit = run_command("/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/slaves".split(" "))
-						json_data2 = json.loads(exit2)
-					except:
-						_LOGGER.warning("could not obtain information about MESOS nodes (%s)" % (exit))
-					return None
-					if json_data2:
-						for node, det in json_data2.items():
-							for element in det:
-								if element['id'] == node_id:
-									nodes.append(element['hostname'])
-					
-	return nodes
-
+>>>>>>> 53ea021820bacf15479df2b1dcc98a700dde15dd
 
 class lrms(clueslib.platform.LRMS):
 
+    # Obtains the list of jobs and identifies the nodes that are in "USED" state (jobs in state "TASK_RUNNING")
+    def _obtain_used_nodes(self):
+        used_nodes = []
+        output = ""
+        try:
+            output = run_command(self._jobs)
+            json_data = json.loads(output)
+        except:
+            _LOGGER.error("could not obtain information about MESOS jobs (%s)" % (output))
+            return []
+    
+        if json_data:
+            for _, details in json_data.items():
+                for element in details:
+                    state = str(element['state'])
+                    if state == "TASK_RUNNING" or state == "TASK_STAGING":
+                        used_nodes.append(str(element['slave_id']))
+        return used_nodes
+    
+    # Obtains the mem and cpu used by the possible job that is in execution in the node "node_id"
+    def _obtain_cpu_mem_used(self, node_id):
+        used_cpu = 0
+        used_mem = 0
+        output = ""
+        try:
+            output = run_command(self._jobs)
+            json_data = json.loads(output)
+        except:
+            _LOGGER.error("could not obtain information about MESOS jobs (%s)" % (output))
+            return None
+    
+        if json_data:
+            for _, details in json_data.items():
+                for element in details:
+                    if str(element['slave_id']) == node_id and str(element['state']) == "TASK_RUNNING":
+                        used_cpu = float(element['resources']['cpus'])
+                        used_mem = element['resources']['mem'] * 1048576
+        
+        return used_cpu, used_mem
+    
+            
+    # Determines the equivalent state between Mesos slaves and Clues2 possible node states
+    @staticmethod
+    def _infer_clues_node_state(id, state, used_nodes):
+        # MESOS node states: active=true || active=false
+        # CLUES2 node states: ERROR, UNKNOWN, IDLE, USED, OFF
+    
+        res_state = ""
+    
+        if state and id not in used_nodes:
+            res_state = NodeInfo.IDLE
+        elif state and id in used_nodes:
+            res_state = NodeInfo.USED
+        elif not state:
+            res_state = NodeInfo.OFF
+        else:
+            res_state = NodeInfo.UNKNOWN
+        
+        return res_state
+    
+    # Determines the equivalent state between Mesos tasks and Clues2 possible job states
+    @staticmethod
+    def _infer_clues_job_state(state):
+        # MESOS job states: TASK_RUNNING, TASK_PENDING, TASK_KILLED, TASK_FINISHED (TODO: check if there are more possible states)
+        # CLUES2 job states: ATTENDED o PENDING
+        res_state = ""
+    
+        if state == 'TASK_PENDING':
+            res_state = clueslib.request.Request.PENDING
+        else:
+            res_state = clueslib.request.Request.ATTENDED
+    
+        return res_state
+    
+    # Determines the equivalent state between Chronos jobs and Clues2 possible job states
+    @staticmethod
+    def _infer_chronos_state(state):
+        # CHRONOS job states: idle,running,queued,failed,started,finished,disabled,skipped,expired,removed (TODO: check if there are more possible states)
+        # CLUES2 job states: ATTENDED o PENDING
+        res_state = ""
+        if state == 'queued': # or state == 'idle':
+            res_state = clueslib.request.Request.PENDING
+        else:
+            res_state = clueslib.request.Request.ATTENDED
+        return res_state
+    
+    # Method to obtain the slave where the chronos job is executed
+    def _obtain_chronosjob_node(self, job_id):
+        output = " "
+        nodes = []
+        try:
+            output = run_command(self._jobs)
+            json_data = json.loads(output)
+        except:
+            _LOGGER.warning("could not obtain information about Mesos tasks (%s)" % (output))
+            return None
+    
+        job = "ChronosTask:" + job_id
+        if json_data:
+            for job, details in json_data.items():
+                for element in details:
+                    jobname = str(element['name'])
+                    if jobname == job:
+                        node_id = str(element['slave_id'])
+                        try:
+                            output = run_command(self._nodes)
+                            json_data2 = json.loads(output)
+                        except:
+                            _LOGGER.warning("could not obtain information about MESOS nodes (%s)" % (output))
+                        return None
+                        if json_data2:
+                            for _, det in json_data2.items():
+                                for element in det:
+                                    if element['id'] == node_id:
+                                        nodes.append(element['hostname'])
+                        
+        return nodes
+
     # Method in charge of monitoring the job queue of Chronos
     def _get_chronos_jobinfolist(self):
-        exit = " "
+        output = " "
         jobinfolist = []
         try:
-            exit = run_command(self._chronos)
-            json_data = json.loads(exit)
+            output = run_command(self._chronos)
+            json_data = json.loads(output)
         except:
-            _LOGGER.warning("could not obtain information about Chronos %s (%s)" % (self._server_ip, exit))
+            _LOGGER.warning("could not obtain information about Chronos %s (%s)" % (self._server_ip, output))
             return None
 
         # process the exit of the chronos command 
@@ -205,7 +222,7 @@ class lrms(clueslib.platform.LRMS):
                 job_id = job['name']
                 # When the job is running, the name received in mesos is "ChronosTask:<chronosJobName>"
                 # TODO: call Mesos: hacer un metodo que para un nombre de trabajo devuelva el nodo en el que se ejecuta
-                nodes = obtain_chronosjob_node(job_id)
+                nodes = self._obtain_chronosjob_node(job_id)
                 #nodes = []
                 state = ""
                 numnodes = 1;
@@ -224,7 +241,7 @@ class lrms(clueslib.platform.LRMS):
                         if e != '':
                             exit2_split = e.split(",")
                             if exit2_split[1] == job_id:
-                                state = infer_chronos_state(exit2_split[3])
+                                state = self._infer_chronos_state(exit2_split[3])
                 except:
                     _LOGGER.warning("could not obtain information about CHRONOS job state %s (%s)" % (self._server_ip, exit))
                     return None
@@ -337,13 +354,13 @@ class lrms(clueslib.platform.LRMS):
             ]
         }'''
 
-        exit = " "
+        output = " "
         try:
-            exit = run_command(self._nodes)
-            json_data = json.loads(exit)
+            output = run_command(self._nodes)
+            json_data = json.loads(output)
             infile = open('/etc/clues2/mesos_vnodes.info', 'r')
         except:
-            _LOGGER.error("could not obtain information about MESOS nodes %s (%s)" % (self._server_ip, exit))
+            _LOGGER.error("could not obtain information about MESOS nodes %s (%s)" % (self._server_ip, output))
             return None
 
         for line in infile:
@@ -370,16 +387,16 @@ class lrms(clueslib.platform.LRMS):
 
         if json_data:
             for node, details in json_data.items():
-                used_nodes = obtain_used_nodes()
+                used_nodes = self._obtain_used_nodes()
                 for element in details:
                     name = element['hostname']
                     for node in nodeinfolist:
                         if name == nodeinfolist[node].name:
-                            state = infer_clues_node_state(element["id"], element["active"], used_nodes)
+                            state = self._infer_clues_node_state(element["id"], element["active"], used_nodes)
                             slots_count = float(element['resources']['cpus'])
                             memory_total = element['resources']['mem'] * 1048576
                             
-                            used_cpu, used_mem = obtain_cpu_mem_used(element["id"])
+                            used_cpu, used_mem = self._obtain_cpu_mem_used(element["id"])
                             slots_free = slots_count - used_cpu
                             memory_free = memory_total - used_mem
 
@@ -448,7 +465,7 @@ class lrms(clueslib.platform.LRMS):
             for job, details in json_data.items():
                 for element in details:
                     job_id = element['id']
-                    state = infer_clues_job_state(str(element['state']))
+                    state = self._infer_clues_job_state(str(element['state']))
                     nodes = []
                     nodes.append(str(element['slave_id']))
                     numnodes = 1;
@@ -483,7 +500,7 @@ class lrms(clueslib.platform.LRMS):
                                     cpus_per_task = 1
                                 if len(tasks) != 0:
                                     for t in tasks:
-                                        state = infer_clues_job_state(str(t['state']))
+                                        state = self._infer_clues_job_state(str(t['state']))
                                         node_id = str(t['slave_id'])
                                         try:
                                             exit2 = run_command(self._nodes)
