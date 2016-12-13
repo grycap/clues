@@ -71,19 +71,6 @@ def run_command(command):
     except Exception as e:
         raise Exception("Error executing '%s': %s" % (" ".join(command), str(e)))
 
-<<<<<<< HEAD
-=======
-# Obtains the list of jobs and identifies the nodes that are in "USED" state (jobs in state "TASK_RUNNING")
-def obtain_used_nodes():
-    exit = " "
-    used_nodes = []
-    try:
-        exit = run_command("/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json".split(" "))
-        json_data = json.loads(exit)
-    except:
-        _LOGGER.error("could not obtain information about MESOS jobs (%s)" % (exit))
-        return []
->>>>>>> 53ea021820bacf15479df2b1dcc98a700dde15dd
 
 class lrms(clueslib.platform.LRMS):
 
