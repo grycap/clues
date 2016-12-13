@@ -32,7 +32,7 @@ _LOGGER = Log("PLUGIN-MESOS")
 
 def run_command(command):
     if command:
-        _LOGGER.debug("Executing command: '" + str(" ".join(command)) + "'")
+        # _LOGGER.debug("Executing command: '" + str(" ".join(command)) + "'")
         try:
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if process:
