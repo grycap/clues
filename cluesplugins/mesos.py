@@ -80,7 +80,7 @@ def obtain_used_nodes():
         json_data = json.loads(exit)
     except:
         _LOGGER.error("could not obtain information about MESOS jobs (%s)" % (exit))
-        return None
+        return []
 
     if json_data:
         for job, details in json_data.items():
