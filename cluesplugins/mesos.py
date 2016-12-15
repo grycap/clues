@@ -127,15 +127,15 @@ class lrms(LRMS):
     def _obtain_mesos_jobs(self):
         '''Obtains the list of jobs in Mesos'''
     	try:
-        	return curl_command(self._jobs, self._server_ip, "Could not obtain information about MESOS jobs")
-		except Exception as exception:
+            return curl_command(self._jobs, self._server_ip, "Could not obtain information about MESOS jobs")
+        except Exception as exception:
             _LOGGER.error("Could not obtain information about MESOS jobs")
 
     def _obtain_mesos_nodes(self):
         '''Obtains the list of nodes in Mesos'''
     	try:
-        	return curl_command(self._nodes, self._server_ip, "Could not obtain information about MESOS nodes")
-		except Exception as exception:
+            return curl_command(self._nodes, self._server_ip, "Could not obtain information about MESOS nodes")
+	except Exception as exception:
             _LOGGER.error("Could not obtain information about MESOS nodes")        
 
     def _obtain_chronos_jobs(self):
@@ -147,23 +147,23 @@ class lrms(LRMS):
 
     def _obtain_chronos_jobs_state(self):
         '''Obtains the list of states for the jobs in Chronos'''
-		try:    	
-        	return curl_command(self._chronos_state, self._server_ip,
+	try:    	
+            return curl_command(self._chronos_state, self._server_ip,
                             "Could not obtain information about the state of the Chronos jobs", False)
-		except Exception as exception:
+	except Exception as exception:
             _LOGGER.error("Could not obtain information about the state of the Chronos jobs")         	
 
     def _obtain_marathon_jobs(self):
         '''Obtains the list of jobs in Marathon'''
         try:
-        	return curl_command(self._marathon, self._server_ip, "Could not obtain information about the Marathon jobs")
+            return curl_command(self._marathon, self._server_ip, "Could not obtain information about the Marathon jobs")
         except Exception as exception:
             _LOGGER.error("Could not obtain information about the Marathon jobs")
 
     def _obtain_mesos_state(self):
         '''Obtains the state of the Mesos server'''
     	try:
-        	return curl_command(self._state, self._server_ip, "Could not obtain information about the MESOS state")
+            return curl_command(self._state, self._server_ip, "Could not obtain information about the MESOS state")
         except Exception as exception:
             _LOGGER.error("Could not obtain information about the MESOS state")
 
