@@ -34,7 +34,8 @@ def run_command(command):
     if command:
         # _LOGGER.debug("Executing command: '" + str(" ".join(command)) + "'")
         try:
-            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(
+                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if process:
                 (out, err) = process.communicate()
                 if process.returncode != 0:
@@ -45,7 +46,8 @@ def run_command(command):
                     raise Exception(message)
                 return out
         except Exception as excp:
-            message = "ERROR_EXECUTING_COMMAND=" + str(" ".join(command)) + ";" + str(excp)
+            message = "ERROR_EXECUTING_COMMAND=" + \
+                str(" ".join(command)) + ";" + str(excp)
             _LOGGER.error(message)
             raise Exception(message)
 
@@ -60,7 +62,7 @@ def curl_command(command, server_ip, error_message, is_json=True):
                 return result
     except Exception as exception:
         message = str(exception) + ';ERROR=' + error_message.rstrip('\n') + ';SERVER_IP=' + \
-                server_ip.rstrip('\n')
+            server_ip.rstrip('\n')
         if result:
             message += ';COMMAND_OUTPUT=' + result.rstrip('\n') + ''
         _LOGGER.error(message)
@@ -124,29 +126,46 @@ class lrms(LRMS):
 
     def _obtain_mesos_jobs(self):
         '''Obtains the list of jobs in Mesos'''
-        return curl_command(self._jobs, self._server_ip, "Could not obtain information about MESOS jobs")
+    	try:
+        	return curl_command(self._jobs, self._server_ip, "Could not obtain information about MESOS jobs")
+		except Exception as exception:
+            _LOGGER.error("Could not obtain information about MESOS jobs")
 
     def _obtain_mesos_nodes(self):
         '''Obtains the list of nodes in Mesos'''
-        return curl_command(self._nodes, self._server_ip, "Could not obtain information about MESOS nodes")
+    	try:
+        	return curl_command(self._nodes, self._server_ip, "Could not obtain information about MESOS nodes")
+		except Exception as exception:
+            _LOGGER.error("Could not obtain information about MESOS nodes")        
 
     def _obtain_chronos_jobs(self):
         '''Obtains the list of jobs in Chronos'''
-        return curl_command(self._chronos, self._server_ip, "Could not obtain information about Chronos jobs")
+        try:
+            return curl_command(self._chronos, self._server_ip, "Could not obtain information about Chronos jobs")
+        except Exception as exception:
+            _LOGGER.error("Could not obtain information about Chronos jobs")
 
     def _obtain_chronos_jobs_state(self):
         '''Obtains the list of states for the jobs in Chronos'''
-        return curl_command(self._chronos_state, self._server_ip,
+		try:    	
+        	return curl_command(self._chronos_state, self._server_ip,
                             "Could not obtain information about the state of the Chronos jobs", False)
+		except Exception as exception:
+            _LOGGER.error("Could not obtain information about the state of the Chronos jobs")         	
 
     def _obtain_marathon_jobs(self):
         '''Obtains the list of jobs in Marathon'''
-        _LOGGER.debug("Obtaining marathon jobs")
-        return curl_command(self._marathon, self._server_ip, "Could not obtain information about Marathon jobs")
+        try:
+        	return curl_command(self._marathon, self._server_ip, "Could not obtain information about the Marathon jobs")
+        except Exception as exception:
+            _LOGGER.error("Could not obtain information about the Marathon jobs")
 
     def _obtain_mesos_state(self):
         '''Obtains the state of the Mesos server'''
-        return curl_command(self._state, self._server_ip, "Could not obtain information about MESOS state")
+    	try:
+        	return curl_command(self._state, self._server_ip, "Could not obtain information about the MESOS state")
+        except Exception as exception:
+            _LOGGER.error("Could not obtain information about the MESOS state")
 
     def _obtain_mesos_used_nodes(self):
         '''Identifies the nodes that are in "USED" state (jobs in state "TASK_RUNNING")'''
@@ -171,7 +190,8 @@ class lrms(LRMS):
             for mesos_job in mesos_jobs['tasks']:
                 if mesos_job['slave_id'] == slave_id and mesos_job['state'] == "TASK_RUNNING":
                     used_cpu = float(mesos_job['resources']['cpus'])
-                    used_mem = calculate_memory_bytes(mesos_job['resources']['mem'])
+                    used_mem = calculate_memory_bytes(
+                        mesos_job['resources']['mem'])
 
         return used_cpu, used_mem
 
@@ -188,7 +208,8 @@ class lrms(LRMS):
                     if mesos_nodes:
                         for mesos_node in mesos_nodes['slaves']:
                             if mesos_node['id'] == mesos_job['slave_id']:
-                                chronos_nodes_hostname.append(mesos_node['hostname'])
+                                chronos_nodes_hostname.append(
+                                    mesos_node['hostname'])
 
         return chronos_nodes_hostname
 
@@ -221,7 +242,8 @@ class lrms(LRMS):
 
         for chronos_job in chronos_jobs:
             job_id = chronos_job['name']
-            # When the chronos_job is running, the name received in mesos is "ChronosTask:<chronosJobName>"
+            # When the chronos_job is running, the name received in mesos is
+            # "ChronosTask:<chronosJobName>"
             nodes = self._obtain_chronos_jobs_nodes(job_id)
             numnodes = 1
             memory = calculate_memory_bytes(chronos_job['mem'])
@@ -229,7 +251,8 @@ class lrms(LRMS):
                 memory = 536870912
             cpus_per_task = float(chronos_job['cpus'])
             # Ask chronos the current chronos_job_state of the chronos_job <name>
-            # We obtain something like "type,jobName,lastRunStatus,currentState" for each chronos_job
+            # We obtain something like
+            # "type,jobName,lastRunStatus,currentState" for each chronos_job
             chronos_job_state = self._obtain_chronos_job_state(job_id)
             jobinfolist = self._update_job_info_list(jobinfolist,
                                                      cpus_per_task, memory, numnodes,
@@ -257,7 +280,8 @@ class lrms(LRMS):
                         for task in tasks:
                             nodes.append(task['host'])
                     numnodes = job_attributes['instances']
-                    marathon_job_state = infer_marathon_job_state(tasks, job_attributes['tasksRunning'])
+                    marathon_job_state = infer_marathon_job_state(
+                        tasks, job_attributes['tasksRunning'])
                     jobinfolist = self._update_job_info_list(jobinfolist,
                                                              cpus_per_task, memory, numnodes,
                                                              job_id, nodes, marathon_job_state)
@@ -286,13 +310,20 @@ class lrms(LRMS):
             }
         )
 
-        self._server_ip = Helpers.val_default(MESOS_SERVER, config_mesos.MESOS_SERVER)
-        self._nodes = Helpers.val_default(MESOS_NODES_COMMAND, config_mesos.MESOS_NODES_COMMAND)
-        self._state = Helpers.val_default(MESOS_STATE_COMMAND, config_mesos.MESOS_STATE_COMMAND)
-        self._jobs = Helpers.val_default(MESOS_JOBS_COMMAND, config_mesos.MESOS_JOBS_COMMAND)
-        self._marathon = Helpers.val_default(MESOS_MARATHON_COMMAND, config_mesos.MESOS_MARATHON_COMMAND)
-        self._chronos = Helpers.val_default(MESOS_CHRONOS_COMMAND, config_mesos.MESOS_CHRONOS_COMMAND)
-        self._chronos_state = Helpers.val_default(MESOS_CHRONOS_STATE_COMMAND, config_mesos.MESOS_CHRONOS_STATE_COMMAND)
+        self._server_ip = Helpers.val_default(
+            MESOS_SERVER, config_mesos.MESOS_SERVER)
+        self._nodes = Helpers.val_default(
+            MESOS_NODES_COMMAND, config_mesos.MESOS_NODES_COMMAND)
+        self._state = Helpers.val_default(
+            MESOS_STATE_COMMAND, config_mesos.MESOS_STATE_COMMAND)
+        self._jobs = Helpers.val_default(
+            MESOS_JOBS_COMMAND, config_mesos.MESOS_JOBS_COMMAND)
+        self._marathon = Helpers.val_default(
+            MESOS_MARATHON_COMMAND, config_mesos.MESOS_MARATHON_COMMAND)
+        self._chronos = Helpers.val_default(
+            MESOS_CHRONOS_COMMAND, config_mesos.MESOS_CHRONOS_COMMAND)
+        self._chronos_state = Helpers.val_default(
+            MESOS_CHRONOS_STATE_COMMAND, config_mesos.MESOS_CHRONOS_STATE_COMMAND)
         LRMS.__init__(self, "MESOS_%s" % self._server_ip)
 
     def get_nodeinfolist(self):
@@ -313,9 +344,11 @@ class lrms(LRMS):
                 keywords['hostname'] = TypedClass.auto(name)
                 queues = ["default"]
                 if queues:
-                    keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                    keywords['queues'] = TypedList(
+                        [TypedClass.auto(q) for q in queues])
 
-                nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
+                nodeinfolist[name] = NodeInfo(
+                    name, slots_count, slots_free, memory_total, memory_free, keywords)
                 nodeinfolist[name].state = state
             infile.close()
 
@@ -327,11 +360,15 @@ class lrms(LRMS):
                 if nodeinfolist:
                     for node in nodeinfolist:
                         if name == nodeinfolist[node].name:
-                            state = infer_clues_node_state(mesos_slave["id"], mesos_slave["active"], used_nodes)
-                            slots_count = float(mesos_slave['resources']['cpus'])
-                            memory_total = calculate_memory_bytes(mesos_slave['resources']['mem'])
+                            state = infer_clues_node_state(
+                                mesos_slave["id"], mesos_slave["active"], used_nodes)
+                            slots_count = float(
+                                mesos_slave['resources']['cpus'])
+                            memory_total = calculate_memory_bytes(
+                                mesos_slave['resources']['mem'])
 
-                            used_cpu, used_mem = self._obtain_cpu_mem_used_in_mesos_node(mesos_slave["id"])
+                            used_cpu, used_mem = self._obtain_cpu_mem_used_in_mesos_node(
+                                mesos_slave["id"])
                             slots_free = slots_count - used_cpu
                             memory_free = memory_total - used_mem
 
@@ -340,7 +377,8 @@ class lrms(LRMS):
                             keywords['hostname'] = TypedClass.auto(name)
                             queues = ["default"]
                             if queues:
-                                keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                                keywords['queues'] = TypedList(
+                                    [TypedClass.auto(q) for q in queues])
 
                             nodeinfolist[name] = NodeInfo(
                                 name, slots_count, slots_free, memory_total, memory_free, keywords)
@@ -367,7 +405,8 @@ class lrms(LRMS):
                         nodes = []
                         numnodes = 1
                         mesos_job_state = Request.PENDING
-                        memory = calculate_memory_bytes(framework['resources']['mem'])
+                        memory = calculate_memory_bytes(
+                            framework['resources']['mem'])
                         if memory <= 0:
                             memory = 536870912
                         cpus_per_task = float(framework['resources']['cpus'])
@@ -377,7 +416,8 @@ class lrms(LRMS):
                         tasks = framework['tasks']
                         if tasks:
                             for task in tasks:
-                                mesos_job_state = infer_mesos_job_state(task['state'])
+                                mesos_job_state = infer_mesos_job_state(
+                                    task['state'])
                                 node_id = task['slave_id']
 
                                 mesos_nodes = self._obtain_mesos_nodes()
