@@ -239,24 +239,24 @@ class lrms(LRMS):
         '''Method in charge of monitoring the chronos_job queue of Chronos'''
         jobinfolist = []
         chronos_jobs = self._obtain_chronos_jobs()
-
-        for chronos_job in chronos_jobs:
-            job_id = chronos_job['name']
-            # When the chronos_job is running, the name received in mesos is
-            # "ChronosTask:<chronosJobName>"
-            nodes = self._obtain_chronos_jobs_nodes(job_id)
-            numnodes = 1
-            memory = calculate_memory_bytes(chronos_job['mem'])
-            if memory <= 0:
-                memory = 536870912
-            cpus_per_task = float(chronos_job['cpus'])
-            # Ask chronos the current chronos_job_state of the chronos_job <name>
-            # We obtain something like
-            # "type,jobName,lastRunStatus,currentState" for each chronos_job
-            chronos_job_state = self._obtain_chronos_job_state(job_id)
-            jobinfolist = self._update_job_info_list(jobinfolist,
-                                                     cpus_per_task, memory, numnodes,
-                                                     job_id, nodes, chronos_job_state)
+        if chronos_jobs:
+            for chronos_job in chronos_jobs:
+                job_id = chronos_job['name']
+                # When the chronos_job is running, the name received in mesos is
+                # "ChronosTask:<chronosJobName>"
+                nodes = self._obtain_chronos_jobs_nodes(job_id)
+                numnodes = 1
+                memory = calculate_memory_bytes(chronos_job['mem'])
+                if memory <= 0:
+                    memory = 536870912
+                cpus_per_task = float(chronos_job['cpus'])
+                # Ask chronos the current chronos_job_state of the chronos_job <name>
+                # We obtain something like
+                # "type,jobName,lastRunStatus,currentState" for each chronos_job
+                chronos_job_state = self._obtain_chronos_job_state(job_id)
+                jobinfolist = self._update_job_info_list(jobinfolist,
+                                                         cpus_per_task, memory, numnodes,
+                                                         job_id, nodes, chronos_job_state)
         return jobinfolist
 
     def _get_marathon_jobinfolist(self):
