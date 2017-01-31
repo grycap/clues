@@ -98,7 +98,7 @@ def infer_clues_node_state(self, state):
         res_state = NodeInfo.ERROR
     elif state == 'DOWN' or state == 'DRAIN' or state == 'MAINT':
         res_state = NodeInfo.OFF
-    elif state == 'ALLOCATED' or state == 'ALLOC' or state == 'COMPLETING':
+    elif state == 'ALLOCATED' or state == 'ALLOC' or state == 'COMPLETING' or state == 'MIXED':
         res_state = NodeInfo.USED
     else:
         res_state = NodeInfo.OFF
