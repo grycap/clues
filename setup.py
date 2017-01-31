@@ -102,6 +102,6 @@ setup(name='CLUES',
             ])
         ],
       scripts = [ 'clues', 'cluesserver', 'addons/pbs/clues-pbs-wrapper', 'addons/one/clues-one-wrapper', 'addons/sge/clues-sge-wrapper', 'addons/slurm/clues-slurm-wrapper' ],
-      # requires = [ 'cluesonebindings (>= 0.1)' ],
+      requires = [ 'cpyutils (>= 0.24)' ],
       cmdclass={'install': my_install}
 )

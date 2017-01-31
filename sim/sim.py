@@ -1,11 +1,8 @@
 import sys
-
-sys.path.append("/home/calfonso/Programacion/git/")
-sys.path.append("/home/calfonso/Programacion/git/clues/")
 import clues.configserver as configserver
 
 import cpyutils.eventloop
-import clueslib.platform
+import clues.clueslib.platform
 import cpyutils.log
 import clues.configcli as configcli
 
@@ -291,9 +288,9 @@ class NodePool():
     def nodenames(self):
         return self.nodes.keys()
 
-class PowerManager_dummy(clueslib.platform.PowerManager):
+class PowerManager_dummy(clues.clueslib.platform.PowerManager):
     def __init__(self, nodepool):
-        clueslib.platform.PowerManager.__init__(self)
+        clues.clueslib.platform.PowerManager.__init__(self)
         self.nodepool = nodepool
     def power_on(self, nname):
         # print nname
@@ -305,7 +302,7 @@ class PowerManager_dummy(clueslib.platform.PowerManager):
             return self.nodepool[nname].power_off(), nname
         return False, nname
 
-class LRMS_FIFO(clueslib.platform.LRMS):
+class LRMS_FIFO(clues.clueslib.platform.LRMS):
     @staticmethod
     def _host_to_nodeinfo(h):
         if (h.state != 'free') and (h.total_slots == 0):
@@ -326,7 +323,7 @@ class LRMS_FIFO(clueslib.platform.LRMS):
         return ni
     
     def get_nodeinfolist(self):
-        from clueslib.node import NodeInfo
+        from clues.clueslib.node import NodeInfo
         nodeinfolist = {}
         for node in self.nodepool:
             n_info = NodeInfo(node.name, node.total_cores, node.cores, node.total_memory, node.memory, {})
@@ -344,7 +341,7 @@ class LRMS_FIFO(clueslib.platform.LRMS):
         return nodeinfolist
     
     def __init__(self, nodepool):
-        clueslib.platform.LRMS.__init__(self, "LRMS-FIFO")
+        clues.clueslib.platform.LRMS.__init__(self, "LRMS-FIFO")
         self.nodepool = nodepool
         self.jobs = {}
         self.jobs_queue = []
@@ -549,7 +546,7 @@ def create_random_jobs(count):
 def queue_jobs(lrms):
     # cpyutils.eventloop.get_eventloop().limit_walltime(100)
     cpyutils.eventloop.get_eventloop().set_endless_loop(False)
-    cpyutils.eventloop.get_eventloop().limit_time_without_new_events(500)
+    cpyutils.eventloop.get_eventloop().limit_time_without_new_events(5000)
     
     jobs = [
         (1, Job(2, 512, 10)),
