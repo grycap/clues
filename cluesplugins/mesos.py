@@ -142,7 +142,6 @@ class lrms(LRMS):
 
     def _obtain_marathon_jobs(self):
         '''Obtains the list of jobs in Marathon'''
-        _LOGGER.debug("Obtaining marathon jobs")
         return curl_command(self._marathon, self._server_ip, "Could not obtain information about Marathon jobs")
 
     def _obtain_mesos_state(self):
