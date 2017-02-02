@@ -125,11 +125,11 @@ class lrms(LRMS):
 
     def _obtain_mesos_jobs(self):
         '''Obtains the list of jobs in Mesos'''
-    	return curl_command(self._jobs, self._server_ip, "Could not obtain information about MESOS jobs")
+        return curl_command(self._jobs, self._server_ip, "Could not obtain information about MESOS jobs")
 
     def _obtain_mesos_nodes(self):
         '''Obtains the list of nodes in Mesos'''
-    	return curl_command(self._nodes, self._server_ip, "Could not obtain information about MESOS nodes")
+        return curl_command(self._nodes, self._server_ip, "Could not obtain information about MESOS nodes")
 
     def _obtain_chronos_jobs(self):
         '''Obtains the list of jobs in Chronos'''
@@ -137,7 +137,7 @@ class lrms(LRMS):
 
     def _obtain_chronos_jobs_state(self):
         '''Obtains the list of states for the jobs in Chronos'''
-	    return curl_command(self._chronos_state, self._server_ip,
+        return curl_command(self._chronos_state, self._server_ip,
                             "Could not obtain information about the state of the Chronos jobs", False)
 
     def _obtain_marathon_jobs(self):
