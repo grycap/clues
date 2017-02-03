@@ -157,7 +157,8 @@ class lrms(LRMS):
             for mesos_job in mesos_jobs['tasks']:
                 state = mesos_job['state']
                 if state == "TASK_RUNNING" or state == "TASK_STAGING":
-                    used_nodes.append(mesos_job['slave_id'])
+                    if mesos_job['slave_id'] not in used_nodes:
+                        used_nodes.append(mesos_job['slave_id'])
 
         return used_nodes
 
@@ -170,8 +171,8 @@ class lrms(LRMS):
         if mesos_jobs:
             for mesos_job in mesos_jobs['tasks']:
                 if mesos_job['slave_id'] == slave_id and mesos_job['state'] == "TASK_RUNNING":
-                    used_cpu = float(mesos_job['resources']['cpus'])
-                    used_mem = calculate_memory_bytes(mesos_job['resources']['mem'])
+                    used_cpu += float(mesos_job['resources']['cpus'])
+                    used_mem += calculate_memory_bytes(mesos_job['resources']['mem'])
 
         return used_cpu, used_mem
 
@@ -264,7 +265,8 @@ class lrms(LRMS):
         return jobinfolist
 
     def __init__(self, MESOS_SERVER=None, MESOS_NODES_COMMAND=None, MESOS_STATE_COMMAND=None, MESOS_JOBS_COMMAND=None,
-                 MESOS_MARATHON_COMMAND=None, MESOS_CHRONOS_COMMAND=None, MESOS_CHRONOS_STATE_COMMAND=None):
+                 MESOS_MARATHON_COMMAND=None, MESOS_CHRONOS_COMMAND=None, MESOS_CHRONOS_STATE_COMMAND=None,
+                 MESOS_NODE_MEMORY=None, MESOS_NODE_SLOTS=None):
 
         config_mesos = cpyutils.config.Configuration(
             "MESOS",
@@ -282,7 +284,9 @@ class lrms(LRMS):
                 "MESOS_CHRONOS_COMMAND":
                 "/usr/bin/curl -L -X GET http://mesosserverpublic:4400/scheduler/jobs",
                 "MESOS_CHRONOS_STATE_COMMAND":
-                "/usr/bin/curl -L -X GET http://mesosserverpublic:4400/scheduler/graph/csv"
+                "/usr/bin/curl -L -X GET http://mesosserverpublic:4400/scheduler/graph/csv",
+                "MESOS_NODE_MEMORY": 1572864000,
+                "MESOS_NODE_SLOTS": 1,
             }
         )
 
@@ -293,6 +297,8 @@ class lrms(LRMS):
         self._marathon = Helpers.val_default(MESOS_MARATHON_COMMAND, config_mesos.MESOS_MARATHON_COMMAND)
         self._chronos = Helpers.val_default(MESOS_CHRONOS_COMMAND, config_mesos.MESOS_CHRONOS_COMMAND)
         self._chronos_state = Helpers.val_default(MESOS_CHRONOS_STATE_COMMAND, config_mesos.MESOS_CHRONOS_STATE_COMMAND)
+        self._node_memory = Helpers.val_default(MESOS_NODE_MEMORY, config_mesos.MESOS_NODE_MEMORY)
+        self._node_slots = Helpers.val_default(MESOS_NODE_SLOTS, config_mesos.MESOS_NODE_SLOTS)
         LRMS.__init__(self, "MESOS_%s" % self._server_ip)
 
     def get_nodeinfolist(self):
@@ -304,10 +310,10 @@ class lrms(LRMS):
                 state = NodeInfo.OFF
                 # Illustrative values for Clues, since the node is not running, we
                 # cannot know the real values
-                slots_count = 1
-                memory_total = 1572864000
-                slots_free = 1
-                memory_free = 1572864000
+                slots_count = self._node_slots
+                memory_total = self._node_memory
+                slots_free = self._node_slots
+                memory_free = self._node_memory
                 # Create a fake queue
                 keywords = {}
                 keywords['hostname'] = TypedClass.auto(name)
