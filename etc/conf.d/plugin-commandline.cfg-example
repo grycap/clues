@@ -1,0 +1,15 @@
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings for powering on or off nodes using an arbitrary commandline. If the commandline return exactly one word, it is assumed
+#  that it is the name of the node that has been powered on or off
+# 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[COMMANDLINE]
+# The file in /etc/hosts format that contains the correspondence of the SSH IP addresses to the host names in the LRMS
+COMMANDLINE_HOSTS_FILE=ipmi.hosts
+
+# The commandlines that must be used to power on and off the nodes (CLUES will subsitute the %s as the name of the node, using print function)
+#
+# * you can use %%a to substitute the MAC address and %%h to substitute the hostname
+COMMANDLINE_CMDLINE_POWON=poweron %%h
+COMMANDLINE_CMDLINE_POWOFF=poweroff %%h

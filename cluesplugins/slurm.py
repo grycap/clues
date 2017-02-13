@@ -98,7 +98,7 @@ def infer_clues_node_state(self, state):
         res_state = NodeInfo.ERROR
     elif state == 'DOWN' or state == 'DRAIN' or state == 'MAINT':
         res_state = NodeInfo.OFF
-    elif state == 'ALLOCATED' or state == 'ALLOC' or state == 'COMPLETING':
+    elif state == 'ALLOCATED' or state == 'ALLOC' or state == 'COMPLETING' or state == 'MIXED':
         res_state = NodeInfo.USED
     else:
         res_state = NodeInfo.OFF
@@ -221,7 +221,7 @@ class lrms(clueslib.platform.LRMS):
                 keywords = {}
                 queues = get_partition(self, name)
                 keywords['hostname'] = TypedClass.auto(name)
-                if len(queues) > 0:
+                if queues:
                     keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
                     
                 nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)

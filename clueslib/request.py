@@ -115,12 +115,6 @@ class _Request():
         retval = "[REQUEST %s] state: %s@%.2f; resources: %s; attended @%.2f; job id: %s; " % (self.id, self.STATE2STR[self.state], self.timestamp_state, self.resources, self.timestamp_attended, self.job_id)
         return retval
 
-    @staticmethod
-    def create_from_jobinfo(job_info):
-        res = _Request(job_info.resources, job_info.job_id, job_info.job_nodes_ids)
-        res.set_state(job_info.state)
-        return res
-
 class Request(_Request):
     _ID = 0
     @staticmethod
@@ -130,6 +124,12 @@ class Request(_Request):
 
     def __init__(self, resources, job_id = None, job_nodes = []):
         _Request.__init__(self, resources, job_id, job_nodes, Request._get_id())
+
+    @staticmethod
+    def create_from_jobinfo(job_info):
+        res = Request(job_info.resources, job_info.job_id, job_info.job_nodes_ids)
+        res.set_state(job_info.state)
+        return res
 
 class JobInfo():
     def __init__(self, resources, job_id, nodes_ids):
