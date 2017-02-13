@@ -80,6 +80,7 @@ class powermanager(PowerManager):
 		self._IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS = config_im.IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS
 		# Structure for the recovery of nodes
 		self._mvs_seen = {}
+		self._stopped_vms = {}
 		self._inf_id = None
 
 	def _get_inf_id(self):
@@ -249,15 +250,15 @@ class powermanager(PowerManager):
 					success = False
 					_LOGGER.exception("ERROR getting VM info: %s" % vm_id)
 
-				if clues_node_name:
+				if clues_node_name and state not in [VirtualMachine.STOPPED]:
 					# Create or update VM info
 					if clues_node_name not in self._mvs_seen:
 						self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
 					else:
- 						if self._mvs_seen[clues_node_name].vm_id != vm_id:
- 							# this must not happen ...
- 							_LOGGER.warning("Node %s in VM with id %s now have a new ID: %s" % (clues_node_name, self._mvs_seen[clues_node_name].vm_id, vm_id))
- 							self.power_off(clues_node_name)
+						if self._mvs_seen[clues_node_name].vm_id != vm_id:
+							# this must not happen ...
+							_LOGGER.warning("Node %s in VM with id %s now have a new ID: %s" % (clues_node_name, self._mvs_seen[clues_node_name].vm_id, vm_id))
+							self.power_off(clues_node_name)
 						self._mvs_seen[clues_node_name].update(vm_id, radl)
 					
 					self._mvs_seen[clues_node_name].seen()
@@ -276,7 +277,11 @@ class powermanager(PowerManager):
 						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
 						_LOGGER.warning("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
 				else:
-					_LOGGER.warning("VM with id %s does not have dns_name specified: %s" % vm_id)
+					if state not in [VirtualMachine.STOPPED]:
+						_LOGGER.warning("VM with id %s does not have dns_name specified." % vm_id)
+					else:
+						continue
+						#_LOGGER.debug("Node %s with VM with id %s is stopped." % (clues_node_name, vm_id))                         
 
 		# from the nodes that we have powered on, check which of them are still running
 		for nname, node in self._mvs_seen.items():
@@ -298,27 +303,37 @@ class powermanager(PowerManager):
 				_LOGGER.warning("Trying to launch an existing node %s. Ignoring it." % nname)
 				return True, nname
 			
+			ec3_reuse_nodes = False
+			if len(self._stopped_vms) > 0:
+				if self._stopped_vms.get(nname):
+					ec3_reuse_nodes = True
+					vm = self._stopped_vms.get(nname)
+					#ec3_reuse_nodes = vm.radl.systems[0].getValue('ec3_reuse_nodes', 0)
+			
 			server = self._get_server()
-			radl_data = self._get_radl(nname)
-			if radl_data:
-				_LOGGER.debug("RADL to launch node %s: %s" % (nname, radl_data))
-				auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
-				(success, vms_id) = server.AddResource(self._get_inf_id(), radl_data, auth_data)
+			auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
+			if ec3_reuse_nodes:
+				(success, vms_id) = server.StartVM(self._get_inf_id(), vm.vm_id, auth_data)
 			else:
-				_LOGGER.error("RADL to launch node %s is empty!!" % nname)
+				radl_data = self._get_radl(nname)
+				if radl_data:
+					_LOGGER.debug("RADL to launch/restart node %s: %s" % (nname, radl_data))
+					(success, vms_id) = server.AddResource(self._get_inf_id(), radl_data, auth_data)
+				else:
+					_LOGGER.error("RADL to launch node %s is empty!!" % nname)
 		except:
-			_LOGGER.exception("Error launching node %s " % nname)
+			_LOGGER.exception("Error launching/restarting node %s " % nname)
 			return False, nname
 
 		if success:
-			_LOGGER.debug("Node %s successfully created" % nname)
+			_LOGGER.debug("Node %s successfully created/restarted" % nname)
 		else:
 			_LOGGER.error("ERROR launching node %s: %s" % (nname, vms_id))
 		
 		return success, nname
 
 	def power_off(self, nname):
-		_LOGGER.debug("Powering off %s" % nname)
+		_LOGGER.debug("Powering off/stopping %s" % nname)
 		try:
 			server = self._get_server()
 			success = False
@@ -327,6 +342,7 @@ class powermanager(PowerManager):
 				vm = self._mvs_seen[nname]
 				ec3_destroy_interval = vm.radl.systems[0].getValue('ec3_destroy_interval', 0)
 				ec3_destroy_safe = vm.radl.systems[0].getValue('ec3_destroy_safe', 0)
+				ec3_reuse_nodes = vm.radl.systems[0].getValue('ec3_reuse_nodes', 0)
 				
 				poweroff = True
 				if ec3_destroy_interval > 0:
@@ -339,18 +355,26 @@ class powermanager(PowerManager):
 				
 				if poweroff:
 					auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
-					(success, vm_ids) = server.RemoveResource(self._get_inf_id(), vm.vm_id, auth_data)
-					if not success: 
-						_LOGGER.error("ERROR deleting node: %s: %s" % (nname,vm_ids))
-					elif vm_ids == 0:
-						_LOGGER.error("ERROR deleting node: %s. No VM has been deleted." % nname)
+					if ec3_reuse_nodes:
+						(success, vm_ids) = server.StopVM(self._get_inf_id(), vm.vm_id, auth_data)
+						self._stopped_vms[nname] = vm
+						if not success: 
+							_LOGGER.error("ERROR stopping node: %s: %s" % (nname,vm_ids))
+						elif vm_ids == 0:
+							_LOGGER.error("ERROR stopping node: %s. No VM has been stopped." % nname)
+					else:
+						(success, vm_ids) = server.RemoveResource(self._get_inf_id(), vm.vm_id, auth_data)
+						if not success: 
+							_LOGGER.error("ERROR deleting node: %s: %s" % (nname,vm_ids))
+						elif vm_ids == 0:
+							_LOGGER.error("ERROR deleting node: %s. No VM has been deleted." % nname)
 				else:
-					_LOGGER.debug("Not powering off node %s" % nname)
+					_LOGGER.debug("Not powering off/stopping node %s" % nname)
 					success = False
 			else:
 				_LOGGER.warning("There is not any VM associated to node %s (are IM credentials compatible to the VM?)" % nname)
 		except:
-			_LOGGER.exception("Error powering off node %s " % nname)
+			_LOGGER.exception("Error powering off/stopping node %s " % nname)
 			success = False
 			
 		return success, nname
@@ -410,3 +434,4 @@ class powermanager(PowerManager):
 			return Node.OFF
 		
 		return False
+
