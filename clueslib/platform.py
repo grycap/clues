@@ -21,6 +21,7 @@ import node
 import helpers
 import cpyutils.runcommand
 import configlib
+import collections
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("PLATFORM")
@@ -99,8 +100,8 @@ class LRMS:
     def get_id(self):
         return self._id
     def get_nodeinfolist(self):
-        node_list = {}
-        return {}
+        node_list = collections.OrderedDict()
+        return node_list
     def _attach_clues_system(self, clues_daemon):
         self._clues_daemon = clues_daemon
     def get_jobinfolist(self):

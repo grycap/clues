@@ -22,6 +22,7 @@ import logging
 import time
 import schedulers
 import helpers
+import collections
 from configlib import _CONFIGURATION_MONITORING, _CONFIGURATION_CLUES
 from node import Node, NodeList, NodeInfo
 from request import JobList, RequestList, Request
@@ -31,7 +32,7 @@ _LOGGER = cpyutils.log.Log("CLUES")
 
 class DBSystem_dummy(object):
     def __init__(self):
-        self._hosts = {}
+        self._hosts = collections.OrderedDict()
 
     def enable_host(self, host, enable = True):
         self._hosts[host]=enable
@@ -60,12 +61,12 @@ class DBSystem(DBSystem_dummy):
         self._connection_string = connection_string
         self._db = cpyutils.db.DB.create_from_string(connection_string)
         self._create_db()
-        self._hosts = {}
+        self._hosts = collections.OrderedDict()
         self._get_hosts()
 
     def _get_hosts(self):
         result, row_count, rows = self._db.sql_query("SELECT name, enabled from hostdata")
-        _hosts = {}
+        _hosts = collections.OrderedDict()
         if result:
             for (name, enabled) in rows:
                 _hosts[ name ] = helpers.str_to_bool(enabled)
@@ -110,7 +111,7 @@ class DBSystem(DBSystem_dummy):
         
     def retrieve_latest_monitoring_data(self):
         result, row_count, rows = self._db.sql_query("select max(timestamp), m.*, d.enabled from host_monitoring as m left join hostdata as d on m.name=d.name group by m.name")
-        _nodes = {}
+        _nodes = collections.OrderedDict()
         if result:
             for (timestamp, name, timestamp_state, slots_count, slots_free, memory_total, memory_free, state, _, _, enabled) in rows:
                 n = Node(name, slots_count, slots_free, memory_total, memory_free)
@@ -151,10 +152,10 @@ class MonitoringInfo():
         
         if lrms_nodelist is None:
             _LOGGER.warning("could not obtain the node list from the platform in the last %s seconds" % err_time)
-            lrms_nodelist = {}
+            lrms_nodelist = collections.OrderedDict()
         
         # Now we are updating the information about the nodes in the monitor
-        _lrms_nodelist = {}
+        _lrms_nodelist = collections.OrderedDict()
         for n_id, node in lrms_nodelist.items():
             _lrms_nodelist[n_id] = Node.create_from_nodeinfo(node.get_nodeinfo())
         
@@ -233,10 +234,10 @@ class CluesDaemon:
                 return
             
             _LOGGER.warning("could not obtain the node list from the platform in the last %s seconds" % err_time)
-            lrms_nodelist = {}
+            lrms_nodelist = collections.OrderedDict()
 
         if self._lrms_nodelist is None:
-            self._lrms_nodelist = {}
+            self._lrms_nodelist = collections.OrderedDict()
 
             node_str = ""
             for n_id, node in lrms_nodelist.items():
@@ -309,7 +310,7 @@ class CluesDaemon:
                 return
             
             _LOGGER.warning("could not obtain the job list from the platform in the last %s seconds" % err_time)
-            lrms_jobinfolist = {}
+            lrms_jobinfolist = collections.OrderedDict()
 
         # Now we are updating the items in the lrms_jobinfo
         if self._lrms_joblist is None:
@@ -492,7 +493,7 @@ class CluesDaemon:
             
         nodelist = NodeList(self._lrms_nodelist)
 
-        candidates_on = {}
+        candidates_on = collections.OrderedDict()
         candidates_off = []
         
         monitoring_info = MonitoringInfo(nodelist, self._timestamp_nodelist, self._lrms_joblist, self._timestamp_joblist)

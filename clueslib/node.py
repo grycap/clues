@@ -25,6 +25,7 @@ import cpyutils.evaluate
 import sys
 import helpers
 import cpyutils.eventloop
+import collections
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("NODE")
@@ -385,7 +386,7 @@ class Node(NodeInfo, helpers.SerializableXML):
 class NodeList():
     # This class will allow to filter node lists
     def __init__(self, nodelist):
-        self._nodeinfo = {}
+        self._nodeinfo = collections.OrderedDict()
         self._filtered_nodeinfo = None
         self._current_node = -1
         self._nodenames = []
@@ -445,7 +446,7 @@ class NodeList():
         return len(self._filtered_nodeinfo)
 
     def FILTER_reset(self):
-        self._filtered_nodeinfo = {}
+        self._filtered_nodeinfo = collections.OrderedDict()
         for n_id, node in self._nodeinfo.items():
             self._filtered_nodeinfo[n_id] = node
         
@@ -454,7 +455,7 @@ class NodeList():
         if filtered_nodeinfo is None:
             filtered_nodeinfo = self._nodeinfo
             
-        self._filtered_nodeinfo = {}
+        self._filtered_nodeinfo = collections.OrderedDict()
         for n_id, node in filtered_nodeinfo.items():
             # Let's perform the filtering using first the criteria that cost less
             if (enabled is not None) and (node.enabled != enabled): continue

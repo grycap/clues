@@ -22,6 +22,7 @@ from node import Node
 import request
 from request import Request
 import math
+import collections
 
 try:
     config_scheduling
@@ -325,7 +326,7 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
             _LOGGER.debug(str_debug)
 
     def schedule(self, requests_queue, monitoring_info, candidates_on, candidates_off):
-        local_candidates_on = {}
+        local_candidates_on = collections.OrderedDict()
         requests_alive = 0
         
         self._booking_system.make_books(monitoring_info, requests_queue)
