@@ -188,7 +188,7 @@ class CluesDaemon:
     def get_nodelist(self):
         if self._lrms_nodelist is not None:
             return NodeList(self._lrms_nodelist)
-        return NodeList({})
+        return NodeList(collections.OrderedDict())
 
     def get_node(self, nname):
         if self._lrms_nodelist is None:

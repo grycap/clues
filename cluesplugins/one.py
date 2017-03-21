@@ -24,7 +24,7 @@ import clueslib.helpers
 import clueslib.request
 from clueslib.platform import PowerManager_with_IPs
 from clueslib.node import Node, NodeInfo, NodeList
-
+import collections
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("PLUGIN-ONE")
@@ -321,7 +321,7 @@ class lrms_general(clueslib.platform.LRMS):
 
     def get_nodeinfolist(self):
         hosts = self._one.get_hosts()
-        nodeinfolist = {}
+        nodeinfolist = collections.OrderedDict()
         if hosts is not None:
             for host in hosts:
                 n_info = self._host_to_nodeinfo(host)

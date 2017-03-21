@@ -26,6 +26,7 @@ from clueslib.request import JobInfo, Request
 from cpyutils.xmlobject import XMLObject_KW, XMLObject
 import cpyutils.evaluate
 import re
+import collections
 
 try:
     _annie
@@ -437,7 +438,7 @@ class lrms(clueslib.platform.LRMS):
             return None
             
         hosts = _PBSNodes(out_command, queues_properties)
-        nodeinfolist = {}
+        nodeinfolist = collections.OrderedDict()
         
         if hosts is not None:
             for host in hosts.Node:

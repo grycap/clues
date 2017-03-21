@@ -23,6 +23,7 @@ from cpyutils.evaluate import TypedClass, TypedList
 from clueslib.node import NodeInfo
 from xml.dom.minidom import parseString
 import os
+import collections
 
 # TODO: check if information about nodes is properly set (check properties, queues and so on)
 import cpyutils.log
@@ -299,7 +300,7 @@ class lrms(clueslib.platform.LRMS):
 
 		hosts = dom.getElementsByTagName("host")
 	
-		nodeinfolist = {}
+		nodeinfolist = collections.OrderedDict()
 		for h in hosts:
 			hostname = h.getAttribute("name");
 			keywords = {}

@@ -23,7 +23,7 @@ import subprocess
 
 from clueslib.node import NodeInfo
 from cpyutils.evaluate import TypedClass, TypedList
-
+import collections
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("PLUGIN-SLURM")
@@ -189,7 +189,7 @@ class lrms(clueslib.platform.LRMS):
         clueslib.platform.LRMS.__init__(self, "SLURM_%s" % self._server_ip)
 
     def get_nodeinfolist(self):      
-        nodeinfolist = {}
+        nodeinfolist = collections.OrderedDict()
         
         '''Exit example of scontrol show nodes
         NodeName=wn0 Arch=x86_64 CoresPerSocket=1
