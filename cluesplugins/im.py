@@ -22,6 +22,7 @@ Created on 26/1/2015
 '''
 
 import xmlrpclib
+from uuid import uuid1
 
 from radl import radl_parse
 from IM.VirtualMachine import VirtualMachine
@@ -80,7 +81,9 @@ class powermanager(PowerManager):
 		self._IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS = config_im.IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS
 		# Structure for the recovery of nodes
 		self._mvs_seen = {}
+		# TODO: save this two vars into DB to be persistent
 		self._stopped_vms = {}
+		self._golden_images = {}
 		self._inf_id = None
 
 	def _get_inf_id(self):
@@ -96,9 +99,9 @@ class powermanager(PowerManager):
 					self._inf_id = inf_list[0]
 					return inf_list[0]
 				else:
-					_LOGGER.error("Error getting infrastruture list: No infrastructure!.")
+					_LOGGER.error("Error getting infrastructure list: No infrastructure!.")
 			else:
-				_LOGGER.error("Error getting infrastruture list: %s" % inf_list)
+				_LOGGER.error("Error getting infrastructure list: %s" % inf_list)
 				return None
 
 	def _get_server(self):
@@ -204,6 +207,8 @@ class powermanager(PowerManager):
 				system_orig.name = nname
 				system_orig.setValue("net_interface.0.dns_name", str(nname))
 				system_orig.setValue("ec3_class", current_system)
+				if current_system in self._golden_images:
+					system_orig.setValue("disk.0.image.url", self._golden_images[current_system])
 				new_radl += str(system_orig) + "\n"
 				
 				for configure in radl_all.configures:
@@ -409,6 +414,15 @@ class powermanager(PowerManager):
 									else:
 										_LOGGER.debug("node %s has been recently recovered %d seconds ago. Do not recover it yet." % (node.name, time_recovered))
 					else:
+						if node.state in [Node.IDLE, Node.USED]:
+							vm = vms[node.name]
+							# user request use of golden images
+							if vm.radl.systems[0].getValue("ec3_golden_images"):
+								ec3_class = vm.radl.systems[0].getValue("ec3_class")
+								# check if the image is in the list of saved images
+								if ec3_class not in self._golden_images:
+									# if not save it
+									self._save_golden_image(vm)
 						if node.name not in vms:
 							# This may happen because it is launched by hand using other credentials than those for the user used for IM (and he cannot manage the VMS)
 							_LOGGER.warning("node %s is detected by the monitoring system, but there is not any VM associated to it (are IM credentials compatible to the VM?)" % node.name)
@@ -435,3 +449,18 @@ class powermanager(PowerManager):
 		
 		return False
 
+	def _save_golden_image(self, vm):
+		success = False
+		try:
+			server = self._get_server()
+			auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
+			image_name = "im-%s" % str(uuid1())
+			(success, new_image) = server.CreateDiskSnapshot(self._get_inf_id(), vm.vm_id, 0, image_name, True, auth_data)
+			if success:
+				ec3_class = vm.radl.systems[0].getValue("ec3_class")
+				self._golden_images[ec3_class] = new_image
+			else:
+				_LOGGER.error("Error saving golden image: %s." % new_image)
+		except:
+			_LOGGER.exception("Error saving golden image.")
+		return success
