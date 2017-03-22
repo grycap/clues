@@ -603,7 +603,7 @@ class CLUES_Scheduler_PowOn_Free(CLUES_Scheduler):
             elif node.state in [ Node.OFF_ERR ]:
 
                 # TODO: check if the cooldown of nodes is fulfilled
-                if node.power_on_operation_failed < schedulers.config_scheduling.RETRIES_POWER_ON:
+                if node.power_on_operation_failed < config_scheduling.RETRIES_POWER_ON:
                     node_slots_free = max(0, node.slots_count)                      # When the resources are negative they are commited to be understood as unknown
                     nodes_that_can_be_poweron_off.append((node_slots_free, node.name))
 
