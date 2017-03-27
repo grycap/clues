@@ -208,7 +208,10 @@ class powermanager(PowerManager):
 				system_orig.setValue("net_interface.0.dns_name", str(nname))
 				system_orig.setValue("ec3_class", current_system)
 				if current_system in self._golden_images:
-					system_orig.setValue("disk.0.image.url", self._golden_images[current_system])
+					image, password = self._golden_images[current_system]
+					system_orig.setValue("disk.0.image.url", image)
+					if password:
+						system_orig.setValue("disk.0.os.credentials.password", password)
 				new_radl += str(system_orig) + "\n"
 				
 				for configure in radl_all.configures:
@@ -286,7 +289,7 @@ class powermanager(PowerManager):
 						_LOGGER.warning("VM with id %s does not have dns_name specified." % vm_id)
 					else:
 						continue
-						#_LOGGER.debug("Node %s with VM with id %s is stopped." % (clues_node_name, vm_id))                         
+						#_LOGGER.debug("Node %s with VM with id %s is stopped." % (clues_node_name, vm_id))
 
 		# from the nodes that we have powered on, check which of them are still running
 		for nname, node in self._mvs_seen.items():
@@ -451,6 +454,7 @@ class powermanager(PowerManager):
 
 	def _save_golden_image(self, vm):
 		success = False
+		_LOGGER.debug("Saving golden image for VM id: " + vm.vm_id)
 		try:
 			server = self._get_server()
 			auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
@@ -458,7 +462,8 @@ class powermanager(PowerManager):
 			(success, new_image) = server.CreateDiskSnapshot(self._get_inf_id(), vm.vm_id, 0, image_name, True, auth_data)
 			if success:
 				ec3_class = vm.radl.systems[0].getValue("ec3_class")
-				self._golden_images[ec3_class] = new_image
+				password = vm.radl.systems[0].getValue("disk.0.os.credentials.password")
+				self._golden_images[ec3_class] = new_image, password
 			else:
 				_LOGGER.error("Error saving golden image: %s." % new_image)
 		except:
