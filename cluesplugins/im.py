@@ -27,6 +27,7 @@ from uuid import uuid1
 from radl import radl_parse
 from IM.VirtualMachine import VirtualMachine
 
+import cpyutils.db
 import cpyutils.config
 import cpyutils.eventloop
 from clueslib.node import Node
