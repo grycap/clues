@@ -69,7 +69,8 @@ class powermanager(PowerManager):
 				"IM_VIRTUAL_CLUSTER_XMLRCP_SSL": False,
 				"IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE": "/usr/local/ec3/auth.dat",
 				"IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS": 30,
-				"IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS": 30
+				"IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS": 30,
+				"IM_VIRTUAL_CLUSTER_DB_CONNECTION_STRING": "sqlite:///var/lib/clues2/clues.db"
 			}
 		)
 
@@ -79,12 +80,48 @@ class powermanager(PowerManager):
 		self._IM_VIRTUAL_CLUSTER_XMLRCP_SSL = config_im.IM_VIRTUAL_CLUSTER_XMLRCP_SSL
 		self._IM_VIRTUAL_CLUSTER_XMLRPC = config_im.IM_VIRTUAL_CLUSTER_XMLRPC
 		self._IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS = config_im.IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS
+
+		self._db = cpyutils.db.DB.create_from_string(config_im.IM_VIRTUAL_CLUSTER_DB_CONNECTION_STRING)
+		self._create_db()
+
 		# Structure for the recovery of nodes
 		self._mvs_seen = {}
-		# TODO: save this two vars into DB to be persistent
+		self._golden_images = self._load_golden_images()
+		# TODO: save this var into DB to be persistent
 		self._stopped_vms = {}
-		self._golden_images = {}
 		self._inf_id = None
+
+	def _create_db(self):
+		try:
+			result, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS im_golden_images(ec3_class varchar(255) "
+											  "PRIMARY KEY, image varchar(255), password varchar(255))", True)
+		except:
+			_LOGGER.exception(
+				"Error creating IM plugin DB. The data persistence will not work!")
+			result = False
+		return result
+
+	def _store_golden_image(self, ec3_class, image, password):
+		try:
+			self._db.sql_query("INSERT into im_golden_images values ('%s','%s','%s')" % (ec3_class,
+                                                                                         image,
+                                                                                         password), True)
+		except:
+			_LOGGER.exception("Error trying to save IM golden image data.")
+
+	def _load_golden_images(self):
+		res = {}
+		try:
+			result, _, rows = self._db.sql_query("select * from im_golden_images")
+			if result:
+				for (ec3_class, image, password) in rows:
+					res[ec3_class] = image, password
+			else:
+				_LOGGER.error("Error trying to load IM golden images data.")
+		except:
+			_LOGGER.exception("Error trying to load IM golden images data.")
+
+		return res
 
 	def _get_inf_id(self):
 		if self._inf_id is not None:
@@ -210,6 +247,7 @@ class powermanager(PowerManager):
 				if current_system in self._golden_images:
 					image, password = self._golden_images[current_system]
 					system_orig.setValue("disk.0.image.url", image)
+					_LOGGER.debug("A golden image for %s node is stored, using it: %s" % (current_system, image))
 					if password:
 						system_orig.setValue("disk.0.os.credentials.password", password)
 				new_radl += str(system_orig) + "\n"
@@ -464,6 +502,8 @@ class powermanager(PowerManager):
 				ec3_class = vm.radl.systems[0].getValue("ec3_class")
 				password = vm.radl.systems[0].getValue("disk.0.os.credentials.password")
 				self._golden_images[ec3_class] = new_image, password
+				# Save it to DB for persistence
+				self._store_golden_image(ec3_class, new_image, password)
 			else:
 				_LOGGER.error("Error saving golden image: %s." % new_image)
 		except:
