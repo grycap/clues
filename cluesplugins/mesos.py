@@ -27,6 +27,7 @@ from cpyutils.log import Log
 from clueslib.node import NodeInfo
 from clueslib.platform import LRMS
 from clueslib.request import Request, ResourcesNeeded, JobInfo
+import collections
 
 _LOGGER = Log("PLUGIN-MESOS")
 
@@ -302,7 +303,7 @@ class lrms(LRMS):
         LRMS.__init__(self, "MESOS_%s" % self._server_ip)
 
     def get_nodeinfolist(self):
-        nodeinfolist = {}
+        nodeinfolist = collections.OrderedDict()
         infile = open_file('/etc/clues2/mesos_vnodes.info')
         if infile:
             for line in infile:

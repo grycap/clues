@@ -5,6 +5,7 @@ import cpyutils.eventloop
 import clues.clueslib.platform
 import cpyutils.log
 import clues.configcli as configcli
+import collections
 
 cpyutils.log.include_timestamp(True)
 _LOGGER = cpyutils.log.Log("SIM")
@@ -252,10 +253,10 @@ class NodePool():
         return np
     
     def __init__(self):
-        self.nodes = {}
+        self.nodes = collections.OrderedDict()
 
     def clone(self):
-        n_dict = {}
+        n_dict = collections.OrderedDict()
         for n_id, n in self.nodes.items():
             n_dict[n_id] = n.clone()
         np = NodePool()
@@ -324,7 +325,7 @@ class LRMS_FIFO(clues.clueslib.platform.LRMS):
     
     def get_nodeinfolist(self):
         from clues.clueslib.node import NodeInfo
-        nodeinfolist = {}
+        nodeinfolist = collections.OrderedDict()
         for node in self.nodepool:
             n_info = NodeInfo(node.name, node.total_cores, node.cores, node.total_memory, node.memory, {})
             # self._host_to_nodeinfo(host)

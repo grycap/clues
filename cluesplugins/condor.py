@@ -26,6 +26,7 @@ import clueslib.request
 import clueslib.platform
 from clueslib.node import Node, NodeInfo, NodeList
 from cpyutils.evaluate import TypedClass, TypedList
+import collections
 
 import subprocess
 
@@ -77,7 +78,7 @@ class lrms(clueslib.platform.LRMS):
         clueslib.platform.LRMS.__init__(self, "HTCONDOR_%s" % self._server_ip)
          
     def get_nodeinfolist(self):
-        nodeinfolist = {}
+        nodeinfolist = collections.OrderedDict()
         worker_nodes = get_worker_nodes_list_from_Startd()
         if len(worker_nodes) > 0:
             for worker_node in worker_nodes:
