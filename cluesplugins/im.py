@@ -270,7 +270,7 @@ class powermanager(PowerManager):
 		_LOGGER.error("Error generating infrastructure RADL")
 		return None
 	
-	def _get_vms(self):
+	def _get_vms(self, monitoring_info=None):
 		now = cpyutils.eventloop.now()
 		server = self._get_server()
 		auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
@@ -318,8 +318,20 @@ class powermanager(PowerManager):
 							# in case of unconfigured show the log to make easier debug
 							(success, contmsg)  = server.GetVMContMsg(self._get_inf_id(), vm_id, auth_data)
 							_LOGGER.debug("Contextualization msg: %s" % contmsg)
-
-						self.recover(clues_node_name)
+							# check if node is disabled and do not recover it
+							enabled = True
+							if monitoring_info:
+								for node in monitoring_info.nodelist:
+									if node.name == clues_node_name:
+										enabled = node.enabled
+								if enabled:
+									self.recover(clues_node_name)
+								else:
+									_LOGGER.debug("Node %s is disabled not recovering it." % clues_node_name)
+							else:
+								_LOGGER.debug("No monitoring info not recovering it.")
+						else:
+							self.recover(clues_node_name)
 					elif state in [VirtualMachine.OFF, VirtualMachine.UNKNOWN]:
 						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
 						_LOGGER.warning("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
@@ -431,7 +443,7 @@ class powermanager(PowerManager):
 			monitoring_info = self._clues_daemon.get_monitoring_info()
 			now = cpyutils.eventloop.now()
 	
-			vms = self._get_vms()
+			vms = self._get_vms(monitoring_info)
 				
 			recover = []
 			# To store the name of the nodes to use it in the third case
