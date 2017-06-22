@@ -44,6 +44,7 @@ class powermanager(PowerManager):
 			self.radl = radl
 			self.timestamp_recovered = 0
 			self.timestamp_created = self.timestamp_seen = cpyutils.eventloop.now()
+			self.last_state = None
 
 		def seen(self):
 			self.timestamp_seen = cpyutils.eventloop.now()
@@ -309,6 +310,8 @@ class powermanager(PowerManager):
 						self._mvs_seen[clues_node_name].update(vm_id, radl)
 					
 					self._mvs_seen[clues_node_name].seen()
+					last_state = self._mvs_seen[clues_node_name].last_state
+					self._mvs_seen[clues_node_name].last_state = state
 
 					if state in [VirtualMachine.FAILED, VirtualMachine.UNCONFIGURED]:
 						# This VM is in "terminal" state remove it from the infrastructure 
@@ -316,8 +319,10 @@ class powermanager(PowerManager):
 
 						if state == VirtualMachine.UNCONFIGURED:
 							# in case of unconfigured show the log to make easier debug
-							(success, contmsg)  = server.GetVMContMsg(self._get_inf_id(), vm_id, auth_data)
-							_LOGGER.debug("Contextualization msg: %s" % contmsg)
+							# but only the first time
+							if last_state != VirtualMachine.UNCONFIGURED:
+								(success, contmsg)  = server.GetVMContMsg(self._get_inf_id(), vm_id, auth_data)
+								_LOGGER.debug("Contextualization msg: %s" % contmsg)
 							# check if node is disabled and do not recover it
 							enabled = True
 							if monitoring_info:
