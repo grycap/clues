@@ -394,9 +394,10 @@ class lrms(LRMS):
                                 node_id = task['slave_id']
 
                                 mesos_nodes = self._obtain_mesos_nodes()
-                                for mesos_node in mesos_nodes['slaves']:
-                                    if node_id == mesos_node['id']:
-                                        nodes.append(mesos_node['hostname'])
+                                if mesos_nodes:
+                                    for mesos_node in mesos_nodes['slaves']:
+                                        if node_id == mesos_node['id']:
+                                            nodes.append(mesos_node['hostname'])
 
                         jobinfolist = self._update_job_info_list(jobinfolist,
                                                                  cpus_per_task, memory, numnodes,
