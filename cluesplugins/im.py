@@ -39,11 +39,13 @@ _LOGGER = cpyutils.log.Log("PLUGIN-IM")
 class powermanager(PowerManager):
 
 	class VM_Node:	
-		def __init__(self, vm_id, radl):
+		def __init__(self, vm_id, radl, ec3_additional_vm):
 			self.vm_id = vm_id
 			self.radl = radl
 			self.timestamp_recovered = 0
 			self.timestamp_created = self.timestamp_seen = cpyutils.eventloop.now()
+			self.ec3_additional_vm = ec3_additional_vm
+			self.last_state = None
 
 		def seen(self):
 			self.timestamp_seen = cpyutils.eventloop.now()
@@ -270,7 +272,7 @@ class powermanager(PowerManager):
 		_LOGGER.error("Error generating infrastructure RADL")
 		return None
 	
-	def _get_vms(self):
+	def _get_vms(self, monitoring_info=None):
 		now = cpyutils.eventloop.now()
 		server = self._get_server()
 		auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
@@ -281,11 +283,13 @@ class powermanager(PowerManager):
 			# The first one is always the front-end node
 			for vm_id in vm_ids[1:]:
 				clues_node_name = None
+				ec3_additional_vm = None
 				try:
 					(success, radl_data)  = server.GetVMInfo(self._get_inf_id(), vm_id, auth_data)
 					if success:
 						radl = radl_parse.parse_radl(radl_data)
 						clues_node_name = radl.systems[0].getValue('net_interface.0.dns_name')
+						ec3_additional_vm = radl.systems[0].getValue('ec3_additional_vm')
 						state = radl.systems[0].getValue('state')
 					else:
 						_LOGGER.error("ERROR getting VM info: %s" % vm_id)
@@ -300,7 +304,7 @@ class powermanager(PowerManager):
 				if clues_node_name and state not in [VirtualMachine.STOPPED]:
 					# Create or update VM info
 					if clues_node_name not in self._mvs_seen:
-						self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
+						self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl, ec3_additional_vm)
 					else:
 						if self._mvs_seen[clues_node_name].vm_id != vm_id:
 							# this must not happen ...
@@ -309,6 +313,8 @@ class powermanager(PowerManager):
 						self._mvs_seen[clues_node_name].update(vm_id, radl)
 					
 					self._mvs_seen[clues_node_name].seen()
+					last_state = self._mvs_seen[clues_node_name].last_state
+					self._mvs_seen[clues_node_name].last_state = state
 
 					if state in [VirtualMachine.FAILED, VirtualMachine.UNCONFIGURED]:
 						# This VM is in "terminal" state remove it from the infrastructure 
@@ -316,10 +322,24 @@ class powermanager(PowerManager):
 
 						if state == VirtualMachine.UNCONFIGURED:
 							# in case of unconfigured show the log to make easier debug
-							(success, contmsg)  = server.GetVMContMsg(self._get_inf_id(), vm_id, auth_data)
-							_LOGGER.debug("Contextualization msg: %s" % contmsg)
-
-						self.recover(clues_node_name)
+							# but only the first time
+							if last_state != VirtualMachine.UNCONFIGURED:
+								(success, contmsg)  = server.GetVMContMsg(self._get_inf_id(), vm_id, auth_data)
+								_LOGGER.debug("Contextualization msg: %s" % contmsg)
+							# check if node is disabled and do not recover it
+							enabled = True
+							if monitoring_info:
+								for node in monitoring_info.nodelist:
+									if node.name == clues_node_name:
+										enabled = node.enabled
+								if enabled:
+									self.recover(clues_node_name)
+								else:
+									_LOGGER.debug("Node %s is disabled not recovering it." % clues_node_name)
+							else:
+								_LOGGER.debug("No monitoring info not recovering it.")
+						else:
+							self.recover(clues_node_name)
 					elif state in [VirtualMachine.OFF, VirtualMachine.UNKNOWN]:
 						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
 						_LOGGER.warning("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
@@ -431,7 +451,7 @@ class powermanager(PowerManager):
 			monitoring_info = self._clues_daemon.get_monitoring_info()
 			now = cpyutils.eventloop.now()
 	
-			vms = self._get_vms()
+			vms = self._get_vms(monitoring_info)
 				
 			recover = []
 			# To store the name of the nodes to use it in the third case
@@ -473,7 +493,7 @@ class powermanager(PowerManager):
 			# This is a strange case but we assure not to have uncontrolled VMs
 			for name in vms:
 				vm = vms[name]
-				if name not in node_names:
+				if name not in node_names and not vm.ec3_additional_vm:
 					_LOGGER.warning("VM with name %s is detected by the IM but it does not exist in the monitoring system... (%s) recovering it.)" % (name, node_names))
 					vm.recovered()
 					recover.append(name)
