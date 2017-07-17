@@ -39,11 +39,12 @@ _LOGGER = cpyutils.log.Log("PLUGIN-IM")
 class powermanager(PowerManager):
 
 	class VM_Node:	
-		def __init__(self, vm_id, radl):
+		def __init__(self, vm_id, radl, ec3_additional_vm):
 			self.vm_id = vm_id
 			self.radl = radl
 			self.timestamp_recovered = 0
 			self.timestamp_created = self.timestamp_seen = cpyutils.eventloop.now()
+			self.ec3_additional_vm = ec3_additional_vm
 			self.last_state = None
 
 		def seen(self):
@@ -282,11 +283,13 @@ class powermanager(PowerManager):
 			# The first one is always the front-end node
 			for vm_id in vm_ids[1:]:
 				clues_node_name = None
+				ec3_additional_vm = None
 				try:
 					(success, radl_data)  = server.GetVMInfo(self._get_inf_id(), vm_id, auth_data)
 					if success:
 						radl = radl_parse.parse_radl(radl_data)
 						clues_node_name = radl.systems[0].getValue('net_interface.0.dns_name')
+						ec3_additional_vm = radl.systems[0].getValue('ec3_additional_vm')
 						state = radl.systems[0].getValue('state')
 					else:
 						_LOGGER.error("ERROR getting VM info: %s" % vm_id)
@@ -301,7 +304,7 @@ class powermanager(PowerManager):
 				if clues_node_name and state not in [VirtualMachine.STOPPED]:
 					# Create or update VM info
 					if clues_node_name not in self._mvs_seen:
-						self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl)
+						self._mvs_seen[clues_node_name] = self.VM_Node(vm_id, radl, ec3_additional_vm)
 					else:
 						if self._mvs_seen[clues_node_name].vm_id != vm_id:
 							# this must not happen ...
@@ -490,7 +493,7 @@ class powermanager(PowerManager):
 			# This is a strange case but we assure not to have uncontrolled VMs
 			for name in vms:
 				vm = vms[name]
-				if name not in node_names:
+				if name not in node_names and not vm.ec3_additional_vm:
 					_LOGGER.warning("VM with name %s is detected by the IM but it does not exist in the monitoring system... (%s) recovering it.)" % (name, node_names))
 					vm.recovered()
 					recover.append(name)
