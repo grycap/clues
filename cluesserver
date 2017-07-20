@@ -414,7 +414,8 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
         LOG_FILE=None
         LOG_LEVEL=logging.DEBUG
 
-    logging.basicConfig(filename=LOG_FILE,level=LOG_LEVEL,format="[%(levelname)s] %(asctime)-15s %(message)s")
+    # logging.basicConfig(filename=LOG_FILE,level=LOG_LEVEL,format="[%(levelname)s] %(asctime)-15s %(message)s")
+    cpyutils.log.Log.setup(LOG_FILE, LOG_LEVEL)
 
     if _ERROR_IMPORTING is not None:
         if isinstance(_ERROR_IMPORTING, ImportError):
