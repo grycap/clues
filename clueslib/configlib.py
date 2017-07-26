@@ -28,6 +28,29 @@ except:
         })
 
 try:
+    _CONFIGURATION_HOOKS
+except:
+    _CONFIGURATION_HOOKS = cpyutils.config.Configuration("hooks",
+        {
+            "TIMEOUT_COMMAND": 180,
+            "WORKING_FOLDER": "",
+            "PRE_POWERON": "",
+            "POST_POWERON": "",
+            "PRE_POWEROFF": "",
+            "POST_POWEROFF": "",
+            "POWEREDON": "",
+            "POWEREDOFF": "",
+            "UNEXPECTED_POWERON": "",
+            "UNEXPECTED_POWEROFF": "",
+            "ONERR": "",
+            "OFFERR": "",
+            "UNKNOWN": "",
+            "IDLE": "",
+            "USED": "",
+            "REQUEST": ""
+        })
+
+try:
     _CONFIGURATION_MONITORING
 except:
     _CONFIGURATION_MONITORING = cpyutils.config.Configuration("monitoring",

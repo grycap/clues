@@ -26,6 +26,7 @@ import sys
 import helpers
 import cpyutils.eventloop
 import collections
+import hooks
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("NODE")
@@ -343,16 +344,36 @@ class Node(NodeInfo, helpers.SerializableXML):
                 
                 changed = True
                 
-                if (state in [ Node.IDLE, Node.USED ]) and (self.state not in [ Node.IDLE, Node.USED ]):
-                    self.mark_poweredon()
+                if (state in [ Node.IDLE, Node.USED ]):
+                    if (self.state not in [ Node.IDLE, Node.USED ]):
+                        self.mark_poweredon()
+                        if unexpected:
+                            hooks.HOOKS.unexpected_poweron(self.name)
+                        hooks.HOOKS.poweredon(self.name)
+                    else:
+                        if state == Node.IDLE:
+                            hooks.HOOKS.idle(self.name)
+                        else:
+                            hooks.HOOKS.used(self.name)
+
                 if (state in [ Node.OFF ]) and (self.state not in [ Node.OFF ]):
                     self.mark_poweredoff()
+                    if unexpected:
+                        hooks.HOOKS.unexpected_poweroff(self.name)
+                    hooks.HOOKS.poweredoff(self.name)
+
                 if state == Node.OFF_ERR:
                     self.power_on_operation_failed += 1
+                    hooks.HOOKS.offerr(self.name, self.power_on_operation_failed)
                     _LOGGER.debug("failed to power on node %s (%d fails)" % (self.name, self.power_on_operation_failed))
                 if state == Node.ON_ERR:
                     self.power_off_operation_failed += 1
+                    hooks.HOOKS.onerr(self.name, self.power_off_operation_failed)
                     _LOGGER.debug("failed to power off node %s (%d fails)" % (self.name, self.power_off_operation_failed))
+
+                if state == Node.UNKNOWN:
+                    hooks.HOOKS.unknown(self.name)
+                    _LOGGER.debug("state of node %s changed to unknown" % (self.name))
 
                 self._store_prev()                    
                 self.state = state
