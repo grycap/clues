@@ -342,7 +342,9 @@ class powermanager(PowerManager):
 							else:
 								_LOGGER.debug("No monitoring info not recovering it.")
 						else:
-							if not ec3_additional_vm:
+							if ec3_additional_vm:
+								_LOGGER.debug("Node %s is an additional not recovering it." % clues_node_name)
+							else:
 								self.recover(clues_node_name)
 					elif state in [VirtualMachine.OFF, VirtualMachine.UNKNOWN]:
 						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
