@@ -333,7 +333,10 @@ class powermanager(PowerManager):
 									if node.name == clues_node_name:
 										enabled = node.enabled
 								if enabled:
-									self.recover(clues_node_name)
+									if ec3_additional_vm:
+										_LOGGER.debug("Node %s is an additional not recovering it." % clues_node_name)
+									else:
+										self.recover(clues_node_name)
 								else:
 									_LOGGER.debug("Node %s is disabled not recovering it." % clues_node_name)
 							else:
