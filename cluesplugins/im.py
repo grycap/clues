@@ -367,6 +367,7 @@ class powermanager(PowerManager):
 			self.recover(vm)
 		
 	def power_on(self, nname):
+		success = None
 		try:
 			vms = self._get_vms()
 			
@@ -392,7 +393,9 @@ class powermanager(PowerManager):
 					(success, vms_id) = server.AddResource(self._get_inf_id(), radl_data, auth_data)
 				else:
 					_LOGGER.error("RADL to launch node %s is empty!!" % nname)
+					return False, nname
 		except:
+			success = False
 			_LOGGER.exception("Error launching/restarting node %s " % nname)
 			return False, nname
 
