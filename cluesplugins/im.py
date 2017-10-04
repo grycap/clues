@@ -272,7 +272,7 @@ class powermanager(PowerManager):
 		_LOGGER.error("Error generating infrastructure RADL")
 		return None
 	
-	def _get_vms(self, monitoring_info=None):
+	def _get_vms(self):
 		now = cpyutils.eventloop.now()
 		server = self._get_server()
 		auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
@@ -311,7 +311,12 @@ class powermanager(PowerManager):
 							_LOGGER.warning("Node %s in VM with id %s now have a new ID: %s" % (clues_node_name, self._mvs_seen[clues_node_name].vm_id, vm_id))
 							self.power_off(clues_node_name)
 						self._mvs_seen[clues_node_name].update(vm_id, radl)
-					
+
+					enabled = True
+					node_found = self._clues_daemon.get_node(clues_node_name)
+					if node_found:
+						enabled = node_found.enabled
+
 					self._mvs_seen[clues_node_name].seen()
 					last_state = self._mvs_seen[clues_node_name].last_state
 					self._mvs_seen[clues_node_name].last_state = state
@@ -327,25 +332,18 @@ class powermanager(PowerManager):
 								(success, contmsg)  = server.GetVMContMsg(self._get_inf_id(), vm_id, auth_data)
 								_LOGGER.debug("Contextualization msg: %s" % contmsg)
 							# check if node is disabled and do not recover it
-							enabled = True
-							if monitoring_info:
-								for node in monitoring_info.nodelist:
-									if node.name == clues_node_name:
-										enabled = node.enabled
-								if enabled:
-									if ec3_additional_vm:
-										_LOGGER.debug("Node %s is an additional not recovering it." % clues_node_name)
-									else:
-										self.recover(clues_node_name)
+							if enabled:
+								if ec3_additional_vm:
+									_LOGGER.debug("Node %s is an additional not recovering it." % clues_node_name)
 								else:
-									_LOGGER.debug("Node %s is disabled not recovering it." % clues_node_name)
+									self.recover(clues_node_name, node_found)
 							else:
-								_LOGGER.debug("No monitoring info not recovering it.")
+								_LOGGER.debug("Node %s is disabled not recovering it." % clues_node_name)
 						else:
 							if ec3_additional_vm:
 								_LOGGER.debug("Node %s is an additional not recovering it." % clues_node_name)
 							else:
-								self.recover(clues_node_name)
+								self.recover(clues_node_name, node_found)
 					elif state in [VirtualMachine.OFF, VirtualMachine.UNKNOWN]:
 						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
 						_LOGGER.warning("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
@@ -366,7 +364,7 @@ class powermanager(PowerManager):
 	
 	def _recover_ids(self, vms):
 		for vm in vms:
-			self.power_off(vm)
+			self.recover(vm)
 		
 	def power_on(self, nname):
 		try:
@@ -457,7 +455,7 @@ class powermanager(PowerManager):
 			monitoring_info = self._clues_daemon.get_monitoring_info()
 			now = cpyutils.eventloop.now()
 	
-			vms = self._get_vms(monitoring_info)
+			vms = self._get_vms()
 				
 			recover = []
 			# To store the name of the nodes to use it in the third case
@@ -510,9 +508,12 @@ class powermanager(PowerManager):
 
 		return PowerManager.lifecycle(self)
 	
-	def recover(self, nname):
+	def recover(self, nname, node):
 		success, nname = self.power_off(nname)
 		if success:
+			if node:
+				node.mark_poweredoff()
+				node.set_state(Node.OFF_ERR)
 			return Node.OFF
 		
 		return False
