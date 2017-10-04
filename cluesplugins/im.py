@@ -142,7 +142,7 @@ class powermanager(PowerManager):
 					_LOGGER.error("Error getting infrastructure list: No infrastructure!.")
 			else:
 				_LOGGER.error("Error getting infrastructure list: %s" % inf_list)
-				return None
+			return None
 
 	def _get_server(self):
 		if self._IM_VIRTUAL_CLUSTER_XMLRCP_SSL:
@@ -189,9 +189,13 @@ class powermanager(PowerManager):
 		return res
 	
 	def _get_radl(self, nname):
+		inf_id = self._get_inf_id()
+		if not inf_id:
+			_LOGGER.error("Error getting RADL. No infrastructure ID!!")
+			return None
 		server = self._get_server()
 		auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
-		(success, vm_ids) = server.GetInfrastructureInfo(self._get_inf_id(), auth_data)
+		(success, vm_ids) = server.GetInfrastructureInfo(inf_id, auth_data)
 
 		# Get all the info from RADL
 		# Especial features in system:
@@ -204,7 +208,7 @@ class powermanager(PowerManager):
 		if success:
 			# The first one is always the front-end node
 			for vm_id in vm_ids[1:]:
-				(success, radl_data)  = server.GetVMInfo(self._get_inf_id(), vm_id, auth_data)
+				(success, radl_data)  = server.GetVMInfo(inf_id, vm_id, auth_data)
 				if success:
 					radl = radl_parse.parse_radl(radl_data)
 					ec3_class = radl.systems[0].getValue("ec3_class")
@@ -217,7 +221,7 @@ class powermanager(PowerManager):
 		else:
 			_LOGGER.error("Error getting infrastructure info: %s" % vm_ids)
 
-		(success, radl_data) = server.GetInfrastructureRADL(self._get_inf_id(), auth_data)
+		(success, radl_data) = server.GetInfrastructureRADL(inf_id, auth_data)
 		if success:
 			radl_all = radl_parse.parse_radl(radl_data)
 		else:
@@ -273,10 +277,14 @@ class powermanager(PowerManager):
 		return None
 	
 	def _get_vms(self):
+		inf_id = self._get_inf_id()
+		if not inf_id:
+			_LOGGER.error("ERROR getting infrastructure info: No infrastructure ID!!")
+			return self._mvs_seen
 		now = cpyutils.eventloop.now()
 		server = self._get_server()
 		auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
-		(success, vm_ids) = server.GetInfrastructureInfo(self._get_inf_id(), auth_data)
+		(success, vm_ids) = server.GetInfrastructureInfo(inf_id, auth_data)
 		if not success:
 			_LOGGER.error("ERROR getting infrastructure info: %s" % vm_ids)
 		else:
@@ -285,7 +293,7 @@ class powermanager(PowerManager):
 				clues_node_name = None
 				ec3_additional_vm = None
 				try:
-					(success, radl_data)  = server.GetVMInfo(self._get_inf_id(), vm_id, auth_data)
+					(success, radl_data)  = server.GetVMInfo(inf_id, vm_id, auth_data)
 					if success:
 						radl = radl_parse.parse_radl(radl_data)
 						clues_node_name = radl.systems[0].getValue('net_interface.0.dns_name')
@@ -329,7 +337,7 @@ class powermanager(PowerManager):
 							# in case of unconfigured show the log to make easier debug
 							# but only the first time
 							if last_state != VirtualMachine.UNCONFIGURED:
-								(success, contmsg)  = server.GetVMContMsg(self._get_inf_id(), vm_id, auth_data)
+								(success, contmsg)  = server.GetVMContMsg(inf_id, vm_id, auth_data)
 								_LOGGER.debug("Contextualization msg: %s" % contmsg)
 							# check if node is disabled and do not recover it
 							if enabled:
@@ -370,7 +378,12 @@ class powermanager(PowerManager):
 		success = None
 		try:
 			vms = self._get_vms()
-			
+
+			inf_id = self._get_inf_id()
+			if not inf_id:
+				_LOGGER.error("ERROR launching %s node: No infrastructure ID!!" % nname)
+				return False, nname
+
 			if nname in vms:
 				_LOGGER.warning("Trying to launch an existing node %s. Ignoring it." % nname)
 				return True, nname
@@ -385,12 +398,12 @@ class powermanager(PowerManager):
 			server = self._get_server()
 			auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
 			if ec3_reuse_nodes:
-				(success, vms_id) = server.StartVM(self._get_inf_id(), vm.vm_id, auth_data)
+				(success, vms_id) = server.StartVM(inf_id, vm.vm_id, auth_data)
 			else:
 				radl_data = self._get_radl(nname)
 				if radl_data:
 					_LOGGER.debug("RADL to launch/restart node %s: %s" % (nname, radl_data))
-					(success, vms_id) = server.AddResource(self._get_inf_id(), radl_data, auth_data)
+					(success, vms_id) = server.AddResource(inf_id, radl_data, auth_data)
 				else:
 					_LOGGER.error("RADL to launch node %s is empty!!" % nname)
 					return False, nname
@@ -409,6 +422,11 @@ class powermanager(PowerManager):
 	def power_off(self, nname):
 		_LOGGER.debug("Powering off/stopping %s" % nname)
 		try:
+			inf_id = self._get_inf_id()
+			if not inf_id:
+				_LOGGER.error("ERROR deleting %s node: No infrastructure ID!!" % nname)
+				return False, nname
+
 			server = self._get_server()
 			success = False
 	
@@ -430,14 +448,14 @@ class powermanager(PowerManager):
 				if poweroff:
 					auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
 					if ec3_reuse_nodes:
-						(success, vm_ids) = server.StopVM(self._get_inf_id(), vm.vm_id, auth_data)
+						(success, vm_ids) = server.StopVM(inf_id, vm.vm_id, auth_data)
 						self._stopped_vms[nname] = vm
 						if not success: 
 							_LOGGER.error("ERROR stopping node: %s: %s" % (nname,vm_ids))
 						elif vm_ids == 0:
 							_LOGGER.error("ERROR stopping node: %s. No VM has been stopped." % nname)
 					else:
-						(success, vm_ids) = server.RemoveResource(self._get_inf_id(), vm.vm_id, auth_data)
+						(success, vm_ids) = server.RemoveResource(inf_id, vm.vm_id, auth_data)
 						if not success: 
 							_LOGGER.error("ERROR deleting node: %s: %s" % (nname,vm_ids))
 						elif vm_ids == 0:
