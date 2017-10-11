@@ -529,7 +529,7 @@ class powermanager(PowerManager):
 
 		return PowerManager.lifecycle(self)
 	
-	def recover(self, nname, node):
+	def recover(self, nname, node=None):
 		success, nname = self.power_off(nname)
 		if success:
 			if node:
