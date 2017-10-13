@@ -485,6 +485,21 @@ class powermanager(PowerManager):
 			# Two cases: (1) a VM that is on in the monitoring info, but it is not seen in IM; and (2) a VM that is off in the monitoring info, but it is seen in IM
 			for node in monitoring_info.nodelist:
 				node_names.append(node.name)
+
+				if node.state in [Node.IDLE, Node.USED]:
+					vm = vms[node.name]
+					state = vm.radl.systems[0].getValue('state')
+					# user request use of golden images and the image is fully configured
+					if vm.radl.systems[0].getValue("ec3_golden_images"):
+						if state == VirtualMachine.CONFIGURED:
+							ec3_class = vm.radl.systems[0].getValue("ec3_class")
+							# check if the image is in the list of saved images
+							if ec3_class not in self._golden_images:
+								# if not save it
+								self._save_golden_image(vm)
+						else:
+							_LOGGER.debug("node %s is idle/used but it is not yet configured. Do not save golden image." % (node.name))
+
 				if node.enabled:
 					if node.state in [Node.OFF, Node.OFF_ERR, Node.UNKNOWN]:
 						if self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS > 0:
@@ -501,16 +516,6 @@ class powermanager(PowerManager):
 									else:
 										_LOGGER.debug("node %s has been recently recovered %d seconds ago. Do not recover it yet." % (node.name, time_recovered))
 					else:
-						if node.state in [Node.IDLE, Node.USED]:
-							vm = vms[node.name]
-							state = vm.radl.systems[0].getValue('state')
-							# user request use of golden images and the image is fully configured
-							if state == VirtualMachine.CONFIGURED and vm.radl.systems[0].getValue("ec3_golden_images"):
-								ec3_class = vm.radl.systems[0].getValue("ec3_class")
-								# check if the image is in the list of saved images
-								if ec3_class not in self._golden_images:
-									# if not save it
-									self._save_golden_image(vm)
 						if node.name not in vms:
 							# This may happen because it is launched by hand using other credentials than those for the user used for IM (and he cannot manage the VMS)
 							_LOGGER.warning("node %s is detected by the monitoring system, but there is not any VM associated to it (are IM credentials compatible to the VM?)" % node.name)
