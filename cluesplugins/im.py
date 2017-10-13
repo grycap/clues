@@ -503,8 +503,9 @@ class powermanager(PowerManager):
 					else:
 						if node.state in [Node.IDLE, Node.USED]:
 							vm = vms[node.name]
-							# user request use of golden images
-							if vm.radl.systems[0].getValue("ec3_golden_images"):
+							state = vm.radl.systems[0].getValue('state')
+							# user request use of golden images and the image is fully configured
+							if state == VirtualMachine.CONFIGURED and vm.radl.systems[0].getValue("ec3_golden_images"):
 								ec3_class = vm.radl.systems[0].getValue("ec3_class")
 								# check if the image is in the list of saved images
 								if ec3_class not in self._golden_images:
