@@ -375,7 +375,7 @@ class lrms(LRMS):
             frameworks = mesos_state['frameworks']
             if frameworks:
                 for framework in frameworks:
-                    if(framework['name'] != "chronos-2.4.0" and framework['name'] != "marathon"):
+                    if framework['name'] not in ["chronos", "chronos-2.4.0", "marathon"]:
                         job_id = framework['id']
                         nodes = []
                         numnodes = 1
