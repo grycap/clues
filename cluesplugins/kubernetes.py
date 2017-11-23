@@ -203,5 +203,4 @@ class lrms(LRMS):
         return jobinfolist
 
 if __name__ == '__main__':
-    l = lrms()
-    print l.get_jobinfolist()
+    pass
