@@ -63,22 +63,28 @@ class lrms(LRMS):
 
         return resp
 
-    def __init__(self, KUBERNETES_SERVER=None, KUBERNETES_PODS_API_URL_PATH=None, KUBERNETES_NODES_API_URL_PATH=None):
+    def __init__(self, KUBERNETES_SERVER=None, KUBERNETES_PODS_API_URL_PATH=None,
+                 KUBERNETES_NODES_API_URL_PATH=None, KUBERNETES_TOKEN=None):
 
         config_kube = cpyutils.config.Configuration(
             "KUBERNETES",
             {
                 "KUBERNETES_SERVER": "https://localhost:8080",
                 "KUBERNETES_PODS_API_URL_PATH": "/api/v1/pods",
-                "KUBERNETES_NODES_API_URL_PATH": "/api/v1/nodes"
+                "KUBERNETES_NODES_API_URL_PATH": "/api/v1/nodes",
+                "KUBERNETES_TOKEN": None
             }
         )
 
         self._server_url = Helpers.val_default(KUBERNETES_SERVER, config_kube.KUBERNETES_SERVER)
-        self._pods_api_url_path = Helpers.val_default(KUBERNETES_PODS_API_URL_PATH, config_kube.KUBERNETES_PODS_API_URL_PATH)
-        self._nodes_api_url_path = Helpers.val_default(KUBERNETES_NODES_API_URL_PATH, config_kube.KUBERNETES_NODES_API_URL_PATH)
+        self._pods_api_url_path = Helpers.val_default(KUBERNETES_PODS_API_URL_PATH,
+                                                      config_kube.KUBERNETES_PODS_API_URL_PATH)
+        self._nodes_api_url_path = Helpers.val_default(KUBERNETES_NODES_API_URL_PATH,
+                                                       config_kube.KUBERNETES_NODES_API_URL_PATH)
+        token = Helpers.val_default(KUBERNETES_TOKEN, config_kube.KUBERNETES_TOKEN)
 
-        self.auth_data = {}
+        if token:
+            self.auth_data = {"token": token}
         LRMS.__init__(self, "KUBERNETES_%s" % self._server_url)
 
     def _get_memory_in_bytes(self, str_memory):
@@ -88,11 +94,11 @@ class lrms(LRMS):
             if unit == 'Ki':
                 memory *= 1024
             elif unit == 'Mi':
-                memory *= 1024*1024
+                memory *= 1024 * 1024
             elif unit == 'Gi':
-                memory *= 1024*1024*1024
+                memory *= 1024 * 1024 * 1024
             elif unit == 'Ti':
-                memory *= 1024*1024*1024*1024
+                memory *= 1024 * 1024 * 1024 * 1024
             return memory
         else:
             return int(str_memory)
@@ -176,8 +182,8 @@ class lrms(LRMS):
             for pod in pods_data["items"]:
                 # name = pod["metadata"]["name"]
                 job_id = pod["metadata"]["uid"]
-                state = pod["status"]["phase"] # Pending, Running, Succeeded, Failed or Unknown
-                
+                state = pod["status"]["phase"]  # Pending, Running, Succeeded, Failed or Unknown
+
                 job_state = Request.UNKNOWN
                 if state == "Pending":
                     job_state = Request.PENDING
