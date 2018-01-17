@@ -64,15 +64,18 @@ class lrms(LRMS):
         return resp
 
     def __init__(self, KUBERNETES_SERVER=None, KUBERNETES_PODS_API_URL_PATH=None,
-                 KUBERNETES_NODES_API_URL_PATH=None, KUBERNETES_TOKEN=None):
+                 KUBERNETES_NODES_API_URL_PATH=None, KUBERNETES_TOKEN=None, KUBERNETES_NODE_MEMORY=None,
+                 KUBERNETES_NODE_SLOTS=None):
 
         config_kube = cpyutils.config.Configuration(
             "KUBERNETES",
             {
-                "KUBERNETES_SERVER": "https://localhost:8080",
+                "KUBERNETES_SERVER": "https://localhost:6443",
                 "KUBERNETES_PODS_API_URL_PATH": "/api/v1/pods",
                 "KUBERNETES_NODES_API_URL_PATH": "/api/v1/nodes",
-                "KUBERNETES_TOKEN": None
+                "KUBERNETES_TOKEN": None,
+                "KUBERNETES_NODE_MEMORY": 1073741824,
+                "KUBERNETES_NODE_SLOTS": 1,
             }
         )
 
@@ -82,6 +85,8 @@ class lrms(LRMS):
         self._nodes_api_url_path = Helpers.val_default(KUBERNETES_NODES_API_URL_PATH,
                                                        config_kube.KUBERNETES_NODES_API_URL_PATH)
         token = Helpers.val_default(KUBERNETES_TOKEN, config_kube.KUBERNETES_TOKEN)
+        self._node_memory = Helpers.val_default(KUBERNETES_NODE_MEMORY, config_kube.KUBERNETES_NODE_MEMORY)
+        self._node_slots = Helpers.val_default(KUBERNETES_NODE_SLOTS, config_kube.KUBERNETES_NODE_SLOTS)
 
         if token:
             self.auth_data = {"token": token}
@@ -142,6 +147,21 @@ class lrms(LRMS):
                     nodeinfolist[name].state = NodeInfo.OFF
         else:
             _LOGGER.error("Error getting Kubernetes node list: %s: %s" % (resp.status_code, resp.text))
+
+        # Add the "virtual" nodes
+        try:
+            for line in open('/etc/clues2/kubernetes_vnodes.info', 'r'):
+                name = line.rstrip('\n')
+                if name not in nodeinfolist:
+                    keywords = {}
+                    queues = ["default"]
+                    if queues:
+                        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                    nodeinfolist[name] = NodeInfo(name, self._node_slots, self._node_slots,
+                                                  self._node_memory, self._node_memory, keywords)
+                    nodeinfolist[name].state = NodeInfo.OFF
+        except Exception as ex:
+            _LOGGER.error("Error processing file /etc/clues2/kubernetes_vnodes.info: %s" % str(ex))
 
         return nodeinfolist
 
