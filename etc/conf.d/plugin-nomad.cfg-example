@@ -1,0 +1,26 @@
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings to consult the state of the nodes of a Mesos deployment in which CLUES is automating power (is powering on or off the internal nodes). These
+# settings are only to check the state of the nodes. Please refer to the powermanager settings to specify how to power on or off the nodes.
+# 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[NOMAD]
+NOMAD_SERVER=http://localhost:10000
+NOMAD_HEADERS="{}"
+NOMAD_API_VERSION=/v1
+NOMAD_API_URL_GET_SERVERS=/agent/members 
+NOMAD_API_URL_GET_CLIENTS=/nodes 
+NOMAD_API_URL_GET_CLIENT_INFO=/node 
+NOMAD_API_URL_GET_CLIENT_STATUS=/client/stats
+NOMAD_API_URL_GET_ALLOCATIONS=/allocations
+NOMAD_API_URL_GET_JOBS=/jobs
+NOMAD_API_URL_GET_JOBS_INFO=/job
+NOMAD_API_URL_GET_ALLOCATION_INFO=/allocation
+NOMAD_ACL_TOKEN=None
+MAX_RETRIES=100
+NOMAD_AUTH_DATA=None
+NOMAD_STATE_OFF=down
+NOMAD_STATE_ON=ready
+NOMAD_PRIVATE_HTTP_PORT=4646
+NOMAD_NODES_LIST_CLUES=/etc/clues2/nomad_vnodes.info
