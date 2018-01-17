@@ -85,6 +85,8 @@ class lrms(LRMS):
 
         if token:
             self.auth_data = {"token": token}
+        else:
+            self.auth_data = {}
         LRMS.__init__(self, "KUBERNETES_%s" % self._server_url)
 
     def _get_memory_in_bytes(self, str_memory):
