@@ -86,6 +86,7 @@ setup(name='CLUES',
             'etc/conf.d/plugin-wol.cfg-example',
             'etc/conf.d/plugin-ipmi.cfg-example',
             'etc/conf.d/plugin-mesos.cfg-example',
+            'etc/conf.d/plugin-nomad.cfg-example',
             'etc/conf.d/schedulers.cfg-example']),
         ('/etc/logrotate.d/', [
             'etc/clues-logrotate'
