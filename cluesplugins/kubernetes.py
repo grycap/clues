@@ -52,16 +52,20 @@ class lrms(LRMS):
         return auth_header
 
     def _create_request(self, method, url, auth_data, headers=None, body=None):
-        if headers is None:
-            headers = {}
-        auth_header = self._get_auth_header(auth_data)
-        if auth_header:
-            headers.update(auth_header)
-
-        url = "%s%s" % (self._server_url, url)
-        resp = requests.request(method, url, verify=False, headers=headers, data=body)
-
-        return resp
+        try:
+            if headers is None:
+                headers = {}
+            auth_header = self._get_auth_header(auth_data)
+            if auth_header:
+                headers.update(auth_header)
+    
+            url = "%s%s" % (self._server_url, url)
+            resp = requests.request(method, url, verify=False, headers=headers, data=body)
+    
+            return resp
+        except Exception as ex:
+            _LOGGER.error("Error contanctinf Kubernetes API: %s" % str(ex))
+            return None
 
     def __init__(self, KUBERNETES_SERVER=None, KUBERNETES_PODS_API_URL_PATH=None,
                  KUBERNETES_NODES_API_URL_PATH=None, KUBERNETES_TOKEN=None, KUBERNETES_NODE_MEMORY=None,
@@ -70,7 +74,7 @@ class lrms(LRMS):
         config_kube = cpyutils.config.Configuration(
             "KUBERNETES",
             {
-                "KUBERNETES_SERVER": "https://localhost:6443",
+                "KUBERNETES_SERVER": "http://localhost:8080",
                 "KUBERNETES_PODS_API_URL_PATH": "/api/v1/pods",
                 "KUBERNETES_NODES_API_URL_PATH": "/api/v1/nodes",
                 "KUBERNETES_TOKEN": None,
@@ -114,37 +118,39 @@ class lrms(LRMS):
         nodeinfolist = collections.OrderedDict()
 
         resp = self._create_request('GET', self._nodes_api_url_path, self.auth_data)
-        if resp.status_code == 200:
+        if resp and resp.status_code == 200:
             nodes_data = resp.json()
 
             for node in nodes_data["items"]:
-                name = node["metadata"]["name"]
-                memory_total = self._get_memory_in_bytes(node["status"]["capacity"]["memory"])
-                slots_count = int(node["status"]["capacity"]["cpu"])
-                pods_total = node["status"]["capacity"]["pods"]
-                memory_free = self._get_memory_in_bytes(node["status"]["allocatable"]["memory"])
-                slots_free = int(node["status"]["allocatable"]["cpu"])
-                pods_free = node["status"]["allocatable"]["pods"]
-
-                is_ready = True
-                for conditions in node["status"]["conditions"]:
-                    if conditions['type'] == "Ready":
-                        if conditions['status'] != "True":
-                            _LOGGER.warning("Node %s is not ready: %s." % (name, conditions["message"]))
-                            is_ready = False
-
-                keywords = {}
-                # Create a fake queue
-                queues = ["default"]
-                if queues:
-                    keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
-                nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
-                if is_ready:
-                    nodeinfolist[name].state = NodeInfo.IDLE
-                    if memory_free <= 0 or slots_free <= 0 or pods_free <= 0:
-                        nodeinfolist[name].state = NodeInfo.USED
-                else:
-                    nodeinfolist[name].state = NodeInfo.OFF
+                # not add master node
+                if "node-role.kubernetes.io/master" not in node["metadata"]["labels"]:
+                    name = node["metadata"]["name"]
+                    memory_total = self._get_memory_in_bytes(node["status"]["capacity"]["memory"])
+                    slots_count = int(node["status"]["capacity"]["cpu"])
+                    pods_total = node["status"]["capacity"]["pods"]
+                    memory_free = self._get_memory_in_bytes(node["status"]["allocatable"]["memory"])
+                    slots_free = int(node["status"]["allocatable"]["cpu"])
+                    pods_free = node["status"]["allocatable"]["pods"]
+    
+                    is_ready = True
+                    for conditions in node["status"]["conditions"]:
+                        if conditions['type'] == "Ready":
+                            if conditions['status'] != "True":
+                                _LOGGER.warning("Node %s is not ready: %s." % (name, conditions["message"]))
+                                is_ready = False
+    
+                    keywords = {}
+                    # Create a fake queue
+                    queues = ["default"]
+                    if queues:
+                        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                    nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
+                    if is_ready:
+                        nodeinfolist[name].state = NodeInfo.IDLE
+                        if memory_free <= 0 or slots_free <= 0 or pods_free <= 0:
+                            nodeinfolist[name].state = NodeInfo.USED
+                    else:
+                        nodeinfolist[name].state = NodeInfo.OFF
         else:
             _LOGGER.error("Error getting Kubernetes node list: %s: %s" % (resp.status_code, resp.text))
 
@@ -199,7 +205,7 @@ class lrms(LRMS):
         jobinfolist = []
 
         resp = self._create_request('GET', self._pods_api_url_path, self.auth_data)
-        if resp.status_code == 200:
+        if resp and resp.status_code == 200:
             pods_data = resp.json()
             for pod in pods_data["items"]:
                 # name = pod["metadata"]["name"]
