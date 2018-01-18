@@ -72,7 +72,7 @@ class lrms(LRMS):
             headers.update({ 'X-Nomad-Token': acl_token})
         auth = None
         if auth_data is not None:
-            if user in auth_data and passwd in auth_data:
+            if 'user' in auth_data and 'passwd' in auth_data:
                 auth=requests.auth.HTTPBasicAuth( auth_data['user'], auth_data['passwd'])
 
         response = None
