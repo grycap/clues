@@ -136,7 +136,6 @@ class lrms(LRMS):
                     for conditions in node["status"]["conditions"]:
                         if conditions['type'] == "Ready":
                             if conditions['status'] != "True":
-                                _LOGGER.warning("Node %s is not ready: %s." % (name, conditions["message"]))
                                 is_ready = False
     
                     keywords = {}
