@@ -312,7 +312,12 @@ class lrms(LRMS):
         queue = '"default" in queues'
         taskcount = 1
 
-        task_name = info['job_id']+'-'+info['taskgroup_id']+'-'+info['name']
+        _LOGGER.debug("_get_JobInfo: " + str(info))
+        _LOGGER.debug("info['job_id']: " + str(info['job_id']))
+        _LOGGER.debug("info['taskgroup_id']: " + str(info['taskgroup_id']))
+        _LOGGER.debug("info['name']: " + str(info['name']))
+
+        task_name = str(info['job_id']) + '-' + str(info['taskgroup_id']) + '-' + str(info['name'])
         resources = ResourcesNeeded(info['cpu'], info['memory'], [queue], taskcount)
         
         job_info = JobInfo(resources, task_name, 1)
@@ -389,10 +394,10 @@ class lrms(LRMS):
 
                 allocations = self._get_Allocations_by_Master(server_node) 
                 if allocations != {}:
-                    job_id = allocations['job_id']
                     for taskgroup_id in allocations:
-                        for task_id, info_task in allocations['TaskStates'].items():
-                            jobs_by_server[ server_node ][ job_id ][ taskgroup_id ][ task_id ] = info_task['State']
+                        job_id = allocations[taskgroup_id]['job_id']
+                        for task_id, info_task in allocations[taskgroup_id]['tasks_states'].items():
+                            jobs_by_server[ server_node ][ job_id ]['TaskGroups'][ taskgroup_id ]['Tasks'][ task_id ]['status'] = info_task['State']
                     
                 
                 for job_id in jobs_by_server[ server_node]:
