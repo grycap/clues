@@ -207,23 +207,24 @@ class lrms(LRMS):
         if resp and resp.status_code == 200:
             pods_data = resp.json()
             for pod in pods_data["items"]:
-                # name = pod["metadata"]["name"]
-                job_id = pod["metadata"]["uid"]
-                state = pod["status"]["phase"]  # Pending, Running, Succeeded, Failed or Unknown
+                # Avoid system pods
+                if pod["metadata"]["namespace"] != "kube-system":
+                    job_id = pod["metadata"]["uid"]
+                    state = pod["status"]["phase"]  # Pending, Running, Succeeded, Failed or Unknown
 
-                job_state = Request.UNKNOWN
-                if state == "Pending":
-                    job_state = Request.PENDING
-                elif state in ["Running", "Succeeded", "Failed"]:
-                    job_state = Request.SERVED
+                    job_state = Request.UNKNOWN
+                    if state == "Pending":
+                        job_state = Request.PENDING
+                    elif state in ["Running", "Succeeded", "Failed"]:
+                        job_state = Request.SERVED
 
-                cpus, memory = self._get_pod_cpus_and_memory(pod)
+                    cpus, memory = self._get_pod_cpus_and_memory(pod)
 
-                queue = '"default" in queues'
-                resources = ResourcesNeeded(cpus, memory, [queue], 1)
-                job_info = JobInfo(resources, job_id, 1)
-                job_info.set_state(job_state)
-                jobinfolist.append(job_info)
+                    queue = '"default" in queues'
+                    resources = ResourcesNeeded(cpus, memory, [queue], 1)
+                    job_info = JobInfo(resources, job_id, 1)
+                    job_info.set_state(job_state)
+                    jobinfolist.append(job_info)
         else:
             _LOGGER.error("Error getting Kubernetes pod list: %s: %s" % (resp.status_code, resp.text))
 
