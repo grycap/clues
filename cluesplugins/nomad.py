@@ -262,26 +262,32 @@ class lrms(LRMS):
                 nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client)
 
         return nodeinfolist
-
-    def _get_JobInfo(self, info):
-        # Default?
-        queue = '"default" in queues'
-        taskcount = 1
-
-        resources = ResourcesNeeded(info['cpu'], info['memory'], [queue], taskcount)
-        job_info = JobInfo(resources, info[ 'alloc_id' ], 1)
-        
-        # Set state
-        job_state = Request.UNKNOWN
-        if info['status'] == "pending":
-            job_state = Request.PENDING
-        elif info['status'] in ["running", "complete", "failed"]:
-            job_state = Request.SERVED
-        elif info['status'] == "lost":
-            job_state = Request.DISSAPEARED
-        job_info.set_state(job_state)
-        
-        return job_info
+  
+    def _get_Jobs_by_Master(self, server_node):
+        jobs = {}
+        url = server_node + self._api_version + self._api_url_get_jobs
+        response = self._create_request('GET', url) 
+        if (response.status_code == 200):
+            for job in response.json():
+                jobs[ job['ID'] ]={}
+                jobs[ job['ID'] ]['status'] = job['Status']
+                jobs[ job['ID'] ]['status_description'] = job['StatusDescription']
+                jobs[ job['ID'] ]['job_id'] = job['ID']
+                jobs[ job['ID'] ]['name'] = job['Name'] 
+                jobs[ job['ID'] ]['TaskGroups'] = {}
+        else:
+            _LOGGER.error("Error getting job_id's from Master node with URL=%s: %s: %s" % (server_node, response.status_code, response.text))
+        return jobs
+    
+    def _get_Jobs_info( self, server_node, job_id):
+        info = {}
+        url = server_node + self._api_version + self._api_url_get_jobs_info + '/' + job_id
+        response = self._create_request('GET', url) 
+        if (response.status_code == 200):
+            info = response.json()
+        else:
+            _LOGGER.error("Error getting information about job with ID=%s from Master node with URL=%s: %s: %s" % (job_id, server_node, response.status_code, response.text))
+        return info
 
     def _get_Allocations_by_Master(self, server_node):
         allocations = {}
@@ -289,49 +295,113 @@ class lrms(LRMS):
         response = self._create_request('GET', url) 
         if (response.status_code == 200):
             for alloc in response.json():
-                allocations[ alloc['ID'] ]={}
-                allocations[ alloc['ID'] ]['status'] = alloc['ClientStatus']
-                allocations[ alloc['ID'] ]['status_description'] = alloc['ClientDescription']
-                allocations[ alloc['ID'] ]['job_id'] = alloc['JobID']
-                allocations[ alloc['ID'] ]['node_id'] = alloc['NodeID'] 
-                allocations[ alloc['ID'] ]['alloc_id'] = alloc['ID']
+                allocations[ alloc['TaskGroup'] ]={}
+                allocations[ alloc['TaskGroup'] ]['status'] = alloc['ClientStatus']
+                allocations[ alloc['TaskGroup'] ]['status_description'] = alloc['ClientDescription']
+                allocations[ alloc['TaskGroup'] ]['job_id'] = alloc['JobID']
+                allocations[ alloc['TaskGroup'] ]['node_id'] = alloc['NodeID'] 
+                allocations[ alloc['TaskGroup'] ]['alloc_id'] = alloc['ID']
+                allocations[ alloc['TaskGroup'] ]['taskgroup_id'] = alloc['TaskGroup']
+                allocations[ alloc['TaskGroup'] ]['tasks_states'] = alloc['TaskStates']
         else:
             _LOGGER.error("Error getting alloc_id from Master node with URL=%s: %s: %s" % (server_node, response.status_code, response.text))
         return allocations
-    
-    def _get_Allocation_status( self, server_node, alloc_id):
-        info = {}
-        url = server_node + self._api_version + self._api_url_get_allocation_info + '/' + alloc_id
-        response = self._create_request('GET', url) 
-        if (response.status_code == 200):
-            info = response.json()
-        else:
-            _LOGGER.error("Error getting information about allocation=%s from Master node with URL=%s: %s: %s" % (alloc_id, server_node, response.status_code, response.text))
-        return info
+
+    def _get_JobInfo(self, info):
+        # Default?
+        queue = '"default" in queues'
+        taskcount = 1
+
+        task_name = info['job_id']+'-'+info['taskgroup_id']+'-'+info['name']
+        resources = ResourcesNeeded(info['cpu'], info['memory'], [queue], taskcount)
+        
+        job_info = JobInfo(resources, task_name, 1)
+        
+        # Set state
+        job_state = Request.UNKNOWN
+        if info['status'] == "pending":
+            job_state = Request.PENDING
+        elif info['status'] in ["running", "complete", "failed", "dead"]:
+            job_state = Request.SERVED
+        elif info['status'] == "lost":
+            job_state = Request.DISSAPEARED
+        job_info.set_state(job_state)
+        
+        return job_info
 
     def get_jobinfolist(self):
-        jobinfolist = []
-        allocations_by_server = {}
+        '''
+        NOMAD: 
+            Job -1- 
+                TaskGroup -1-
+                    Task -1-
+                    ...
+                    Task -N-
+                ...
+                Taskgroup -N-
+                    Task -1-
+                    ...
+                    Task -N-
+            ...
+            Job -N-
+                TaskGroup -1-
+                    Task -1-
+                    ...
+                    Task -N-
+                ...
+                Taskgroup -N-
+                    Task -1-
+                    ...
+                    Task -N-
+        
+        Due to this hierarchy, this function gather information about each task
+        '''
+        taskinfolist = []
+        jobs_by_server = {}
         # Obtain server nodes
         master_nodes = self._get_Master_nodes()       
         
-        # Obtain allocations id
+        # Obtain jobs id
         for server_node in master_nodes:
-            allocations_by_server[ server_node ] = self._get_Allocations_by_Master(server_node)
-            if (allocations_by_server[ server_node ] != {}): # Clients of the server have got allocations 
-                for alloc_id, info_alloc in allocations_by_server[ server_node].items():
-                    info = self._get_Allocation_status(server_node, alloc_id)
-                    info_alloc['cpu'] = 0.0
-                    info_alloc['memory'] = 0.0
-                    if (info != {}):
-                        if (info['Resources']['CPU'] != 0):
-                            info_alloc['cpu'] = float(info['Resources']['CPU']) / 1000.0
-                        if (info['Resources']['MemoryMB'] != 0):
-                            info_alloc['memory'] = float(info['Resources']['MemoryMB'] * 1024 * 1024 )
+            jobs_by_server[ server_node ] = self._get_Jobs_by_Master(server_node)
+            # Clients of the server have got jobs 
+            if (jobs_by_server[ server_node ] != {}): 
+                for job_id in jobs_by_server[ server_node]:
+                    # Obtain info the job
+                    info_job = self._get_Jobs_info(server_node, job_id )      
+                    for task_group in info_job['TaskGroups']:
+                        taskgroup_id = task_group['Name']
+                        info_taskgroup = {}
+                        info_taskgroup['name'] = taskgroup_id
+                        info_taskgroup['Tasks'] = {}
+                        for t in task_group['Tasks']:
+                            task_id = t['Name'] 
+                            info_task = {}
+                            info_task['name'] = task_id
+                            info_task['cpu'] = float(t['Resources']['CPU']) / 1000.0
+                            info_task['status'] = jobs_by_server[ server_node ][ job_id ]['status'] # This isn't the state of the task, the valid state is obtained with quering self._api_url_get_allocations
+                            info_task['memory'] = float(t['Resources']['MemoryMB'] * 1024 * 1024 )
+                            info_task['taskgroup_id'] = taskgroup_id
+                            info_task['job_id'] = job_id
+                            info_taskgroup['Tasks'][task_id] = info_task
+
+                        jobs_by_server[ server_node ][ job_id ]['TaskGroups'][ taskgroup_id ] = info_taskgroup
+
+                allocations = self._get_Allocations_by_Master(server_node) 
+                if allocations != {}:
+                    job_id = allocations['job_id']
+                    for taskgroup_id in allocations:
+                        for task_id, info_task in allocations['TaskStates'].items():
+                            jobs_by_server[ server_node ][ job_id ][ taskgroup_id ][ task_id ] = info_task['State']
                     
-                    jobinfolist.append( self._get_JobInfo(info_alloc) )
+                
+                for job_id in jobs_by_server[ server_node]:
+                    for taskgroup_id in jobs_by_server[ server_node ][ job_id ]['TaskGroups']:
+                        for task_id, info_task in jobs_by_server[ server_node][ job_id ]['TaskGroups'][ taskgroup_id ]['Tasks'].items():
+                            taskinfolist.append( self._get_JobInfo( info_task ) )
 
-        return jobinfolist
-
+        _LOGGER.debug("Len of taskinfolist: " + str(len(taskinfolist)))
+        return taskinfolist
+    
 if __name__ == '__main__':
     pass
