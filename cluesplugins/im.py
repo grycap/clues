@@ -486,7 +486,7 @@ class powermanager(PowerManager):
 			for node in monitoring_info.nodelist:
 				node_names.append(node.name)
 
-				if node.state in [Node.IDLE, Node.USED]:
+				if node.name in vms and node.state in [Node.IDLE, Node.USED]:
 					vm = vms[node.name]
 					state = vm.radl.systems[0].getValue('state')
 					# user request use of golden images and the image is fully configured
