@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 [KUBERNETES]
-KUBERNETES_SERVER=https://localhost:8080
+KUBERNETES_SERVER=http://localhost:8080
 UBERNETES_PODS_API_URL_PATH=/api/v1/pods
 KUBERNETES_NODES_API_URL_PATH=/api/v1/node
 KUBERNETES_NODE_MEMORY=1073741824
