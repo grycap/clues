@@ -58,7 +58,7 @@ class lrms(LRMS):
         if auth_header:
             headers.update(auth_header)
 
-        url = "%s/%s" % (self._server_url, url)
+        url = "%s%s" % (self._server_url, url)
         resp = requests.request(method, url, verify=False, headers=headers, data=body)
 
         return resp
@@ -130,7 +130,7 @@ class lrms(LRMS):
                 for conditions in node["status"]["conditions"]:
                     if conditions['type'] == "Ready":
                         if conditions['status'] != "True":
-                            _LOGGER.warn("Node %s is not ready: %s." % (name, conditions["message"]))
+                            _LOGGER.warning("Node %s is not ready: %s." % (name, conditions["message"]))
                             is_ready = False
 
                 keywords = {}
