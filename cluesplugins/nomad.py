@@ -391,15 +391,15 @@ class lrms(LRMS):
                             info_taskgroup['Tasks'][task_id] = info_task
 
                         jobs_by_server[ server_node ][ job_id ]['TaskGroups'][ taskgroup_id ] = info_taskgroup
-
+vi ser
                 allocations = self._get_Allocations_by_Master(server_node) 
                 if allocations != {}:
                     for taskgroup_id in allocations:
                         job_id = allocations[taskgroup_id]['job_id']
                         for task_id, info_task in allocations[taskgroup_id]['tasks_states'].items():
                             if (taskgroup_id in jobs_by_server[ server_node ][ job_id ]['TaskGroups']) and ( task_id in jobs_by_server[ server_node ][ job_id ]['TaskGroups'][ taskgroup_id ]['Tasks']): 
-                            jobs_by_server[ server_node ][ job_id ]['TaskGroups'][ taskgroup_id ]['Tasks'][ task_id ]['status'] = info_task['State']
-                    
+                                jobs_by_server[ server_node ][ job_id ]['TaskGroups'][ taskgroup_id ]['Tasks'][ task_id ]['status'] = info_task['State']
+                    vi ser
                 
                 for job_id in jobs_by_server[ server_node]:
                     for taskgroup_id in jobs_by_server[ server_node ][ job_id ]['TaskGroups']:
