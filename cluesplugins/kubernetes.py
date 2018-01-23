@@ -114,6 +114,23 @@ class lrms(LRMS):
         else:
             return int(str_memory)
 
+    def _get_node_used_resources(self, nodename):
+        used_mem = 0
+        used_cpus = 0.0
+        used_pods = 0
+
+        resp = self._create_request('GET', self._pods_api_url_path, self.auth_data)
+        if resp and resp.status_code == 200:
+            pods_data = resp.json()
+            for pod in pods_data["items"]:
+                if "nodeName" in pod["spec"] and nodename == pod["spec"]["nodeName"]:
+                    used_pods += 1
+                    cpus, memory = self._get_pod_cpus_and_memory(pod)
+                    used_mem += memory
+                    used_cpus += cpus
+
+        return used_mem, used_cpus, used_pods
+
     def get_nodeinfolist(self):
         nodeinfolist = collections.OrderedDict()
 
@@ -125,13 +142,16 @@ class lrms(LRMS):
                 # not add master node
                 if "node-role.kubernetes.io/master" not in node["metadata"]["labels"]:
                     name = node["metadata"]["name"]
-                    memory_total = self._get_memory_in_bytes(node["status"]["capacity"]["memory"])
-                    slots_count = int(node["status"]["capacity"]["cpu"])
-                    pods_total = node["status"]["capacity"]["pods"]
-                    memory_free = self._get_memory_in_bytes(node["status"]["allocatable"]["memory"])
-                    slots_free = int(node["status"]["allocatable"]["cpu"])
-                    pods_free = node["status"]["allocatable"]["pods"]
-    
+                    memory_total = self._get_memory_in_bytes(node["status"]["allocatable"]["memory"])
+                    slots_total = int(node["status"]["allocatable"]["cpu"])
+                    pods_total = int(node["status"]["allocatable"]["pods"])
+
+                    used_mem, used_cpus, used_pods = self._get_node_used_resources(name)
+
+                    memory_free = memory_total - used_mem
+                    slots_free = slots_total - used_cpus
+                    pods_free = pods_total - used_pods
+
                     is_ready = True
                     for conditions in node["status"]["conditions"]:
                         if conditions['type'] == "Ready":
@@ -143,7 +163,8 @@ class lrms(LRMS):
                     queues = ["default"]
                     if queues:
                         keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
-                    nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
+                    keywords['pods_free'] = pods_free
+                    nodeinfolist[name] = NodeInfo(name, slots_total, slots_free, memory_total, memory_free, keywords)
                     if is_ready:
                         nodeinfolist[name].state = NodeInfo.IDLE
                         if memory_free <= 0 or slots_free <= 0 or pods_free <= 0:
@@ -177,21 +198,15 @@ class lrms(LRMS):
             return float(cpu_info)
 
     def _get_pod_cpus_and_memory(self, pod):
-        cpus = memory = 0
+        cpus = 0.0
+        memory = 0
         for cont in pod["spec"]["containers"]:
             if "resources" in cont:
-                # we give precedence requests to limits
-                # TODO: Use the highest value?
                 if "requests" in cont["resources"]:
                     if "cpu" in cont["resources"]["requests"]:
                         cpus += self._get_cpu_float(cont["resources"]["requests"]["cpu"])
                     if "memory" in cont["resources"]["requests"]:
                         memory += self._get_memory_in_bytes(cont["resources"]["requests"]["memory"])
-                elif "limits" in cont["resources"]:
-                    if "cpu" in cont["resources"]["limits"]:
-                        cpus += self._get_cpu_float(cont["resources"]["limits"]["cpu"])
-                    if "memory" in cont["resources"]["limits"]:
-                        memory += self._get_memory_in_bytes(cont["resources"]["limits"]["memory"])
 
         return cpus, memory
 
