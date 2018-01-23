@@ -167,7 +167,7 @@ class lrms(LRMS):
                     nodeinfolist[name] = NodeInfo(name, slots_total, slots_free, memory_total, memory_free, keywords)
                     if is_ready:
                         nodeinfolist[name].state = NodeInfo.IDLE
-                        if memory_free <= 0 or slots_free <= 0 or pods_free <= 0:
+                        if used_pods > 0:
                             nodeinfolist[name].state = NodeInfo.USED
                     else:
                         nodeinfolist[name].state = NodeInfo.OFF
