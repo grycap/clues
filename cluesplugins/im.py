@@ -42,8 +42,7 @@ class powermanager(PowerManager):
 		def __init__(self, vm_id, radl, ec3_additional_vm):
 			self.vm_id = vm_id
 			self.radl = radl
-			self.timestamp_recovered = 0
-			self.timestamp_created = self.timestamp_seen = cpyutils.eventloop.now()
+			self.timestamp_recovered = self.timestamp_created = self.timestamp_seen = cpyutils.eventloop.now()
 			self.ec3_additional_vm = ec3_additional_vm
 			self.last_state = None
 
