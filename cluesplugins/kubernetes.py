@@ -61,10 +61,13 @@ class lrms(LRMS):
     
             url = "%s%s" % (self._server_url, url)
             resp = requests.request(method, url, verify=False, headers=headers, data=body)
-    
-            return resp
+            if resp.status_code == 200:
+                return resp.json()
+            else:
+                _LOGGER.error("Error contacting Kubernetes API: %s - %s" % (resp.status_code, resp.text))
+                return None
         except Exception as ex:
-            _LOGGER.error("Error contanctinf Kubernetes API: %s" % str(ex))
+            _LOGGER.error("Error contacting Kubernetes API: %s" % str(ex))
             return None
 
     def __init__(self, KUBERNETES_SERVER=None, KUBERNETES_PODS_API_URL_PATH=None,
@@ -132,16 +135,11 @@ class lrms(LRMS):
     def get_nodeinfolist(self):
         nodeinfolist = collections.OrderedDict()
 
-        resp = self._create_request('GET', self._nodes_api_url_path, self.auth_data)
-        if resp and resp.status_code == 200:
-            nodes_data = resp.json()
-
-            resp = self._create_request('GET', self._pods_api_url_path, self.auth_data)
-            if resp and resp.status_code == 200:
-                pods_data = resp.json()
-            else:
-                _LOGGER.error("Error getting Kubernetes pod list: %s: %s" % (resp.status_code, resp.text))
-                pods_data = None
+        nodes_data = self._create_request('GET', self._nodes_api_url_path, self.auth_data)
+        if nodes_data:
+            pods_data = self._create_request('GET', self._pods_api_url_path, self.auth_data)
+            if not pods_data:
+                _LOGGER.error("Error getting Kubernetes pod list. Node usage will not be obtained.")
 
             for node in nodes_data["items"]:
                 # not add master node
@@ -177,7 +175,7 @@ class lrms(LRMS):
                     else:
                         nodeinfolist[name].state = NodeInfo.OFF
         else:
-            _LOGGER.error("Error getting Kubernetes node list: %s: %s" % (resp.status_code, resp.text))
+            _LOGGER.error("Error getting Kubernetes node list.")
 
         # Add the "virtual" nodes
         try:
@@ -223,9 +221,8 @@ class lrms(LRMS):
         '''
         jobinfolist = []
 
-        resp = self._create_request('GET', self._pods_api_url_path, self.auth_data)
-        if resp and resp.status_code == 200:
-            pods_data = resp.json()
+        pods_data = self._create_request('GET', self._pods_api_url_path, self.auth_data)
+        if pods_data:
             for pod in pods_data["items"]:
                 job_id = pod["metadata"]["uid"]
                 state = pod["status"]["phase"]  # Pending, Running, Succeeded, Failed or Unknown
@@ -244,7 +241,7 @@ class lrms(LRMS):
                 job_info.set_state(job_state)
                 jobinfolist.append(job_info)
         else:
-            _LOGGER.error("Error getting Kubernetes pod list: %s: %s" % (resp.status_code, resp.text))
+            _LOGGER.error("Error getting Kubernetes pod list")
 
         return jobinfolist
 
