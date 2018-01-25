@@ -114,14 +114,12 @@ class lrms(LRMS):
         else:
             return int(str_memory)
 
-    def _get_node_used_resources(self, nodename):
+    def _get_node_used_resources(self, nodename, pods_data):
         used_mem = 0
         used_cpus = 0.0
         used_pods = 0
 
-        resp = self._create_request('GET', self._pods_api_url_path, self.auth_data)
-        if resp and resp.status_code == 200:
-            pods_data = resp.json()
+        if pods_data:
             for pod in pods_data["items"]:
                 if "nodeName" in pod["spec"] and nodename == pod["spec"]["nodeName"]:
                     used_pods += 1
@@ -138,6 +136,13 @@ class lrms(LRMS):
         if resp and resp.status_code == 200:
             nodes_data = resp.json()
 
+            resp = self._create_request('GET', self._pods_api_url_path, self.auth_data)
+            if resp and resp.status_code == 200:
+                pods_data = resp.json()
+            else:
+                _LOGGER.error("Error getting Kubernetes pod list: %s: %s" % (resp.status_code, resp.text))
+                pods_data = None
+
             for node in nodes_data["items"]:
                 # not add master node
                 if "node-role.kubernetes.io/master" not in node["metadata"]["labels"]:
@@ -146,7 +151,7 @@ class lrms(LRMS):
                     slots_total = int(node["status"]["allocatable"]["cpu"])
                     pods_total = int(node["status"]["allocatable"]["pods"])
 
-                    used_mem, used_cpus, used_pods = self._get_node_used_resources(name)
+                    used_mem, used_cpus, used_pods = self._get_node_used_resources(name, pods_data)
 
                     memory_free = memory_total - used_mem
                     slots_free = slots_total - used_cpus
