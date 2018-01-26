@@ -161,8 +161,7 @@ class lrms(LRMS):
                         if conditions['type'] == "Ready":
                             if conditions['status'] != "True":
                                 is_ready = False
-    
-                    _LOGGER.debug("PODS: %d - %d = %d" % (pods_total, used_pods, pods_free))
+
                     keywords = {'pods_free': TypedNumber(pods_free)}
                     nodeinfolist[name] = NodeInfo(name, slots_total, slots_free, memory_total, memory_free, keywords)
                     if is_ready:
