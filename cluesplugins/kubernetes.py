@@ -16,14 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import socket
 import collections
 import requests
 import base64
 import cpyutils.config
 import clueslib.helpers as Helpers
 
-from cpyutils.evaluate import TypedClass, TypedList
+from cpyutils.evaluate import TypedNumber
 from cpyutils.log import Log
 from clueslib.node import NodeInfo
 from clueslib.platform import LRMS
@@ -72,7 +71,7 @@ class lrms(LRMS):
 
     def __init__(self, KUBERNETES_SERVER=None, KUBERNETES_PODS_API_URL_PATH=None,
                  KUBERNETES_NODES_API_URL_PATH=None, KUBERNETES_TOKEN=None, KUBERNETES_NODE_MEMORY=None,
-                 KUBERNETES_NODE_SLOTS=None):
+                 KUBERNETES_NODE_SLOTS=None, KUBERNETES_NODE_PODS=None):
 
         config_kube = cpyutils.config.Configuration(
             "KUBERNETES",
@@ -83,6 +82,7 @@ class lrms(LRMS):
                 "KUBERNETES_TOKEN": None,
                 "KUBERNETES_NODE_MEMORY": 1073741824,
                 "KUBERNETES_NODE_SLOTS": 1,
+                "KUBERNETES_NODE_PODS": 110,
             }
         )
 
@@ -94,6 +94,7 @@ class lrms(LRMS):
         token = Helpers.val_default(KUBERNETES_TOKEN, config_kube.KUBERNETES_TOKEN)
         self._node_memory = Helpers.val_default(KUBERNETES_NODE_MEMORY, config_kube.KUBERNETES_NODE_MEMORY)
         self._node_slots = Helpers.val_default(KUBERNETES_NODE_SLOTS, config_kube.KUBERNETES_NODE_SLOTS)
+        self._node_pods = Helpers.val_default(KUBERNETES_NODE_PODS, config_kube.KUBERNETES_NODE_PODS)
 
         if token:
             self.auth_data = {"token": token}
@@ -160,13 +161,8 @@ class lrms(LRMS):
                         if conditions['type'] == "Ready":
                             if conditions['status'] != "True":
                                 is_ready = False
-    
-                    keywords = {}
-                    # Create a fake queue
-                    queues = ["default"]
-                    if queues:
-                        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
-                    keywords['pods_free'] = pods_free
+
+                    keywords = {'pods_free': TypedNumber(pods_free)}
                     nodeinfolist[name] = NodeInfo(name, slots_total, slots_free, memory_total, memory_free, keywords)
                     if is_ready:
                         nodeinfolist[name].state = NodeInfo.IDLE
@@ -182,10 +178,7 @@ class lrms(LRMS):
             for line in open('/etc/clues2/kubernetes_vnodes.info', 'r'):
                 name = line.rstrip('\n')
                 if name not in nodeinfolist:
-                    keywords = {}
-                    queues = ["default"]
-                    if queues:
-                        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                    keywords = {'pods_free': TypedNumber(self._node_pods)}
                     nodeinfolist[name] = NodeInfo(name, self._node_slots, self._node_slots,
                                                   self._node_memory, self._node_memory, keywords)
                     nodeinfolist[name].state = NodeInfo.OFF
@@ -235,8 +228,8 @@ class lrms(LRMS):
 
                 cpus, memory = self._get_pod_cpus_and_memory(pod)
 
-                queue = '"default" in queues'
-                resources = ResourcesNeeded(cpus, memory, [queue], 1)
+                req_str = 'pods_free > 0'
+                resources = ResourcesNeeded(cpus, memory, [req_str], 1)
                 job_info = JobInfo(resources, job_id, 1)
                 job_info.set_state(job_state)
                 jobinfolist.append(job_info)
