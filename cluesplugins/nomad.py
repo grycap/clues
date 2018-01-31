@@ -105,7 +105,7 @@ class lrms(LRMS):
                 "NOMAD_API_URL_GET_CLIENTS": "/nodes", # master server
                 "NOMAD_API_URL_GET_CLIENT_INFO": "/node", # master server
                 "NOMAD_API_URL_GET_CLIENT_STATUS": "/client/stats", # client node
-                "NOMAD_API_URL_GET_CLIENT_ALLOCATIONS": "/node/$CLIENT_ID$/allocation", # master server
+                "NOMAD_API_URL_GET_CLIENT_ALLOCATIONS": "/node/$CLIENT_ID$/allocations", # master server
                 "NOMAD_API_URL_GET_ALLOCATIONS": "/allocations", # master node
                 "NOMAD_API_URL_GET_JOBS": "/jobs", # master node
                 "NOMAD_API_URL_GET_JOBS_INFO": "/job/$JOB_ID$", # master node
@@ -116,7 +116,7 @@ class lrms(LRMS):
                 "NOMAD_STATE_OFF": "down",
                 "NOMAD_STATE_ON": "ready",
                 "NOMAD_PRIVATE_HTTP_PORT": "4646",
-                "NOMAD_NODES_LIST_CLUES": "/etc/clues2/nomad_vnodes.info"
+                "NOMAD_NODES_LIST_CLUES": "/etc/clues2/nomad_vnodes.info",
                 "NOMAD_QUEUES": "default",
                 "NOMAD_QUEUES_OJPN": "" # Queues One Job Per Node 
             }
@@ -149,9 +149,10 @@ class lrms(LRMS):
         except ValueError, e:
             self._headers = {}
             _LOGGER.error("Error loading variable NOMAD_HEADERS from config file, NOMAD_HEADERS will be %s" % str(config_nomad.NOMAD_HEADERS) )
-    
-        self._queues.remove('')
-        self._queues_ojpn.remove('')
+
+        #_LOGGER.debug( "len %s" % str(len(self._queues)) )
+        #self._queues.remove('')
+        #self._queues_ojpn.remove('')
         
         LRMS.__init__(self, "TOKEN_%s" % self._server_url)
 
@@ -163,7 +164,7 @@ class lrms(LRMS):
                 if alloc['ClientStatus'] in ['pending', 'running']:
                     return True
         else:
-            _LOGGER.error("Error getting information about allocatios of client with ID=%s from Master node with URL=%s: %s: %s" % (client_id, server_node, response.status_code, response.text))
+            _LOGGER.error("Error getting information about allocations of client with ID=%s from Master node with URL=%s: %s: %s" % (client_id, server_node, response.status_code, response.text))
         return False
 
     def _get_NodeInfo (self, info_node):
@@ -182,10 +183,22 @@ class lrms(LRMS):
 
         # Keywords
         keywords = {}
-        keywords['hostname'] = TypedClass.auto(name)                          
-        keywords['queues'] = TypedList([TypedClass.auto(q) for q in self._queues])
-            
-            
+        keywords['hostname'] = TypedClass.auto(name)       
+        
+        # Check queues 
+        queues = self._queues[:]                       
+        q = info_node['node_class']
+        if not (q in self._queues or q == '') :
+            _LOGGER.error(" '%s' (node_class of Nomad Client) is not a valid queue, queue is set to all queues." % (q))
+        if q in self._queues:
+            queues = [ q ]     
+        if ( set( queues ).intersection(self._queues_ojpn) and info_node['any_job_is_running']): # Some queue is a OJPN queue and job is running 
+            state = NodeInfo.USED
+        
+        _LOGGER.debug(  "queues: %s" % str(queues) )
+        
+        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+
         # Information of query
         if ('client_status' in info_node): 
             slots_count = len( info_node['client_status']['CPU'] )
@@ -197,18 +210,9 @@ class lrms(LRMS):
             if (memory_free <= 0 or slots_free <= 0):
                 state = NodeInfo.USED
 
-            # Check queues 
-            q = info_node['client_status']['node_class']
-            if not (q in self._queues and q == '') :
-                _LOGGER.error(" '%s' (node_class of Nomad Client) is not a valid queue, queue is set to all queues." % (queue))
-            if q in self._queues:
-                keywords['queues'] = [ TypedClass.auto(q) ]      
+               
 
         node = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
-
-        if ( set(keywords['queues']).intersection(self._queues_ojpn) and info_node['any_job_is_running']): # Some queue is a OJPN queue and job is running 
-            state = NodeInfo.USED
-        
         node.state = state
         return node
 
@@ -237,7 +241,7 @@ class lrms(LRMS):
                 clients[ client['ID'] ]['status_description'] = client['StatusDescription'] 
                 clients[ client['ID'] ]['state'] = NodeInfo.OFF
                 clients[ client['ID'] ]['node_class'] = client['NodeClass']
-                clients[ client['ID'] ]['any_job_is_running'] = _is_Client_runningAJob (server_node, client['ID'] )
+                clients[ client['ID'] ]['any_job_is_running'] = self._is_Client_runningAJob (server_node, client['ID'] )
                 if (client['Status'] == self._state_on):
                     clients[ client['ID'] ]['state'] = NodeInfo.IDLE
         else:
@@ -316,6 +320,7 @@ class lrms(LRMS):
                 info_node['status'] = self._state_off
                 info_node['node_class'] = ''
                 info_node['status_description'] = 'Node is OFF'
+                info_node['any_job_is_running'] = self._queues[0]
                 nodeinfolist[ info_node['name'] ] = self._get_NodeInfo(info_node)
             infile.close()
 
