@@ -388,6 +388,7 @@ class lrms(LRMS):
                 allocations[ alloc['TaskGroup'] ]['alloc_id'] = alloc['ID']
                 allocations[ alloc['TaskGroup'] ]['taskgroup_id'] = alloc['TaskGroup']
                 allocations[ alloc['TaskGroup'] ]['tasks_states'] = alloc['TaskStates']
+                #_LOGGER.debug( "TaskStates of %s --> %s " % (alloc['TaskGroup'] , json.dumps(alloc['TaskStates'])) )
         else:
             _LOGGER.error("Error getting alloc_id from Master node with URL=%s: %s: %s" % (server_node, response.status_code, response.text))
         return allocations
@@ -411,7 +412,7 @@ class lrms(LRMS):
         
         # Set state
         job_state = Request.UNKNOWN
-        if info['status'] == "pending":
+        if info['status'] in ["pending", "starting"]:
             job_state = Request.PENDING
         elif info['status'] in ["running", "complete", "failed", "dead"]:
             job_state = Request.SERVED
