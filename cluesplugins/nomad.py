@@ -122,27 +122,26 @@ class lrms(LRMS):
             }
         )
 
-        self._server_url = Helpers.val_default(NOMAD_SERVER, config_nomad.NOMAD_SERVER)
-        
-        self._api_version = Helpers.val_default(NOMAD_API_VERSION, config_nomad.NOMAD_API_VERSION)
-        self._api_url_get_allocations = Helpers.val_default(NOMAD_API_URL_GET_ALLOCATIONS, config_nomad.NOMAD_API_URL_GET_ALLOCATIONS)
-        self._api_url_get_allocation_info = Helpers.val_default(NOMAD_API_URL_GET_ALLOCATION_INFO, config_nomad.NOMAD_API_URL_GET_ALLOCATION_INFO)
-        self._api_url_get_jobs = Helpers.val_default(NOMAD_API_URL_GET_JOBS, config_nomad.NOMAD_API_URL_GET_JOBS)
-        self._api_url_get_jobs_info = Helpers.val_default(NOMAD_API_URL_GET_JOBS_INFO, config_nomad.NOMAD_API_URL_GET_JOBS_INFO)
-        self._api_url_get_servers = Helpers.val_default(NOMAD_API_URL_GET_SERVERS, config_nomad.NOMAD_API_URL_GET_SERVERS)
-        self._api_url_get_clients = Helpers.val_default(NOMAD_API_URL_GET_CLIENTS, config_nomad.NOMAD_API_URL_GET_CLIENTS)
-        self._api_url_get_clients_info = Helpers.val_default(NOMAD_API_URL_GET_CLIENT_INFO, config_nomad.NOMAD_API_URL_GET_CLIENT_INFO)
-        self._api_url_get_clients_status = Helpers.val_default(NOMAD_API_URL_GET_CLIENT_STATUS, config_nomad.NOMAD_API_URL_GET_CLIENT_STATUS)
-        self._api_url_get_clients_allocations = Helpers.val_default(NOMAD_API_URL_GET_CLIENT_ALLOCATIONS, config_nomad.NOMAD_API_URL_GET_CLIENT_ALLOCATIONS)
+        self._server_url = Helpers.val_default(NOMAD_SERVER, config_nomad.NOMAD_SERVER).replace('"','')
+        self._api_version = Helpers.val_default(NOMAD_API_VERSION, config_nomad.NOMAD_API_VERSION).replace('"','')
+        self._api_url_get_allocations = Helpers.val_default(NOMAD_API_URL_GET_ALLOCATIONS, config_nomad.NOMAD_API_URL_GET_ALLOCATIONS).replace('"','')
+        self._api_url_get_allocation_info = Helpers.val_default(NOMAD_API_URL_GET_ALLOCATION_INFO, config_nomad.NOMAD_API_URL_GET_ALLOCATION_INFO).replace('"','')
+        self._api_url_get_jobs = Helpers.val_default(NOMAD_API_URL_GET_JOBS, config_nomad.NOMAD_API_URL_GET_JOBS).replace('"','')
+        self._api_url_get_jobs_info = Helpers.val_default(NOMAD_API_URL_GET_JOBS_INFO, config_nomad.NOMAD_API_URL_GET_JOBS_INFO).replace('"','')
+        self._api_url_get_servers = Helpers.val_default(NOMAD_API_URL_GET_SERVERS, config_nomad.NOMAD_API_URL_GET_SERVERS).replace('"','')
+        self._api_url_get_clients = Helpers.val_default(NOMAD_API_URL_GET_CLIENTS, config_nomad.NOMAD_API_URL_GET_CLIENTS).replace('"','')
+        self._api_url_get_clients_info = Helpers.val_default(NOMAD_API_URL_GET_CLIENT_INFO, config_nomad.NOMAD_API_URL_GET_CLIENT_INFO).replace('"','')
+        self._api_url_get_clients_status = Helpers.val_default(NOMAD_API_URL_GET_CLIENT_STATUS, config_nomad.NOMAD_API_URL_GET_CLIENT_STATUS).replace('"','')
+        self._api_url_get_clients_allocations = Helpers.val_default(NOMAD_API_URL_GET_CLIENT_ALLOCATIONS, config_nomad.NOMAD_API_URL_GET_CLIENT_ALLOCATIONS).replace('"','')
         self._max_retries = Helpers.val_default(MAX_RETRIES, config_nomad.MAX_RETRIES)
         self._acl_token = Helpers.val_default(NOMAD_ACL_TOKEN, config_nomad.NOMAD_ACL_TOKEN)
         self._auth_data = Helpers.val_default(NOMAD_AUTH_DATA, config_nomad.NOMAD_AUTH_DATA)
-        self._state_off = Helpers.val_default(NOMAD_STATE_OFF, config_nomad.NOMAD_STATE_OFF)
-        self._state_on = Helpers.val_default(NOMAD_STATE_ON, config_nomad.NOMAD_STATE_ON)
-        self._http_port = Helpers.val_default(NOMAD_PRIVATE_HTTP_PORT, config_nomad.NOMAD_PRIVATE_HTTP_PORT)
-        self._nodes_info_file = Helpers.val_default(NOMAD_NODES_LIST_CLUES, config_nomad.NOMAD_NODES_LIST_CLUES)
-        self._queues = Helpers.val_default(NOMAD_QUEUES, config_nomad.NOMAD_QUEUES).split(',')
-        self._queues_ojpn = Helpers.val_default(NOMAD_QUEUES_OJPN, config_nomad.NOMAD_QUEUES_OJPN).split(',')
+        self._state_off = Helpers.val_default(NOMAD_STATE_OFF, config_nomad.NOMAD_STATE_OFF).replace('"','')
+        self._state_on = Helpers.val_default(NOMAD_STATE_ON, config_nomad.NOMAD_STATE_ON).replace('"','')
+        self._http_port = Helpers.val_default(NOMAD_PRIVATE_HTTP_PORT, config_nomad.NOMAD_PRIVATE_HTTP_PORT).replace('"','')
+        self._nodes_info_file = Helpers.val_default(NOMAD_NODES_LIST_CLUES, config_nomad.NOMAD_NODES_LIST_CLUES).replace('"','')
+        self._queues = Helpers.val_default(NOMAD_QUEUES, config_nomad.NOMAD_QUEUES).replace('"','').split(',')
+        self._queues_ojpn = Helpers.val_default(NOMAD_QUEUES_OJPN, config_nomad.NOMAD_QUEUES_OJPN).replace('"','').split(',')
 
         try:
             self._headers = json.loads(Helpers.val_default(NOMAD_HEADERS, config_nomad.NOMAD_HEADERS))
@@ -162,6 +161,7 @@ class lrms(LRMS):
         if (response.status_code == 200):
             for alloc in response.json():
                 if alloc['ClientStatus'] in ['pending', 'running']:
+                    _LOGGER.debug("_is_Client_runningAJob is TRUE")
                     return True
         else:
             _LOGGER.error("Error getting information about allocations of client with ID=%s from Master node with URL=%s: %s: %s" % (client_id, server_node, response.status_code, response.text))
@@ -193,9 +193,10 @@ class lrms(LRMS):
         if q in self._queues:
             queues = [ q ]     
         if ( set( queues ).intersection(self._queues_ojpn) and info_node['any_job_is_running']): # Some queue is a OJPN queue and job is running 
+            _LOGGER.debug(" ****** Check queues is true  ****** for node %s: any_job_is_running = %s" % (name, str(info_node['any_job_is_running'])))
             state = NodeInfo.USED
         
-        _LOGGER.debug(  "queues: %s" % str(queues) )
+        
         
         keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
 
@@ -210,6 +211,7 @@ class lrms(LRMS):
             if (memory_free <= 0 or slots_free <= 0):
                 state = NodeInfo.USED
 
+            _LOGGER.debug(  "queues of node %s: %s" % (name, str(queues)) )
                
 
         node = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
@@ -320,7 +322,7 @@ class lrms(LRMS):
                 info_node['status'] = self._state_off
                 info_node['node_class'] = ''
                 info_node['status_description'] = 'Node is OFF'
-                info_node['any_job_is_running'] = self._queues[0]
+                info_node['any_job_is_running'] = False
                 nodeinfolist[ info_node['name'] ] = self._get_NodeInfo(info_node)
             infile.close()
 
