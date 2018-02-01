@@ -111,7 +111,7 @@ class lrms(LRMS):
                 "NOMAD_API_URL_GET_JOBS_INFO": "/job/$JOB_ID$", # master node
                 "NOMAD_API_URL_GET_ALLOCATION_INFO": "/allocation", # master node
                 "NOMAD_ACL_TOKEN": None,
-                "MAX_RETRIES": 100,
+                "MAX_RETRIES": 10,
                 "NOMAD_AUTH_DATA": None,
                 "NOMAD_STATE_OFF": "down",
                 "NOMAD_STATE_ON": "ready",
@@ -149,7 +149,7 @@ class lrms(LRMS):
             self._headers = {}
             _LOGGER.error("Error loading variable NOMAD_HEADERS from config file, NOMAD_HEADERS will be %s" % str(config_nomad.NOMAD_HEADERS) )
 
-        #_LOGGER.debug( "len %s" % str(len(self._queues)) )
+        #_LOGGER.info( "len %s" % str(len(self._queues)) )
         #self._queues.remove('')
         #self._queues_ojpn.remove('')
         
@@ -161,7 +161,7 @@ class lrms(LRMS):
         if (response.status_code == 200):
             for alloc in response.json():
                 if alloc['ClientStatus'] in ['pending', 'running']:
-                    _LOGGER.debug("_is_Client_runningAJob is TRUE")
+                    _LOGGER.info("_is_Client_runningAJob is TRUE")
                     return True
         else:
             _LOGGER.error("Error getting information about allocations of client with ID=%s from Master node with URL=%s: %s: %s" % (client_id, server_node, response.status_code, response.text))
@@ -193,7 +193,7 @@ class lrms(LRMS):
         if q in self._queues:
             queues = [ q ]     
         if ( set( queues ).intersection(self._queues_ojpn) and info_node['any_job_is_running']): # Some queue is a OJPN queue and job is running 
-            _LOGGER.debug(" ****** Check queues is true  ****** for node %s: any_job_is_running = %s" % (name, str(info_node['any_job_is_running'])))
+            _LOGGER.info(" ****** Check queues is true  ****** for node %s: any_job_is_running = %s" % (name, str(info_node['any_job_is_running'])))
             state = NodeInfo.USED
         
         
@@ -209,13 +209,14 @@ class lrms(LRMS):
             for cpu in info_node['client_status']['CPU']:
                 slots_free += float(cpu['Idle']) / ( float(slots_count) * 100.0)
             if (memory_free <= 0 or slots_free <= 0):
-                state = NodeInfo.USED
-
-            _LOGGER.debug(  "queues of node %s: %s" % (name, str(queues)) )
-               
+                state = NodeInfo.USED                   
 
         node = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
         node.state = state
+
+        _LOGGER.info("_get_NodeInfo: " + str(node) )
+        _LOGGER.info( "queues of node %s: %s \n" % (name, str(queues)) )
+
         return node
 
     def _get_Master_nodes(self):
@@ -307,9 +308,11 @@ class lrms(LRMS):
 
                 nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client)
 
+        
         return nodeinfolist
 
     def get_nodeinfolist(self):
+        _LOGGER.info("***** START - get_nodeinfolist ***** ")
         nodeinfolist = collections.OrderedDict()
         clients_by_server = {}
 
@@ -346,6 +349,8 @@ class lrms(LRMS):
                         if client_status:
                             info_client['client_status'] = client_status
                 nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client)
+        
+        _LOGGER.info("***** END - get_nodeinfolist ***** ")
         return nodeinfolist
   
     def _get_Jobs_by_Master(self, server_node):
@@ -388,7 +393,7 @@ class lrms(LRMS):
                 allocations[ alloc['TaskGroup'] ]['alloc_id'] = alloc['ID']
                 allocations[ alloc['TaskGroup'] ]['taskgroup_id'] = alloc['TaskGroup']
                 allocations[ alloc['TaskGroup'] ]['tasks_states'] = alloc['TaskStates']
-                #_LOGGER.debug( "TaskStates of %s --> %s " % (alloc['TaskGroup'] , json.dumps(alloc['TaskStates'])) )
+                #_LOGGER.info( "TaskStates of %s --> %s " % (alloc['TaskGroup'] , json.dumps(alloc['TaskStates'])) )
         else:
             _LOGGER.error("Error getting alloc_id from Master node with URL=%s: %s: %s" % (server_node, response.status_code, response.text))
         return allocations
@@ -398,10 +403,7 @@ class lrms(LRMS):
         queue = '"default" in queues'
         taskcount = 1
 
-        _LOGGER.debug("_get_JobInfo: " + str(info))
-        _LOGGER.debug("info['job_id']: " + str(info['job_id']))
-        _LOGGER.debug("info['taskgroup_id']: " + str(info['taskgroup_id']))
-        _LOGGER.debug("info['name']: " + str(info['name']))
+        
 
         queue = '"' + info['queue'] + '" in queues'
 
@@ -420,6 +422,13 @@ class lrms(LRMS):
             job_state = Request.DISSAPEARED
         job_info.set_state(job_state)
         
+        _LOGGER.info("\n_get_JobInfo: " + str(info))
+        _LOGGER.info("info['job_id']: " + str(info['job_id']))
+        _LOGGER.info("info['taskgroup_id']: " + str(info['taskgroup_id']))
+        _LOGGER.info("info['name']: " + str(info['name']))
+        _LOGGER.info("info['status']: " + str(info['status']))
+        _LOGGER.info("queues: " + queue + "\n")
+
         return job_info
 
     def get_jobinfolist(self):
@@ -449,7 +458,7 @@ class lrms(LRMS):
             
             Due to this hierarchy, this function gather information about each task
         '''
-        
+        _LOGGER.info("***** START - get_jobinfolist ***** ")
         taskinfolist = []
         jobs_by_server = {}
         # Obtain server nodes
@@ -488,6 +497,7 @@ class lrms(LRMS):
 
                         jobs_by_server[ server_node ][ job_id ]['TaskGroups'][ taskgroup_id ] = info_taskgroup
 
+                '''
                 allocations = self._get_Allocations_by_Master(server_node) 
                 if allocations != {}:
                     for taskgroup_id in allocations:
@@ -495,13 +505,15 @@ class lrms(LRMS):
                         for task_id, info_task in allocations[taskgroup_id]['tasks_states'].items():
                             if (taskgroup_id in jobs_by_server[ server_node ][ job_id ]['TaskGroups']) and ( task_id in jobs_by_server[ server_node ][ job_id ]['TaskGroups'][ taskgroup_id ]['Tasks']): 
                                 jobs_by_server[ server_node ][ job_id ]['TaskGroups'][ taskgroup_id ]['Tasks'][ task_id ]['status'] = info_task['State']
-                
+                '''
+
                 for job_id in jobs_by_server[ server_node]:
                     for taskgroup_id in jobs_by_server[ server_node ][ job_id ]['TaskGroups']:
                         for task_id, info_task in jobs_by_server[ server_node][ job_id ]['TaskGroups'][ taskgroup_id ]['Tasks'].items():
                             taskinfolist.append( self._get_JobInfo( info_task ) )
 
-        _LOGGER.debug("Len of taskinfolist: " + str(len(taskinfolist)))
+        _LOGGER.info("Len of taskinfolist: " + str(len(taskinfolist)))
+        _LOGGER.info("***** END - get_jobinfolist ***** ")
         return taskinfolist
 
     def get_jobinfolist_old(self):
@@ -577,7 +589,7 @@ class lrms(LRMS):
                         for task_id, info_task in jobs_by_server[ server_node][ job_id ]['TaskGroups'][ taskgroup_id ]['Tasks'].items():
                             taskinfolist.append( self._get_JobInfo( info_task ) )
 
-        _LOGGER.debug("Len of taskinfolist: " + str(len(taskinfolist)))
+        _LOGGER.info("Len of taskinfolist: " + str(len(taskinfolist)))
         return taskinfolist    
 if __name__ == '__main__':
     pass
