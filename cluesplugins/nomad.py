@@ -350,13 +350,13 @@ class lrms(LRMS):
                         warn_contraint = True
                         if type(task_group['Constraints']) is list:
                             for constraint in task_group['Constraints']:
-                                if constraint['LTarget'] == self._queue_constraint_target:
+                                if constraint['LTarget'] == self._queue_constraint_target and constraint['RTarget'] in self._queues:
                                     jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = constraint['RTarget']
                                     warn_contraint = False
                         
                         if warn_contraint: 
                             jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = self._queues[0]
-                            _LOGGER.warning("No '%s' contraint for taskgroup '%s' of the job '%s' from Master node with URL=%s. The queue of this job will be '%s'" % (self._queue_constraint_target, taskgroup_id, job_id, server_node, self._queues[0]))
+                            _LOGGER.warning("No '%s' contraint for taskgroup '%s' of the job '%s' or it isn't a valid queue from Master node with URL=%s. The queue of this job will be '%s'" % (self._queue_constraint_target, taskgroup_id, job_id, server_node, self._queues[0]))
 
                         # Obtain Resources of the taskgroup
                         jobs[job_id]['TaskGroups'][taskgroup_id]['cpu'] = 0.0
