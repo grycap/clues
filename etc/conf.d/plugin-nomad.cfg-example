@@ -6,19 +6,19 @@
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 [NOMAD]
-NOMAD_SERVER=http://localhost:10000
+NOMAD_SERVER="http://localhost:10000"
 NOMAD_HEADERS="{}"
-NOMAD_API_VERSION=/v1
-NOMAD_API_URL_GET_SERVERS=/agent/members 
+NOMAD_API_VERSION="/v1"
+NOMAD_API_URL_GET_SERVERS="/agent/members "
 NOMAD_API_URL_GET_CLIENTS=/nodes 
-NOMAD_API_URL_GET_CLIENT_INFO=/node 
-NOMAD_API_URL_GET_CLIENT_STATUS=/client/stats
-NOMAD_API_URL_GET_ALLOCATIONS=/allocations
+NOMAD_API_URL_GET_CLIENT_INFO="/node/$CLIENT_ID$"
+NOMAD_API_URL_GET_CLIENT_STATUS="/client/stats"
+NOMAD_API_URL_GET_ALLOCATIONS="/allocations"
 NOMAD_API_URL_GET_JOBS="/jobs"
 NOMAD_API_URL_GET_JOBS_INFO="/job/$JOB_ID$"
-NOMAD_API_URL_GET_ALLOCATION_INFO=/allocation
+NOMAD_API_URL_GET_ALLOCATION_INFO="/allocation"
 NOMAD_ACL_TOKEN=None
-MAX_RETRIES=100
+MAX_RETRIES=10
 NOMAD_AUTH_DATA=None
 NOMAD_STATE_OFF=down
 NOMAD_STATE_ON=ready

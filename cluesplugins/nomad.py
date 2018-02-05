@@ -188,7 +188,7 @@ class lrms(LRMS):
 
         # Check node state if has some OJPN queue   
         if ( set( queues ).intersection(self._queues_ojpn) and info_node['any_job_is_running'] and state == NodeInfo.IDLE): # Some queue is a OJPN queue and job is running and the node is ON
-            _LOGGER.info(" ****** Check queues is true  ****** for node %s: any_job_is_running = %s" % (name, str(info_node['any_job_is_running'])))
+            #_LOGGER.info(" ****** Check queues is true  ****** for node %s: any_job_is_running = %s" % (name, str(info_node['any_job_is_running'])))
             state = NodeInfo.USED
     
         
@@ -226,7 +226,7 @@ class lrms(LRMS):
         if (response['status_code'] == 200):
             for alloc in response['json']:
                 if alloc['ClientStatus'] in ['pending', 'running']:
-                    _LOGGER.info("_is_Client_runningAJob is TRUE")
+                    #_LOGGER.debug("_is_Client_runningAJob is TRUE")
                     return True
         else:
             _LOGGER.error("Error getting information about allocations of client with ID=%s from Master node with URL=%s: %s: %s" % (client_id, server_node, response['status_code'], response['text']))
@@ -307,21 +307,10 @@ class lrms(LRMS):
 
                 nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client)
         
+        for key, value in nodeinfolist.items():
+            _LOGGER.debug("%s" % (str(value)) ) 
         ##_LOGGER.info("***** END - get_nodeinfolist ***** ")
         return nodeinfolist
-
-    def _get_Master_nodes(self):
-        master_nodes = []
-        url = self._server_url + self._api_version + self._api_url_get_servers
-        response = self._create_request('GET', url, auth_data=self._auth_data)
-        if (response['status_code'] == 200):
-            members = response['json']['Members']
-            for node in members:
-                master_nodes.append('http://'+node['Addr']+':'+self._http_port)
-        else:
-            _LOGGER.error("Error getting Nomad Master nodes addresses from %s: %s: %s" % (server_node, response['status_code'], response['text']))
-        return master_nodes
-
 
     def _get_Jobs_by_Master(self, server_node):
         jobs = {}
@@ -335,7 +324,8 @@ class lrms(LRMS):
                 jobs[ job['ID'] ]['job_id'] = job['ID']
                 jobs[ job['ID'] ]['name'] = job['Name'] 
                 jobs[ job['ID'] ]['TaskGroups'] = {}
-                for taskgroup_id, tasks_info in response['json']['JobSummary']['Summary'].items():
+                for taskgroup_id, tasks_info in job['JobSummary']['Summary'].items():
+                    jobs[ job['ID'] ]['TaskGroups'][taskgroup_id] = {}
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['name'] = job['ID'] + '-' + taskgroup_id
                     # Check state
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['state'] = Request.UNKNOWN
@@ -356,23 +346,28 @@ class lrms(LRMS):
                     taskgroup_id = task_group['Name']
                     if taskgroup_id in jobs[job_id]['TaskGroups']: 
                         # Obtain Queue of the taskgroup
-                        jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = self._queues[0]
+                        
+                        warn_contraint = True
                         if type(task_group['Constraints']) is list:
                             for constraint in task_group['Constraints']:
                                 if constraint['LTarget'] == self._queue_constraint_target:
                                     jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = constraint['RTarget']
+                                    warn_contraint = False
                         
+                        if warn_contraint: 
+                            jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = self._queues[0]
+                            _LOGGER.warning("No '%s' contraint for taskgroup '%s' of the job '%s' from Master node with URL=%s. The queue of this job will be '%s'" % (self._queue_constraint_target, taskgroup_id, job_id, server_node, self._queues[0]))
+
                         # Obtain Resources of the taskgroup
                         jobs[job_id]['TaskGroups'][taskgroup_id]['cpu'] = 0.0
                         jobs[job_id]['TaskGroups'][taskgroup_id]['memory'] = 0.0
-                        if len(task_group['Task']) > 1:
+                        if len(task_group['Tasks']) > 1:
                             _LOGGER.warning( "Taskgroup '%s' of job '%s' has got multiple tasks and this plugin doesn't support this. " % (taskgroup_id, job_id) )
-                        for task in task_group['Task']:
+                        for task in task_group['Tasks']:
                             jobs[job_id]['TaskGroups'][taskgroup_id]['cpu'] += float(task['Resources']['CPU']) / 1000.0
                             jobs[job_id]['TaskGroups'][taskgroup_id]['memory'] += float(task['Resources']['MemoryMB'] * 1024 * 1024 )
 
-                    else:
-                        _LOGGER.warning("No '%s' contraint for taskgroup '%s' of the job '%s' from Master node with URL=%s. The queue of this job will be '%s'" % (self._queue_constraint_target, taskgroup_id, job_id, server_node, self._queues[0]))
+                    
             else:
                 _LOGGER.error("Error getting job information with job_id = %s from Master node with URL = %s: %s: %s" % (job_id, server_node, response['status_code'], response['text']))  
                 # Default values
@@ -397,14 +392,6 @@ class lrms(LRMS):
         # Set state
         job_info.set_state(info['state'])
         
-        '''
-        _LOGGER.info("\n_get_JobInfo: " + str(info))
-        _LOGGER.info("info['job_id']: " + str(info['job_id']))
-        _LOGGER.info("info['taskgroup_id']: " + str(info['taskgroup_id']))
-        _LOGGER.info("info['name']: " + str(info['name']))
-        _LOGGER.info("info['status']: " + str(info['status']))
-        _LOGGER.info("queues: " + queue + "\n")
-        '''
         return job_info
 
     def get_jobinfolist(self):
@@ -422,9 +409,10 @@ class lrms(LRMS):
             # Obtain task resources for each taskgroup 
             jobs_by_server[server_node] = self._get_TaskGroup_resources(jobs_by_server[server_node], server_node)
 
-            for job_id in jobs_by_server[server_node]
+            for job_id in jobs_by_server[server_node]:
                 for taskgroup_id in jobs_by_server[server_node][job_id]['TaskGroups']:
                     taskinfolist.append( self._get_JobInfo( jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id] ) )
+                    _LOGGER.debug(" *JOB* - task_name = %s, cpu = %.2f, memory = %.2f, queue = %s and state = %d " % ( jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['name'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['cpu'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['memory'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['queue'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['state'] ) )
 
         return taskinfolist
     
