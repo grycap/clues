@@ -169,7 +169,8 @@ class lrms(LRMS):
                             if conditions['status'] != "True":
                                 is_ready = False
 
-                    keywords = {'pods_free': TypedNumber(pods_free)}
+                    keywords = {'pods_free': TypedNumber(pods_free),
+                                'nodeName': TypedClass(name, TypedClass.STRING)}
                     # Add labels as keyworks
                     for key, value in node["metadata"]["labels"].items():
                         keywords[key] = TypedClass(value, TypedClass.STRING)
@@ -186,10 +187,27 @@ class lrms(LRMS):
 
         # Add the "virtual" nodes
         try:
+            # format of the file:
+            # One line per node. This line can be only the hostname or include
+            # node keywords:
+            # nodename1
+            # nodename2: somekey=someval, otherkey=otherval
             for line in open('/etc/clues2/kubernetes_vnodes.info', 'r'):
                 name = line.rstrip('\n')
+                if ":" in name:
+                    parts = name.split(':')
+                    name = parts[0].strip()
+                    keypairs = parts[1].split(',')
+                else:
+                    keypairs = []
                 if name not in nodeinfolist:
-                    keywords = {'pods_free': TypedNumber(self._node_pods)}
+                    keywords = {'pods_free': TypedNumber(self._node_pods),
+                                'nodeName': TypedClass(name, TypedClass.STRING)}
+
+                    for keypair in keypairs:
+                        parts = keypair.split('=')
+                        keywords[parts[0].strip()] = TypedClass(parts[1].strip(), TypedClass.STRING)
+
                     nodeinfolist[name] = NodeInfo(name, self._node_slots, self._node_slots,
                                                   self._node_memory, self._node_memory, keywords)
                     nodeinfolist[name].state = NodeInfo.OFF
@@ -239,11 +257,14 @@ class lrms(LRMS):
 
                 cpus, memory = self._get_pod_cpus_and_memory(pod)
 
-                req_str = 'pods_free > 0'
+                req_str = '(pods_free > 0)'
+                if 'nodeName' in pod["spec"] and pod["spec"]["nodeName"]:
+                    req_str += ' && (nodeName = "%s")' % pod["spec"]["nodeName"]
+
                 # Add node selector labels
                 if 'nodeSelector' in pod['spec'] and pod['spec']['nodeSelector']:
                     for key, value in pod['spec']['nodeSelector'].items():
-                        req_str += " && %s = '%s'" % (key, value)
+                        req_str += ' && (%s == "%s")' % (key, value)
                 resources = ResourcesNeeded(cpus, memory, [req_str], 1)
                 job_info = JobInfo(resources, job_id, 1)
                 job_info.set_state(job_state)
