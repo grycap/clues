@@ -316,7 +316,10 @@ class powermanager(PowerManager):
 						if self._mvs_seen[clues_node_name].vm_id != vm_id:
 							# this must not happen ...
 							_LOGGER.warning("Node %s in VM with id %s now have a new ID: %s" % (clues_node_name, self._mvs_seen[clues_node_name].vm_id, vm_id))
-							self.power_off(clues_node_name)
+							if ec3_additional_vm:
+								_LOGGER.debug("Node %s is an additional not recovering it." % clues_node_name)
+							else:
+								self.power_off(clues_node_name)
 						self._mvs_seen[clues_node_name].update(vm_id, radl)
 
 					enabled = True
@@ -486,18 +489,22 @@ class powermanager(PowerManager):
 				node_names.append(node.name)
 
 				if node.name in vms and node.state in [Node.IDLE, Node.USED]:
-					vm = vms[node.name]
-					state = vm.radl.systems[0].getValue('state')
-					# user request use of golden images and the image is fully configured
-					if vm.radl.systems[0].getValue("ec3_golden_images"):
-						if state == VirtualMachine.CONFIGURED:
-							ec3_class = vm.radl.systems[0].getValue("ec3_class")
-							# check if the image is in the list of saved images
-							if ec3_class not in self._golden_images:
-								# if not save it
-								self._save_golden_image(vm)
-						else:
-							_LOGGER.debug("node %s is idle/used but it is not yet configured. Do not save golden image." % (node.name))
+					if node.name in vms:
+						vm = vms[node.name]
+						state = vm.radl.systems[0].getValue('state')
+						# user request use of golden images and the image is fully configured
+						if vm.radl.systems[0].getValue("ec3_golden_images"):
+							if state == VirtualMachine.CONFIGURED:
+								ec3_class = vm.radl.systems[0].getValue("ec3_class")
+								# check if the image is in the list of saved images
+								if ec3_class not in self._golden_images:
+									# if not save it
+									self._save_golden_image(vm)
+							else:
+								_LOGGER.debug("node %s is idle/used but it is not yet configured. Do not save golden image." % (node.name))
+					else:
+						# This may happen because it is launched manually not setting the dns_name of the node 
+						_LOGGER.warning("node %s is detected by the monitoring system, but there is not any VM associated to it (are IM credentials compatible to the VM?)" % node.name)
 
 				if node.enabled:
 					if node.state in [Node.OFF, Node.OFF_ERR, Node.UNKNOWN]:
