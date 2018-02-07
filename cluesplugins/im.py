@@ -42,8 +42,7 @@ class powermanager(PowerManager):
 		def __init__(self, vm_id, radl, ec3_additional_vm):
 			self.vm_id = vm_id
 			self.radl = radl
-			self.timestamp_recovered = 0
-			self.timestamp_created = self.timestamp_seen = cpyutils.eventloop.now()
+			self.timestamp_recovered = self.timestamp_created = self.timestamp_seen = cpyutils.eventloop.now()
 			self.ec3_additional_vm = ec3_additional_vm
 			self.last_state = None
 
@@ -486,7 +485,7 @@ class powermanager(PowerManager):
 			for node in monitoring_info.nodelist:
 				node_names.append(node.name)
 
-				if node.state in [Node.IDLE, Node.USED]:
+				if node.name in vms and node.state in [Node.IDLE, Node.USED]:
 					vm = vms[node.name]
 					state = vm.radl.systems[0].getValue('state')
 					# user request use of golden images and the image is fully configured
