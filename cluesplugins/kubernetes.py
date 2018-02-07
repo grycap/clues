@@ -22,7 +22,7 @@ import base64
 import cpyutils.config
 import clueslib.helpers as Helpers
 
-from cpyutils.evaluate import TypedNumber
+from cpyutils.evaluate import TypedNumber, TypedClass
 from cpyutils.log import Log
 from clueslib.node import NodeInfo
 from clueslib.platform import LRMS
@@ -143,13 +143,20 @@ class lrms(LRMS):
                 _LOGGER.error("Error getting Kubernetes pod list. Node usage will not be obtained.")
 
             for node in nodes_data["items"]:
-                # not add master node
-                if "node-role.kubernetes.io/master" not in node["metadata"]["labels"]:
-                    name = node["metadata"]["name"]
-                    memory_total = self._get_memory_in_bytes(node["status"]["allocatable"]["memory"])
-                    slots_total = int(node["status"]["allocatable"]["cpu"])
-                    pods_total = int(node["status"]["allocatable"]["pods"])
+                name = node["metadata"]["name"]
+                memory_total = self._get_memory_in_bytes(node["status"]["allocatable"]["memory"])
+                slots_total = int(node["status"]["allocatable"]["cpu"])
+                pods_total = int(node["status"]["allocatable"]["pods"])
 
+                skip_node = False
+                # Get Taints
+                if 'taints' in node["spec"] and node["spec"]['taints']:
+                    for taint in node["spec"]['taints']:
+                        if taint['effect'] in ["NoSchedule", "PreferNoSchedule", "NoExecute"]:
+                            skip_node = True
+                            _LOGGER.debug("Node %s is tainted with %s, skiping." % (name, taint['effect']))
+
+                if not skip_node:
                     used_mem, used_cpus, used_pods = self._get_node_used_resources(name, pods_data)
 
                     memory_free = memory_total - used_mem
@@ -163,6 +170,10 @@ class lrms(LRMS):
                                 is_ready = False
 
                     keywords = {'pods_free': TypedNumber(pods_free)}
+                    # Add labels as keyworks
+                    for key, value in node["metadata"]["labels"].items():
+                        keywords[key] = TypedClass(value, TypedClass.STRING)
+
                     nodeinfolist[name] = NodeInfo(name, slots_total, slots_free, memory_total, memory_free, keywords)
                     if is_ready:
                         nodeinfolist[name].state = NodeInfo.IDLE
@@ -229,6 +240,10 @@ class lrms(LRMS):
                 cpus, memory = self._get_pod_cpus_and_memory(pod)
 
                 req_str = 'pods_free > 0'
+                # Add node selector labels
+                if 'nodeSelector' in pod['spec'] and pod['spec']['nodeSelector']:
+                    for key, value in pod['spec']['nodeSelector'].items():
+                        req_str += " && %s = '%s'" % (key, value)
                 resources = ResourcesNeeded(cpus, memory, [req_str], 1)
                 job_info = JobInfo(resources, job_id, 1)
                 job_info.set_state(job_state)
