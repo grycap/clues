@@ -25,7 +25,6 @@ import xmlrpclib
 from uuid import uuid1
 
 from radl import radl_parse
-from IM.VirtualMachine import VirtualMachine
 
 import cpyutils.db
 import cpyutils.config
@@ -35,6 +34,20 @@ from clueslib.platform import PowerManager
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("PLUGIN-IM")
+
+
+class VirtualMachine:
+
+    # VM states
+    UNKNOWN = "unknown"
+    PENDING = "pending"
+    RUNNING = "running"
+    STOPPED = "stopped"
+    OFF = "off"
+    FAILED = "failed"
+    CONFIGURED = "configured"
+    UNCONFIGURED = "unconfigured"
+
 
 class powermanager(PowerManager):
 
