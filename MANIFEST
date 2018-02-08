@@ -30,6 +30,8 @@ cluesplugins/onetemplate.py
 cluesplugins/pbs.py
 cluesplugins/sge.py
 cluesplugins/slurm.py
+cluesplugins/kubernetes.py
+cluesplugins/nomad.py
 cluesplugins/wol.py
 etc/clues-logrotate
 etc/clues2.cfg-cli-example
@@ -44,6 +46,8 @@ etc/conf.d/plugin-pbs.cfg-example
 etc/conf.d/plugin-sge.cfg-example
 etc/conf.d/plugin-slurm.cfg-example
 etc/conf.d/plugin-wol.cfg-example
+etc/conf.d/plugin-kubernetes.cfg-example
+etc/conf.d/plugin-nomad.cfg-example
 etc/conf.d/schedulers.cfg-example
 etc/conf.d/wrapper-one.cfg-example
 etc/conf.d/wrapper-sge.cfg-example

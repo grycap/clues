@@ -74,13 +74,16 @@ For the ```LRMS_CLASS``` you have different options available (you *MUST* state 
 * cluesplugins.pbs that is designed to work in a Torque/PBS environment.
 * cluesplugins.sge that is designed to work in a SGE-like environment
 * cluesplugins.slurm that is designed to work in a SLURM environment
+* cluesplugins.mesos that is designed to work in a Mesos environment
+* cluesplugins.kubernetes that is designed to work in a Kubernetes environment
+* cluesplugins.nomad that is designed to work in a Nomad environment
 
 For the ```POWERMANAGER_CLASS``` you have different options available (you *MUST* state one and only one of them):
 * cluesplugins.ipmi to power on or off working nodes in an physical infrastructure using IPMI calls
 * cluesplugins.wol to power on working nodes in an physical infrastructure using Wake-on-Lan calls, and powering them off using password-less SSH connections.
 * cluesplugins.one to create and destoy virtual machines as working nodes in a OpenNebula IaaS.
 * cluesplugins.onetemplate to create and destoy virtual machines as working nodes in a in a OpenNebula IaaS (creating the template inline instead of using existing templates).
-* cluesplugins.im that is designed to work in an multi-IaaS environment managed by the Infrastructure Manager [link pending].
+* cluesplugins.im that is designed to work in an multi-IaaS environment managed by the Infrastructure Manager [IM](http://www.grycap.upv.es/im).
 
 Finally, you should state the CLUES schedulers that you want to use. It is a comma-separated ordered list where the schedulers are being called in the same order that they are stated.
 
