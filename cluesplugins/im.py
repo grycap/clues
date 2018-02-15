@@ -102,14 +102,15 @@ class powermanager(PowerManager):
 		# Structure for the recovery of nodes
 		self._mvs_seen = {}
 		self._golden_images = self._load_golden_images()
-		# TODO: save this var into DB to be persistent
-		self._stopped_vms = {}
+		self._stopped_vms = self._load_stopped_vms()
 		self._inf_id = None
 
 	def _create_db(self):
 		try:
 			result, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS im_golden_images(ec3_class varchar(255) "
 											  "PRIMARY KEY, image varchar(255), password varchar(255))", True)
+			result, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS im_stopped_vms(node_name varchar(255) "
+											  "PRIMARY KEY, vm_id varchar(255))", True)
 		except:
 			_LOGGER.exception(
 				"Error creating IM plugin DB. The data persistence will not work!")
@@ -120,9 +121,29 @@ class powermanager(PowerManager):
 		try:
 			self._db.sql_query("INSERT into im_golden_images values ('%s','%s','%s')" % (ec3_class,
                                                                                          image,
-                                                                                         password), True)
+																						 password), True)
 		except:
 			_LOGGER.exception("Error trying to save IM golden image data.")
+
+	def _store_stopped_vm(self, node_name, vm_id):
+		try:
+			self._db.sql_query("INSERT OR REPLACE into im_stopped_vms values ('%s','%s')" % (node_name, vm_id), True)
+		except:
+			_LOGGER.exception("Error trying to save IM stopped VMs data.")
+
+	def _load_stopped_vms(self):
+		res = {}
+		try:
+			result, _, rows = self._db.sql_query("select * from im_stopped_vms")
+			if result:
+				for nname, vm_id in rows:
+					res[nname] = vm_id
+			else:
+				_LOGGER.error("Error trying to load IM stopped VMs data.")
+		except:
+			_LOGGER.exception("Error trying to load IM stopped VMs data.")
+
+		return res
 
 	def _load_golden_images(self):
 		res = {}
@@ -407,13 +428,13 @@ class powermanager(PowerManager):
 			if len(self._stopped_vms) > 0:
 				if self._stopped_vms.get(nname):
 					ec3_reuse_nodes = True
-					vm = self._stopped_vms.get(nname)
+					vm_id = self._stopped_vms.get(nname)
 					#ec3_reuse_nodes = vm.radl.systems[0].getValue('ec3_reuse_nodes', 0)
 			
 			server = self._get_server()
 			auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
 			if ec3_reuse_nodes:
-				(success, vms_id) = server.StartVM(inf_id, vm.vm_id, auth_data)
+				(success, vms_id) = server.StartVM(inf_id, vm_id, auth_data)
 			else:
 				radl_data = self._get_radl(nname)
 				if radl_data:
@@ -464,7 +485,8 @@ class powermanager(PowerManager):
 					auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
 					if ec3_reuse_nodes:
 						(success, vm_ids) = server.StopVM(inf_id, vm.vm_id, auth_data)
-						self._stopped_vms[nname] = vm
+						self._stopped_vms[nname] = vm.vm_id
+						self._store_stopped_vm(nname, vm.vm_id)
 						if not success: 
 							_LOGGER.error("ERROR stopping node: %s: %s" % (nname,vm_ids))
 						elif vm_ids == 0:
