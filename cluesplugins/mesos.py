@@ -440,7 +440,6 @@ class lrms(LRMS):
                     if framework['name'] not in ["chronos", "chronos-2.4.0", "marathon"]:
                         job_id = framework['id']
                         nodes = []
-                        numnodes = 1
                         mesos_job_state = Request.PENDING
                         memory = calculate_memory_bytes(framework['resources']['mem'])
                         cpus_per_task = float(framework['resources']['cpus'])
@@ -472,7 +471,7 @@ class lrms(LRMS):
                                             nodes.append(mesos_node['hostname'])
 
                         jobinfolist = self._update_job_info_list(jobinfolist,
-                                                                 cpus_per_task, memory, numnodes,
+                                                                 1, memory, cpus_per_task,
                                                                  job_id, nodes, mesos_job_state)
 
         # Obtain Marathon jobs and add to the jobinfolist of Mesos
