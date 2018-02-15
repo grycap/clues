@@ -19,6 +19,7 @@
 import socket
 import subprocess
 import json
+import requests
 import cpyutils.config
 import clueslib.helpers as Helpers
 
@@ -265,6 +266,66 @@ class lrms(LRMS):
                                                              job_id, nodes, marathon_job_state)
         return jobinfolist
 
+    @staticmethod
+    def _unit_to_value(unit):
+        """Return the value of an unit."""
+
+        if not unit:
+            return 1
+        unit = unit[0].upper()
+        if unit == "K":
+            return 1024
+        if unit == "M":
+            return 1024 * 1024
+        if unit == "G":
+            return 1024 * 1024 * 1024
+        return 1
+
+    def _parse_web_ui_env(self, html_code):
+        """
+        Parse the HTML code of the env page to the get the spark cpus
+        """
+        # Find <td>spark.cores.max</td><td>2</td>
+        cpus = 0
+        try:
+            ini = html_code.find("<td>spark.cores.max</td><td>")
+            if ini >= 0:
+                ini += 28
+                end = html_code.find("</td>", ini)
+                cpus = int(html_code[ini:end])
+        except Exception as ex:
+            _LOGGER.error("Error getting Spark cpus: %s" % str(ex))
+
+        # Find <td>spark.executor.memory</td><td>512M</td>
+        memory = 0
+        try:
+            ini = html_code.find("<td>spark.executor.memory</td><td>")
+            if ini >= 0:
+                ini += 34
+                end = html_code.find("</td>", ini)
+                memory = int(html_code[ini:end-1])
+                memory_unit = html_code[ini:end][-1]
+                memory *= self._unit_to_value(memory_unit)
+        except Exception as ex:
+            _LOGGER.error("Error getting Spark memory: %s" % str(ex))
+
+        return cpus, memory
+
+    def _get_spark_resources(self, webui_url):
+        """
+        Get the number of CPUs of the Spark job from the Web UI
+        """
+        try:
+            resp = requests.get("%s/environment" % webui_url, verify=False)
+            if resp.status_code == 200:
+                return self._parse_web_ui_env(resp.text)
+            else:
+                _LOGGER.error("Error querying the Spark Web UI: %s" % resp.reason)
+                return 0, 0
+        except Exception as ex:
+            _LOGGER.error("Error getting Spark Resources: %s" % str(ex))
+            return 0, 0
+
     def __init__(self, MESOS_SERVER=None, MESOS_NODES_COMMAND=None, MESOS_STATE_COMMAND=None, MESOS_JOBS_COMMAND=None,
                  MESOS_MARATHON_COMMAND=None, MESOS_CHRONOS_COMMAND=None, MESOS_CHRONOS_STATE_COMMAND=None,
                  MESOS_NODE_MEMORY=None, MESOS_NODE_SLOTS=None):
@@ -381,9 +442,19 @@ class lrms(LRMS):
                         numnodes = 1
                         mesos_job_state = Request.PENDING
                         memory = calculate_memory_bytes(framework['resources']['mem'])
+                        cpus_per_task = float(framework['resources']['cpus'])
+
+                        if 'webui_url' in framework:
+                            # this is a spark job get the requested resources
+                            spark_cpus, spark_mem = self._get_spark_resources(framework['webui_url'])
+                            _LOGGER.debug("Spark resources detected: CPUs: %d, MEM: %d" % (spark_cpus, spark_mem))
+                            if spark_cpus > 0:
+                                cpus_per_task = spark_cpus
+                            if spark_mem > 0:
+                                memory = spark_mem
+
                         if memory <= 0:
                             memory = 536870912
-                        cpus_per_task = float(framework['resources']['cpus'])
                         if cpus_per_task <= 0:
                             cpus_per_task = 1
 
