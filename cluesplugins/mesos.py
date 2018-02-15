@@ -316,6 +316,7 @@ class lrms(LRMS):
         Get the number of CPUs of the Spark job from the Web UI
         """
         try:
+            # TODO: check api 2.2.1 /api/v1//applications/[app-id]/environment
             resp = requests.get("%s/environment" % webui_url, verify=False)
             if resp.status_code == 200:
                 return self._parse_web_ui_env(resp.text)
