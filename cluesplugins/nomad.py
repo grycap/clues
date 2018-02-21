@@ -95,7 +95,7 @@ class lrms(LRMS):
 
         return response
 
-    def __init__(self, NOMAD_SERVER=None, NOMAD_HEADERS=None, NOMAD_API_VERSION=None, NOMAD_API_URL_GET_ALLOCATIONS=None, NOMAD_API_URL_GET_SERVERS=None, NOMAD_API_URL_GET_CLIENTS=None, NOMAD_API_URL_GET_CLIENT_INFO=None, MAX_RETRIES=None, NOMAD_ACL_TOKEN=None, NOMAD_AUTH_DATA=None, NOMAD_API_URL_GET_CLIENT_STATUS=None, NOMAD_STATE_OFF=None, NOMAD_STATE_ON=None, NOMAD_PRIVATE_HTTP_PORT=None, NOMAD_API_URL_GET_JOBS=None, NOMAD_API_URL_GET_JOBS_INFO=None, NOMAD_API_URL_GET_ALLOCATION_INFO=None, NOMAD_NODES_LIST_CLUES=None, NOMAD_QUEUES=None, NOMAD_QUEUES_OJPN=None, NOMAD_API_URL_GET_CLIENT_ALLOCATIONS=None):
+    def __init__(self, NOMAD_SERVER=None, NOMAD_HEADERS=None, NOMAD_API_VERSION=None, NOMAD_API_URL_GET_ALLOCATIONS=None, NOMAD_API_URL_GET_SERVERS=None, NOMAD_API_URL_GET_CLIENTS=None, NOMAD_API_URL_GET_CLIENT_INFO=None, MAX_RETRIES=None, NOMAD_ACL_TOKEN=None, NOMAD_AUTH_DATA=None, NOMAD_API_URL_GET_CLIENT_STATUS=None, NOMAD_STATE_OFF=None, NOMAD_STATE_ON=None, NOMAD_PRIVATE_HTTP_PORT=None, NOMAD_API_URL_GET_JOBS=None, NOMAD_API_URL_GET_JOBS_INFO=None, NOMAD_API_URL_GET_ALLOCATION_INFO=None, NOMAD_NODES_LIST_CLUES=None, NOMAD_QUEUES=None, NOMAD_QUEUES_OJPN=None, NOMAD_API_URL_GET_CLIENT_ALLOCATIONS=None, NOMAD_DEFAULT_CPUS_PER_NODE=None, NOMAD_DEFAULT_MEMORY_PER_NODE=None):
 
         config_nomad = cpyutils.config.Configuration(
             "NOMAD",
@@ -120,7 +120,9 @@ class lrms(LRMS):
                 "NOMAD_PRIVATE_HTTP_PORT": "4646",
                 "NOMAD_NODES_LIST_CLUES": "/etc/clues2/nomad_vnodes.info",
                 "NOMAD_QUEUES": "default",
-                "NOMAD_QUEUES_OJPN": "" # Queues One Job Per Node 
+                "NOMAD_QUEUES_OJPN": "", # Queues One Job Per Node
+                "NOMAD_DEFAULT_CPUS_PER_NODE": 2.0,
+                "NOMAD_DEFAULT_MEMORY_PER_NODE": "8Gi"
             }
         )
 
@@ -144,7 +146,8 @@ class lrms(LRMS):
         self._nodes_info_file = Helpers.val_default(NOMAD_NODES_LIST_CLUES, config_nomad.NOMAD_NODES_LIST_CLUES).replace('"','')
         self._queues = Helpers.val_default(NOMAD_QUEUES, config_nomad.NOMAD_QUEUES).replace('"','').split(',')
         self._queues_ojpn = Helpers.val_default(NOMAD_QUEUES_OJPN, config_nomad.NOMAD_QUEUES_OJPN).replace('"','').split(',')
-
+        self._default_cpu_node = Helpers.val_default(NOMAD_DEFAULT_CPUS_PER_NODE, config_nomad.NOMAD_DEFAULT_CPUS_PER_NODE)
+        self._default_memory_node = Helpers.val_default(NOMAD_DEFAULT_MEMORY_PER_NODE, config_nomad.NOMAD_DEFAULT_MEMORY_PER_NODE).replace('"','')
         self._queue_constraint_target = '${node.class}'
 
         # Check length of queues
@@ -163,9 +166,9 @@ class lrms(LRMS):
         name = info_node['name']
 
         # Illustrative values for Clues, since the node is not running, we cannot know the real values
-        slots_count = 1.0
-        slots_free = 1.0
-        memory_total = get_memory_in_bytes('1024Mi')
+        slots_count = float(self._default_cpu_node)
+        slots_free = slots_count
+        memory_total = get_memory_in_bytes(self._default_memory_node)
         memory_free = memory_total
         
         # Check state
@@ -291,11 +294,10 @@ class lrms(LRMS):
             for client_id in clients_by_server[ server_node ]:
                 info_client = clients_by_server[ server_node ][ client_id ]
                 # Client is ON
-                if (info_client['state'] == NodeInfo.IDLE) or (info_client['state'] == NodeInfo.USED ):
+                if (info_client['state'] in [NodeInfo.IDLE, NodeInfo.USED]):
                     # Obtain Client node address 
                     client_addr = self._get_Client_address(server_node, client_id)
                     if client_addr:
-                        #info_client['address'] = client_addr
                         # Querying Client node for getting the status
                         url = 'http://' + client_addr + self._api_version + self._api_url_get_clients_status
                         response = self._create_request('GET', url) 
@@ -304,8 +306,8 @@ class lrms(LRMS):
                         else:
                             _LOGGER.error("Error getting client_status from Client_url=%s: %s: %s" % (client_addr, response['status_code'], response['text']))
 
-
-                nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client)
+                if not (nodeinfolist[ info_client['name'] ].state in [NodeInfo.IDLE, NodeInfo.USED]):
+                    nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client)
         
         for key, value in nodeinfolist.items():
             _LOGGER.debug("%s" % (str(value)) ) 
