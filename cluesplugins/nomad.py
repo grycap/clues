@@ -387,9 +387,7 @@ class lrms(LRMS):
     def _get_JobInfo(self, info):
         
         queue = '"' + info['queue'] + '" in queues'
-        taskcount = 10
-        if info['queue'] in self._queues_ojpn:
-            taskcount = 1
+        taskcount = 1 
 
         resources = ResourcesNeeded(info['cpu'], info['memory'], [queue], taskcount)
         
