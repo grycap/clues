@@ -315,8 +315,6 @@ class lrms(LRMS):
                 string += key2 + ":" + str(value.keywords[key2]) +","
             string = string[:-1]  + "}"
             _LOGGER.debug( string )
-
-            _LOGGER.debug("%s" % (str(value)) ) 
         ##_LOGGER.info("***** END - get_nodeinfolist ***** ")
         return nodeinfolist
 
