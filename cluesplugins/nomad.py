@@ -310,6 +310,12 @@ class lrms(LRMS):
                     nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client)
         
         for key, value in nodeinfolist.items():
+            string = "%s + keywords={ " % (str(value) ) 
+            for key2 in value.keywords:
+                string += key2 + ":" + str(value.keywords[key2]) +","
+            string = string[:-1]  + "}"
+            _LOGGER.debug( string )
+
             _LOGGER.debug("%s" % (str(value)) ) 
         ##_LOGGER.info("***** END - get_nodeinfolist ***** ")
         return nodeinfolist
