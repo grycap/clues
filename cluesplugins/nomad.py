@@ -333,6 +333,9 @@ class lrms(LRMS):
                 for taskgroup_id, tasks_info in job['JobSummary']['Summary'].items():
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id] = {}
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['name'] = job['ID'] + '-' + taskgroup_id
+                    jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['cpu'] = 0.0
+                    jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['memory'] = 0.0
+                    jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['queue'] = self._queues[0]
                     # Check state
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['state'] = Request.UNKNOWN
                     if tasks_info['Queued'] > 0 or tasks_info['Starting'] > 0:
@@ -352,15 +355,14 @@ class lrms(LRMS):
                     taskgroup_id = task_group['Name']
                     if taskgroup_id in jobs[job_id]['TaskGroups']: 
                         # Obtain Queue of the taskgroup
-                        
-                        warn_contraint = True
+                        warning_constraint = True
                         if type(task_group['Constraints']) is list:
                             for constraint in task_group['Constraints']:
                                 if constraint['LTarget'] == self._queue_constraint_target and constraint['RTarget'] in self._queues:
                                     jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = constraint['RTarget']
-                                    warn_contraint = False
+                                    warning_constraint = False
                         
-                        if warn_contraint: 
+                        if warning_constraint: 
                             jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = self._queues[0]
                             _LOGGER.warning("No '%s' contraint for taskgroup '%s' of the job '%s' or it isn't a valid queue from Master node with URL=%s. The queue of this job will be '%s'" % (self._queue_constraint_target, taskgroup_id, job_id, server_node, self._queues[0]))
 
