@@ -202,7 +202,7 @@ class lrms(LRMS):
             memory_free = info_node['client_status']['Memory']['Available']
             slots_free = 0
             for cpu in info_node['client_status']['CPU']:
-                slots_free += float(cpu['Idle']) / ( float(slots_count) * 100.0)
+                slots_free += float(cpu['Idle']) / 100.0
             if (memory_free <= 0 or slots_free <= 0):
                 state = NodeInfo.USED                   
        
