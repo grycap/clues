@@ -1,0 +1,15 @@
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# These are the settings to consult the state of the nodes of a Kubernetes deployment in which CLUES is automating power (is powering on or off the internal nodes).
+# These settings are only to check the state of the nodes. Please refer to the powermanager settings to specify how to power on or off the nodes.
+# 
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[KUBERNETES]
+KUBERNETES_SERVER=http://localhost:8080
+UBERNETES_PODS_API_URL_PATH=/api/v1/pods
+KUBERNETES_NODES_API_URL_PATH=/api/v1/nodes
+KUBERNETES_NODE_MEMORY=1073741824
+KUBERNETES_NODE_SLOTS=1
+KUBERNETES_NODE_PODS=110
+#KUBERNETES_TOKEN=some_token

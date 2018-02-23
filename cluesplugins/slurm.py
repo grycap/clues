@@ -150,7 +150,7 @@ def get_partition(self, node_name):
             #nodes is like wnone-[0-1]
             pos1 = nodes.find("[")
             pos2 = nodes.find("]")
-            pos3 = nodes.find("-")
+            pos3 = nodes.find("-", pos1)
             if pos1 > -1 and pos2 > -1 and pos3 > -1:
                 num1 = int(nodes[pos1+1:pos3])
                 num2 = int(nodes[pos3+1:pos2])
