@@ -76,6 +76,7 @@ For the ```LRMS_CLASS``` you have different options available (you *MUST* state 
 * cluesplugins.slurm that is designed to work in a SLURM environment
 * cluesplugins.mesos that is designed to work in a Mesos environment
 * cluesplugins.kubernetes that is designed to work in a Kubernetes environment
+* cluesplugins.nomad that is designed to work in a Nomad environment
 
 For the ```POWERMANAGER_CLASS``` you have different options available (you *MUST* state one and only one of them):
 * cluesplugins.ipmi to power on or off working nodes in an physical infrastructure using IPMI calls
