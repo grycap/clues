@@ -24,6 +24,7 @@ import clueslib.helpers as Helpers
 
 from cpyutils.evaluate import TypedClass, TypedList
 from cpyutils.log import Log
+from cpyutils.runcommand import runcommand
 from clueslib.node import NodeInfo
 from clueslib.platform import LRMS
 from clueslib.request import Request, ResourcesNeeded, JobInfo
@@ -32,35 +33,18 @@ import collections
 _LOGGER = Log("PLUGIN-MESOS")
 
 
-def run_command(command):
-    if command:
-        # _LOGGER.debug("Executing command: '" + str(" ".join(command)) + "'")
-        try:
-            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if process:
-                (out, err) = process.communicate()
-                if process.returncode != 0:
-                    message = "RETURN_CODE=" + str(process.returncode)
-                    if err:
-                        message += ";ERROR_OUTPUT=" + str(err)
-                    _LOGGER.error(message)
-                    raise Exception(message)
-                return out
-        except Exception as excp:
-            message = "ERROR_EXECUTING_COMMAND=" + str(" ".join(command)) + ";" + str(excp)
-            _LOGGER.error(message)
-            raise Exception(message)
-
-
-def curl_command(command, server_ip, error_message, is_json=True):
+def curl_command(command, server_ip, error_message, is_json=True, timeout=10):
     result = None
     try:
-        result = run_command(command.split(" "))
-        if result:
-            if is_json:
-                return json.loads(result)
-            else:
-                return result
+        success, result = runcommand(command, True, timeout)
+        if success:
+            if result:
+                if is_json:
+                    return json.loads(result)
+                else:
+                    return result
+        else:
+            raise Exception("Command return code is not 0.")
     except Exception as exception:
         message = str(exception) + ';ERROR=' + error_message.rstrip('\n') + ';SERVER_IP=' + server_ip.rstrip('\n')
         if result:
@@ -375,7 +359,7 @@ class lrms(LRMS):
             frameworks = mesos_state['frameworks']
             if frameworks:
                 for framework in frameworks:
-                    if(framework['name'] != "chronos-2.4.0" and framework['name'] != "marathon"):
+                    if framework['name'] not in ["chronos", "chronos-2.4.0", "marathon"]:
                         job_id = framework['id']
                         nodes = []
                         numnodes = 1
