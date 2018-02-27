@@ -172,9 +172,13 @@ class lrms(LRMS):
         memory_free = memory_total
         
         # Check state
-        state = NodeInfo.OFF
-        if (info_node['status'] == self._state_on):
+        state = NodeInfo.UNKNOWN
+        if (info_node['status'] == self._state_on and not info_node['any_job_is_running']):
             state = NodeInfo.IDLE
+        elif (info_node['status'] == self._state_on and info_node['any_job_is_running']):
+            state = NodeInfo.USED
+        elif (info_node['status'] == self._state_off):
+            state = NodeInfo.OFF
 
         # Keywords
         keywords = {}
@@ -187,13 +191,7 @@ class lrms(LRMS):
             _LOGGER.error(" '%s' (node_class of Nomad Client) is not a valid queue, queue is set to all queues." % (q))
         if q in self._queues:
             queues = [ q ]  
-        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
-
-        # Check node state if has some OJPN queue   
-        if ( set( queues ).intersection(self._queues_ojpn) and info_node['any_job_is_running'] and state == NodeInfo.IDLE): # Some queue is a OJPN queue and job is running and the node is ON
-            #_LOGGER.info(" ****** Check queues is true  ****** for node %s: any_job_is_running = %s" % (name, str(info_node['any_job_is_running'])))
-            state = NodeInfo.USED
-    
+        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])  
         
         # Information of query
         if ('client_status' in info_node): 
@@ -295,6 +293,7 @@ class lrms(LRMS):
                 info_client = clients_by_server[ server_node ][ client_id ]
                 # Client is ON
                 if (info_client['state'] in [NodeInfo.IDLE, NodeInfo.USED]):
+                    _LOGGER.debug( "info_client['state'] = " + str(info_client['state']) )
                     # Obtain Client node address 
                     client_addr = self._get_Client_address(server_node, client_id)
                     if client_addr:
