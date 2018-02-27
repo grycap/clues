@@ -75,23 +75,6 @@ def infer_marathon_job_state(jobs, jobs_running):
     return Request.ATTENDED if jobs and jobs_running > 0 else Request.PENDING
 
 
-def infer_clues_node_state(node_id, node_state, used_nodes):
-    ''' Determines the equivalent node_state between Mesos slaves and Clues2 possible node states
-    MESOS node states: active=true || active=false
-    CLUES2 node states: ERROR, UNKNOWN, IDLE, USED, OFF
-    '''
-    clues_node_state = ""
-    if node_state and node_id not in used_nodes:
-        clues_node_state = NodeInfo.IDLE
-    elif node_state and node_id in used_nodes:
-        clues_node_state = NodeInfo.USED
-    elif not node_state:
-        clues_node_state = NodeInfo.OFF
-    else:
-        clues_node_state = NodeInfo.UNKNOWN
-    return clues_node_state
-
-
 def calculate_memory_bytes(memory):
     return memory * 1048576
 
@@ -132,34 +115,6 @@ class lrms(LRMS):
     def _obtain_mesos_state(self):
         '''Obtains the state of the Mesos server'''
         return curl_command(self._state, self._server_ip, "Could not obtain information about MESOS state")
-
-    def _obtain_mesos_used_nodes(self):
-        '''Identifies the nodes that are in "USED" state (jobs in state "TASK_RUNNING")'''
-        mesos_jobs = self._obtain_mesos_jobs()
-        used_nodes = []
-
-        if mesos_jobs:
-            for mesos_job in mesos_jobs['tasks']:
-                state = mesos_job['state']
-                if state == "TASK_RUNNING" or state == "TASK_STAGING":
-                    if mesos_job['slave_id'] not in used_nodes:
-                        used_nodes.append(mesos_job['slave_id'])
-
-        return used_nodes
-
-    def _obtain_cpu_mem_used_in_mesos_node(self, slave_id):
-        ''' Obtains the mem and cpu used by the mesos_job that is in execution in the node with id 'slave_id' '''
-        used_cpu = 0
-        used_mem = 0
-        mesos_jobs = self._obtain_mesos_jobs()
-
-        if mesos_jobs:
-            for mesos_job in mesos_jobs['tasks']:
-                if mesos_job['slave_id'] == slave_id and mesos_job['state'] == "TASK_RUNNING":
-                    used_cpu += float(mesos_job['resources']['cpus'])
-                    used_mem += calculate_memory_bytes(mesos_job['resources']['mem'])
-
-        return used_cpu, used_mem
 
     def _obtain_chronos_jobs_nodes(self, job_id):
         '''Method to obtain the slaves' hostnames that are executing chronos jobs'''
@@ -312,7 +267,6 @@ class lrms(LRMS):
 
         mesos_slaves = self._obtain_mesos_nodes()
         if mesos_slaves:
-            used_nodes = self._obtain_mesos_used_nodes()
             for mesos_slave in mesos_slaves['slaves']:
                 name = mesos_slave['hostname']
                 if nodeinfolist:
@@ -324,11 +278,20 @@ class lrms(LRMS):
                             _LOGGER.warning("Error resolving node ip %s" % nodeinfolist[node].name)
                         if name == nodeinfolist[node].name or name == nodeinfolist_node_ip:
                             name = nodeinfolist[node].name
-                            state = infer_clues_node_state(mesos_slave["id"], mesos_slave["active"], used_nodes)
                             slots_count = float(mesos_slave['resources']['cpus'])
                             memory_total = calculate_memory_bytes(mesos_slave['resources']['mem'])
+                            used_cpu = float(mesos_slave['used_resources']['cpus'])
+                            used_mem = calculate_memory_bytes(mesos_slave['used_resources']['mem'])
 
-                            used_cpu, used_mem = self._obtain_cpu_mem_used_in_mesos_node(mesos_slave["id"])
+                            state = NodeInfo.UNKNOWN
+                            if mesos_slave["active"]:
+                                if used_cpu > 0 or used_mem > 0:
+                                    state = NodeInfo.USED
+                                else:
+                                    state = NodeInfo.IDLE
+                            else:
+                                state = NodeInfo.OFF
+
                             slots_free = slots_count - used_cpu
                             memory_free = memory_total - used_mem
 
