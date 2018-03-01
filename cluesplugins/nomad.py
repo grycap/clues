@@ -337,7 +337,7 @@ class lrms(LRMS):
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['queue'] = self._queues[0]
                     # Check state
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['state'] = Request.UNKNOWN
-                    if tasks_info['Queued'] > 0 or tasks_info['Starting'] > 0:
+                    if (tasks_info['Queued'] > 0 or tasks_info['Starting'] > 0) and jobs[ job['ID'] ]['status'] != "dead":
                         jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['state'] = Request.PENDING
                     else: 
                         jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['state'] = Request.SERVED
