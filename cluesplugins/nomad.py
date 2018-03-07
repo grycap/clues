@@ -334,7 +334,7 @@ class lrms(LRMS):
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['name'] = job['ID'] + '-' + taskgroup_id
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['cpu'] = 0.0
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['memory'] = 0.0
-                    jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['queue'] = self._queues[0]
+                    jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['queue'] = 'no_queue' #self._queues[0]
                     # Check state
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['state'] = Request.UNKNOWN
                     if (tasks_info['Queued'] > 0 or tasks_info['Starting'] > 0) and jobs[ job['ID'] ]['status'] != "dead":
@@ -362,8 +362,8 @@ class lrms(LRMS):
                                     warning_constraint = False
                         
                         if warning_constraint: 
-                            jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = self._queues[0]
-                            _LOGGER.warning("No '%s' contraint for taskgroup '%s' of the job '%s' or it isn't a valid queue from Master node with URL=%s. The queue of this job will be '%s'" % (self._queue_constraint_target, taskgroup_id, job_id, server_node, self._queues[0]))
+                            jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = 'no_queue'
+                            _LOGGER.warning("No '%s' contraint for taskgroup '%s' of the job '%s' or it isn't a valid queue from Master node with URL=%s. This job will not be added to the CLUES list" % (self._queue_constraint_target, taskgroup_id, job_id, server_node))
 
                         # Obtain Resources of the taskgroup
                         jobs[job_id]['TaskGroups'][taskgroup_id]['cpu'] = 0.0
@@ -381,12 +381,11 @@ class lrms(LRMS):
                 for taskgroup_id in jobs[job_id]['TaskGroups'].keys():
                     jobs[job_id]['TaskGroups'][taskgroup_id]['cpu'] = 0.0
                     jobs[job_id]['TaskGroups'][taskgroup_id]['memory'] = 0.0
-                    jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = self._queues[0]
+                    jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = 'no_queue'
 
         return jobs      
 
     def _get_JobInfo(self, info):
-        
         queue = '"' + info['queue'] + '" in queues'
         taskcount = 1 
 
@@ -416,8 +415,11 @@ class lrms(LRMS):
 
             for job_id in jobs_by_server[server_node]:
                 for taskgroup_id in jobs_by_server[server_node][job_id]['TaskGroups']:
-                    taskinfolist.append( self._get_JobInfo( jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id] ) )
-                    _LOGGER.debug(" *JOB* - task_name = %s, cpu = %.2f, memory = %.2f, queue = %s and state = %d " % ( jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['name'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['cpu'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['memory'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['queue'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['state'] ) )
+                    added = 'NOT'
+                    if 'no_queue' !=  jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['queue']:
+                        added = ''
+                        taskinfolist.append( self._get_JobInfo( jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id] ) )
+                    _LOGGER.debug(" *JOB %s ADDED* - task_name = %s, cpu = %.2f, memory = %.2f, queue = %s and state = %d " % ( added, jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['name'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['cpu'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['memory'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['queue'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['state'] ) )
 
         return taskinfolist
     
