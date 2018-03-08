@@ -455,7 +455,7 @@ class powermanager(PowerManager):
 		
 		return success, nname
 
-	def power_off(self, nname):
+	def power_off(self, nname, destroy=False):
 		_LOGGER.debug("Powering off/stopping %s" % nname)
 		try:
 			inf_id = self._get_inf_id()
@@ -483,7 +483,7 @@ class powermanager(PowerManager):
 				
 				if poweroff:
 					auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
-					if ec3_reuse_nodes:
+					if ec3_reuse_nodes and not destroy:
 						(success, vm_ids) = server.StopVM(inf_id, vm.vm_id, auth_data)
 						self._stopped_vms[nname] = vm.vm_id
 						self._store_stopped_vm(nname, vm.vm_id)
@@ -577,7 +577,7 @@ class powermanager(PowerManager):
 		return PowerManager.lifecycle(self)
 	
 	def recover(self, nname, node=None):
-		success, nname = self.power_off(nname)
+		success, nname = self.power_off(nname, True)
 		if success:
 			if node:
 				node.mark_poweredoff()
