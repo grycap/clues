@@ -23,6 +23,7 @@ Created on 26/1/2015
 
 import xmlrpclib
 from uuid import uuid1
+import re
 
 from radl import radl_parse
 
@@ -221,6 +222,32 @@ class powermanager(PowerManager):
 		
 		return res
 	
+	def _get_system(self, vm_info, radl_all, nname):
+
+		# First try to check if the user has specified the ec3_node_pattern
+		# it must be a regular expression to match with nname
+        # for example: vnode-[1,2,3,4,5]
+		for system in radl_all.systems:
+			if system.getValue("ec3_node_pattern"):
+				if re.match(system.getValue("ec3_node_pattern"), nname):
+					return system.name
+
+		# Start with the system named "wn"
+		current_system = "wn"
+		while current_system:
+			system_orig = vm_info[current_system]["radl"]
+			ec3_max_instances = system_orig.getValue("ec3_max_instances", -1)
+			if ec3_max_instances < 0:
+				ec3_max_instances = 99999999
+			if vm_info[current_system]["count"] < ec3_max_instances:
+				return current_system
+			else:
+				# we must change the system to the next one
+				current_system = system_orig.getValue("ec3_if_fail", '')
+				if not current_system:
+					_LOGGER.error("Error: we need more instances but ec3_if_fail of system %s is empty" % system_orig.name)
+		return None
+
 	def _get_radl(self, nname):
 		inf_id = self._get_inf_id()
 		if not inf_id:
@@ -268,46 +295,36 @@ class powermanager(PowerManager):
 				vm_info[system.name]['count'] = 0
 			vm_info[system.name]['radl'] = system
 
-		# Start with the system named "wn"
-		current_system = "wn"
-		while current_system:
-			system_orig = vm_info[current_system]["radl"]
-			ec3_max_instances = system_orig.getValue("ec3_max_instances", -1)
-			if ec3_max_instances < 0:
-				ec3_max_instances = 99999999
-			if vm_info[current_system]["count"] < ec3_max_instances:
-				# launch this system type
-				new_radl = ""
-				for net in radl_all.networks:
-					new_radl += "network " + net.id + "\n"
+		current_system = self._get_system(vm_info, radl_all, nname)
+		if current_system:
+			# launch this system type
+			new_radl = ""
+			for net in radl_all.networks:
+				new_radl += "network " + net.id + "\n"
 
-				system_orig.name = nname
-				system_orig.setValue("net_interface.0.dns_name", str(nname))
-				system_orig.setValue("ec3_class", current_system)
-				if current_system in self._golden_images:
-					image, password = self._golden_images[current_system]
-					system_orig.setValue("disk.0.image.url", image)
-					_LOGGER.debug("A golden image for %s node is stored, using it: %s" % (current_system, image))
-					if password:
-						system_orig.setValue("disk.0.os.credentials.password", password)
-				new_radl += str(system_orig) + "\n"
-				
-				for configure in radl_all.configures:
-					if configure.name == current_system:
-						configure.name = nname
-						new_radl += str(configure) + "\n"
-				
-				new_radl += "deploy " + nname + " 1"
-				
-				return new_radl
-			else:
-				# we must change the system to the next one
-				current_system = system_orig.getValue("ec3_if_fail", '')
-				if not current_system:
-					_LOGGER.error("Error: we need more instances but ec3_if_fail of system %s is empty" % system_orig.name)
-		
-		_LOGGER.error("Error generating infrastructure RADL")
-		return None
+			system_orig = vm_info[current_system]["radl"]
+			system_orig.name = nname
+			system_orig.setValue("net_interface.0.dns_name", str(nname))
+			system_orig.setValue("ec3_class", current_system)
+			if current_system in self._golden_images:
+				image, password = self._golden_images[current_system]
+				system_orig.setValue("disk.0.image.url", image)
+				_LOGGER.debug("A golden image for %s node is stored, using it: %s" % (current_system, image))
+				if password:
+					system_orig.setValue("disk.0.os.credentials.password", password)
+			new_radl += str(system_orig) + "\n"
+
+			for configure in radl_all.configures:
+				if configure.name == current_system:
+					configure.name = nname
+					new_radl += str(configure) + "\n"
+
+			new_radl += "deploy " + nname + " 1"
+
+			return new_radl
+		else:
+			_LOGGER.error("Error generating infrastructure RADL")
+			return None
 	
 	def _get_vms(self):
 		inf_id = self._get_inf_id()
