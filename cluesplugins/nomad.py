@@ -42,21 +42,24 @@ def open_file(file_path):
         raise Exception(message)
     return file_read
 
-def get_memory_in_bytes(str_memory):
-    if (str_memory.strip()[-2:] in ['Mi', 'Gi', 'Ki']):
-        unit = str_memory.strip()[-2:]
+def _get_memory_in_bytes(str_memory):
+    if str_memory.strip()[-2:] in ['Mi', 'Gi', 'Ki', 'Ti']:
+        unit = str_memory.strip()[-2:][1]
         memory = int(str_memory.strip()[:-2])
-        if unit == 'Ki':
-            memory *= 1024
-        elif unit == 'Mi':
-            memory *= 1024 * 1024
-        elif unit == 'Gi':
-            memory *= 1024 * 1024 * 1024
-        elif unit == 'Ti':
-            memory *= 1024 * 1024 * 1024 * 1024
-        return memory
+    elif str_memory.strip()[-1:] in ['M', 'G', 'K', 'T']:
+        unit = str_memory.strip()[-1:]
+        memory = int(str_memory.strip()[:-1])
     else:
         return int(str_memory)
+    if unit == 'K':
+        memory *= 1024
+    elif unit == 'M':
+        memory *= 1024 * 1024
+    elif unit == 'G':
+        memory *= 1024 * 1024 * 1024
+    elif unit == 'T':
+        memory *= 1024 * 1024 * 1024 * 1024
+    return memory
 
 class lrms(LRMS):
 
@@ -162,14 +165,7 @@ class lrms(LRMS):
         
         LRMS.__init__(self, "TOKEN_%s" % self._server_url)
 
-    def _get_NodeInfo (self, info_node):
-        name = info_node['name']
-
-        # Illustrative values for Clues, since the node is not running, we cannot know the real values
-        slots_count = float(self._default_cpu_node)
-        slots_free = slots_count
-        memory_total = get_memory_in_bytes(self._default_memory_node)
-        memory_free = memory_total
+    def _get_NodeInfo (self, info_node, default_info_node):
         
         # Check state
         state = NodeInfo.UNKNOWN
@@ -178,21 +174,24 @@ class lrms(LRMS):
         elif (info_node['status'] == self._state_on and info_node['any_job_is_running']):
             state = NodeInfo.USED
         elif (info_node['status'] == self._state_off):
-            state = NodeInfo.OFF
-
-        # Keywords
-        keywords = {}
-        keywords['hostname'] = TypedClass.auto(name)       
+            state = NodeInfo.OFF       
         
         # Check queues 
-        queues = self._queues[:]                       
+        keywords = default_info_node['keywords'] 
+        queues = default_info_node['keywords']['queues'] 
         q = info_node['node_class']
         if not (q in self._queues or q == '') :
-            _LOGGER.error(" '%s' (node_class of Nomad Client) is not a valid queue, queue is set to all queues." % (q))
+            _LOGGER.error(" '%s' (node_class of Nomad Client) is not a valid queue, queue is set to queue of file %s." % (q, self._nodes_info_file))
         if q in self._queues:
             queues = [ q ]  
-        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])  
+            keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])  
         
+        # Illustrative values for Clues, since the node is not running, we cannot know the real values
+        slots_count = default_info_node['cpus'] 
+        slots_free = default_info_node['cpus'] 
+        memory_total = default_info_node['memory'] 
+        memory_free = default_info_node['memory'] 
+
         # Information of query
         if ('client_status' in info_node): 
             slots_count = len( info_node['client_status']['CPU'] )
@@ -205,7 +204,7 @@ class lrms(LRMS):
                 state = NodeInfo.USED                   
        
 
-        node = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
+        node = NodeInfo(info_node['name'], slots_count, slots_free, memory_total, memory_free, keywords)
         node.state = state
 
         return node
@@ -267,35 +266,55 @@ class lrms(LRMS):
     def get_nodeinfolist(self):
         ##_LOGGER.info("***** START - get_nodeinfolist ***** ")
         nodeinfolist = collections.OrderedDict()
-        clients_by_server = {}
+        default_node_info = collections.OrderedDict()
 
-        # Default values
-        infile = open_file(self._nodes_info_file )
-        if infile:
-            for line in infile:
-                info_node = {}
-                info_node['name'] = line.rstrip('\n')
-                info_node['status'] = self._state_off
-                info_node['node_class'] = ''
-                info_node['status_description'] = 'Node is OFF'
-                info_node['any_job_is_running'] = False
-                nodeinfolist[ info_node['name'] ] = self._get_NodeInfo(info_node)
-            infile.close()
+        # DEFAULT NODE INFO
+        try:
+            vnodes = json.load(open(self._nodes_info_file, 'r'))
+            for vnode in vnodes:
+                NODE = {}
+                NODE['name'] = vnode["name"] 
+                NODE['state'] = NodeInfo.OFF
+                NODE['keywords'] = {}
+                
+                NODE['cpus'] = float(self._default_cpu_node)
+                if "cpus" in vnode:
+                    NODE['cpus'] = int(vnode["cpus"])
+
+                NODE['cpus'] = _get_memory_in_bytes(self._default_memory_node)   
+                if "memory" in vnode:
+                    NODE['memory'] = _get_memory_in_bytes(vnode["memory"])
+
+                if "keywords" in vnode:
+                    for keypair in vnode["keywords"].split(','):
+                        parts = keypair.split('=')
+                        NODE['keywords'][parts[0].strip()] = TypedClass(parts[1].strip(), TypedClass.STRING)
+
+                if "queues" in vnode:
+                    queues = vnode["queues"].split(",")
+                    if queues:
+                        NODE['keywords']['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                else: # All queues to the node
+                    NODE['keywords']['queues'] = TypedList([TypedClass.auto(q) for q in self._queues[:] ])  
+
+                default_node_info[ NODE['name'] ] = NODE
+
+        except Exception as ex:
+            _LOGGER.error("Error processing file %s: %s" % (self._nodes_info_file , str(ex)) )
+
+        clients_by_server = {}
 
         # Obtain server nodes
         master_nodes = self._get_Master_nodes()       
         
-        # Obtain ID, Name, Status and if the Client is running some job 
         for server_node in master_nodes:
-            clients_by_server[ server_node ] = self._get_Clients_by_Master(server_node)
+            clients_by_server[ server_node ] = self._get_Clients_by_Master(server_node)  # Obtain ID, Name, Status, NodeClass and if the Client is running some job 
             # Obtain Resources and Queues
             for client_id in clients_by_server[ server_node ]:
                 info_client = clients_by_server[ server_node ][ client_id ]
-                # Client is ON
-                if (info_client['state'] in [NodeInfo.IDLE, NodeInfo.USED]):
-                    _LOGGER.debug( "info_client['state'] = " + str(info_client['state']) )
-                    # Obtain Client node address 
-                    client_addr = self._get_Client_address(server_node, client_id)
+                if (info_client['state'] in [NodeInfo.IDLE, NodeInfo.USED]): # Client is ON
+                    # Obtain Client node address for checking used resources
+                    client_addr = self._get_Client_address(server_node, client_id) 
                     if client_addr:
                         # Querying Client node for getting the status
                         url = 'http://' + client_addr + self._api_version + self._api_url_get_clients_status
@@ -305,8 +324,17 @@ class lrms(LRMS):
                         else:
                             _LOGGER.error("Error getting client_status from Client_url=%s: %s: %s" % (client_addr, response['status_code'], response['text']))
 
-                if not (nodeinfolist[ info_client['name'] ].state in [NodeInfo.IDLE, NodeInfo.USED]):
-                    nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client)
+                    if info_client['name'] in default_node_info: # Valid node for CLUES and IM
+                        nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client, default_node_info[ info_client['name'] ])
+                    else:
+                        _LOGGER.warning("Nomad Client with name '%s' founded using Nomad Server API but not exists this node in the file %s" % (info_client['name'] , self._nodes_info_file) )
+        
+        # Add nodes from nomad_info file to the list
+        for node in default_node_info:
+            if node not in nodeinfolist: 
+                nodeinfolist[ node['name'] ] = NodeInfo(node['name'], node['cpus'], node['cpus'], node['memory'], node['memory'], node['keywords'])
+                nodeinfolist[ node['name'] ].state = node['state']
+                
         
         for key, value in nodeinfolist.items():
             string = "%s + keywords={ " % (str(value) ) 
@@ -316,6 +344,7 @@ class lrms(LRMS):
             _LOGGER.debug( string )
         ##_LOGGER.info("***** END - get_nodeinfolist ***** ")
         return nodeinfolist
+
 
     def _get_Jobs_by_Master(self, server_node):
         jobs = {}

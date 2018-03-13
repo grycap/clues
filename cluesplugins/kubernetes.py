@@ -19,10 +19,11 @@
 import collections
 import requests
 import base64
+import json
 import cpyutils.config
 import clueslib.helpers as Helpers
 
-from cpyutils.evaluate import TypedNumber, TypedClass
+from cpyutils.evaluate import TypedNumber, TypedClass, TypedList
 from cpyutils.log import Log
 from clueslib.node import NodeInfo
 from clueslib.platform import LRMS
@@ -103,20 +104,24 @@ class lrms(LRMS):
         LRMS.__init__(self, "KUBERNETES_%s" % self._server_url)
 
     def _get_memory_in_bytes(self, str_memory):
-        if str_memory.strip()[-2:] in ['Mi', 'Gi', 'Ki']:
-            unit = str_memory.strip()[-2:]
+        if str_memory.strip()[-2:] in ['Mi', 'Gi', 'Ki', 'Ti']:
+            unit = str_memory.strip()[-2:][1]
             memory = int(str_memory.strip()[:-2])
-            if unit == 'Ki':
-                memory *= 1024
-            elif unit == 'Mi':
-                memory *= 1024 * 1024
-            elif unit == 'Gi':
-                memory *= 1024 * 1024 * 1024
-            elif unit == 'Ti':
-                memory *= 1024 * 1024 * 1024 * 1024
-            return memory
+        elif str_memory.strip()[-1:] in ['M', 'G', 'K', 'T']:
+            unit = str_memory.strip()[-1:]
+            memory = int(str_memory.strip()[:-1])
         else:
             return int(str_memory)
+
+        if unit == 'K':
+            memory *= 1024
+        elif unit == 'M':
+            memory *= 1024 * 1024
+        elif unit == 'G':
+            memory *= 1024 * 1024 * 1024
+        elif unit == 'T':
+            memory *= 1024 * 1024 * 1024 * 1024
+        return memory
 
     def _get_node_used_resources(self, nodename, pods_data):
         used_mem = 0
@@ -171,7 +176,7 @@ class lrms(LRMS):
 
                     keywords = {'pods_free': TypedNumber(pods_free),
                                 'nodeName': TypedClass(name, TypedClass.STRING)}
-                    # Add labels as keyworks
+                    # Add labels as keywords
                     for key, value in node["metadata"]["labels"].items():
                         keywords[key] = TypedClass(value, TypedClass.STRING)
 
@@ -187,29 +192,32 @@ class lrms(LRMS):
 
         # Add the "virtual" nodes
         try:
-            # format of the file:
-            # One line per node. This line can be only the hostname or include
-            # node keywords:
-            # nodename1
-            # nodename2: somekey=someval, otherkey=otherval
-            for line in open('/etc/clues2/kubernetes_vnodes.info', 'r'):
-                name = line.rstrip('\n')
-                if ":" in name:
-                    parts = name.split(':')
-                    name = parts[0].strip()
-                    keypairs = parts[1].split(',')
-                else:
-                    keypairs = []
+            vnodes = json.load(open('/etc/clues2/kubernetes_vnodes.info', 'r'))
+            for vnode in vnodes:
+                name = vnode["name"]
                 if name not in nodeinfolist:
                     keywords = {'pods_free': TypedNumber(self._node_pods),
                                 'nodeName': TypedClass(name, TypedClass.STRING)}
 
-                    for keypair in keypairs:
-                        parts = keypair.split('=')
-                        keywords[parts[0].strip()] = TypedClass(parts[1].strip(), TypedClass.STRING)
+                    cpus = self._node_slots
+                    if "cpus" in vnode:
+                        cpus = int(vnode["cpus"])
 
-                    nodeinfolist[name] = NodeInfo(name, self._node_slots, self._node_slots,
-                                                  self._node_memory, self._node_memory, keywords)
+                    memory = self._node_memory
+                    if "memory" in vnode:
+                        memory = self._get_memory_in_bytes(vnode["memory"])
+
+                    if "queues" in vnode:
+                        queues = vnode["queues"].split(",")
+                        if queues:
+                            keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+
+                    if "keywords" in vnode:
+                        for keypair in vnode["keywords"].split(','):
+                            parts = keypair.split('=')
+                            keywords[parts[0].strip()] = TypedClass(parts[1].strip(), TypedClass.STRING)
+
+                    nodeinfolist[name] = NodeInfo(name, cpus, cpus, memory, memory, keywords)
                     nodeinfolist[name].state = NodeInfo.OFF
         except Exception as ex:
             _LOGGER.error("Error processing file /etc/clues2/kubernetes_vnodes.info: %s" % str(ex))
