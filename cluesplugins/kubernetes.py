@@ -176,7 +176,7 @@ class lrms(LRMS):
 
                     keywords = {'pods_free': TypedNumber(pods_free),
                                 'nodeName': TypedClass(name, TypedClass.STRING)}
-                    # Add labels as keyworks
+                    # Add labels as keywords
                     for key, value in node["metadata"]["labels"].items():
                         keywords[key] = TypedClass(value, TypedClass.STRING)
 
@@ -212,8 +212,8 @@ class lrms(LRMS):
                         if queues:
                             keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
 
-                    if "keyworks" in vnode:
-                        for keypair in vnode["keyworks"].split(','):
+                    if "keywords" in vnode:
+                        for keypair in vnode["keywords"].split(','):
                             parts = keypair.split('=')
                             keywords[parts[0].strip()] = TypedClass(parts[1].strip(), TypedClass.STRING)
 
