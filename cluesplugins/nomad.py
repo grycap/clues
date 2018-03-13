@@ -281,7 +281,7 @@ class lrms(LRMS):
                 if "cpus" in vnode:
                     NODE['cpus'] = int(vnode["cpus"])
 
-                NODE['cpus'] = _get_memory_in_bytes(self._default_memory_node)   
+                NODE['memory'] = _get_memory_in_bytes(self._default_memory_node)   
                 if "memory" in vnode:
                     NODE['memory'] = _get_memory_in_bytes(vnode["memory"])
 
@@ -330,10 +330,10 @@ class lrms(LRMS):
                         _LOGGER.warning("Nomad Client with name '%s' founded using Nomad Server API but not exists this node in the file %s" % (info_client['name'] , self._nodes_info_file) )
         
         # Add nodes from nomad_info file to the list
-        for node in default_node_info:
-            if node not in nodeinfolist: 
-                nodeinfolist[ node['name'] ] = NodeInfo(node['name'], node['cpus'], node['cpus'], node['memory'], node['memory'], node['keywords'])
-                nodeinfolist[ node['name'] ].state = node['state']
+        for namenode, node_info in default_node_info.items():
+            if namenode not in nodeinfolist: 
+                nodeinfolist[ namenode ] = NodeInfo(namenode, node_info['cpus'], node_info['cpus'], node_info['memory'], node_info['memory'], node_info['keywords'])
+                nodeinfolist[ namenode ].state = node_info['state']
                 
         
         for key, value in nodeinfolist.items():
