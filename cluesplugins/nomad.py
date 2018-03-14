@@ -278,8 +278,8 @@ class lrms(LRMS):
                 NODE['keywords'] = {}
                 
                 NODE['cpus'] = float(self._default_cpu_node)
-                if "cpus" in vnode:
-                    NODE['cpus'] = int(vnode["cpus"])
+                if "cpu" in vnode:
+                    NODE['cpus'] = int(vnode["cpu"])
 
                 NODE['memory'] = _get_memory_in_bytes(self._default_memory_node)   
                 if "memory" in vnode:
