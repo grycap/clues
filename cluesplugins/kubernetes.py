@@ -200,8 +200,8 @@ class lrms(LRMS):
                                 'nodeName': TypedClass(name, TypedClass.STRING)}
 
                     cpus = self._node_slots
-                    if "cpus" in vnode:
-                        cpus = int(vnode["cpus"])
+                    if "cpu" in vnode:
+                        cpus = int(vnode["cpu"])
 
                     memory = self._node_memory
                     if "memory" in vnode:
