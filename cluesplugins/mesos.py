@@ -280,7 +280,7 @@ class lrms(LRMS):
                 "MESOS_STATE_COMMAND":
                 "/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/state.json",
                 "MESOS_JOBS_COMMAND":
-                "/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json",
+                "/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json?limit=1000",
                 "MESOS_MARATHON_COMMAND":
                 "/usr/bin/curl -L -X GET http://mesosserverpublic:8080/v2/apps?embed=tasks",
                 "MESOS_CHRONOS_COMMAND":
