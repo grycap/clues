@@ -305,27 +305,39 @@ class lrms(LRMS):
 
     def get_nodeinfolist(self):
         nodeinfolist = collections.OrderedDict()
-        infile = open_file('/etc/clues2/mesos_vnodes.info')
-        if infile:
-            for line in infile:
-                name = line.rstrip('\n')
-                state = NodeInfo.OFF
-                # Illustrative values for Clues, since the node is not running, we
-                # cannot know the real values
-                slots_count = self._node_slots
-                memory_total = self._node_memory
-                slots_free = self._node_slots
-                memory_free = self._node_memory
-                # Create a fake queue
-                keywords = {}
-                keywords['hostname'] = TypedClass.auto(name)
-                queues = ["default"]
-                if queues:
-                    keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+        try:
+            vnodes = json.load(open('/etc/clues2/mesos_vnodes.info', 'r'))
+            for vnode in vnodes:
+                name = vnode["name"]
+                if name not in nodeinfolist:
+                    keywords = {'hostname': TypedClass(name, TypedClass.STRING)}
+                    state = NodeInfo.OFF
+                    slots_count = self._node_slots
+                    slots_free = self._node_slots
+                    if "cpus" in vnode:
+                        slots_count = int(vnode["cpus"])
+                        slots_free = int(vnode["cpus"])
 
-                nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
-                nodeinfolist[name].state = state
-            infile.close()
+                    memory_total = self._node_memory
+                    memory_free = self._node_memory
+                    if "memory" in vnode:
+                        memory_total = get_memory_in_bytes(vnode["memory"])
+                        memory_free = get_memory_in_bytes(vnode["memory"])
+                    queues = ["default"]
+                    if "queues" in vnode:
+                        queues = vnode["queues"].split(",")
+                        if queues:
+                            keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+
+                    if "keywords" in vnode:
+                        for keypair in vnode["keywords"].split(','):
+                            parts = keypair.split('=')
+                            keywords[parts[0].strip()] = TypedClass(parts[1].strip(), TypedClass.STRING)
+
+                    nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
+                    nodeinfolist[name].state = state
+        except Exception as ex:
+            _LOGGER.error("Error processing file /etc/clues2/mesos_vnodes.info: %s" % str(ex))
 
         mesos_slaves = self._obtain_mesos_nodes()
         if mesos_slaves:
