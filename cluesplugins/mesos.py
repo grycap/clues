@@ -79,6 +79,26 @@ def infer_marathon_job_state(jobs, jobs_running):
 def calculate_memory_bytes(memory):
     return memory * 1048576
 
+def get_memory_in_bytes(str_memory):
+    if str_memory.strip()[-2:] in ['Mi', 'Gi', 'Ki', 'Ti']:
+        unit = str_memory.strip()[-2:][1]
+        memory = int(str_memory.strip()[:-2])
+    elif str_memory.strip()[-1:] in ['M', 'G', 'K', 'T']:
+        unit = str_memory.strip()[-1:]
+        memory = int(str_memory.strip()[:-1])
+    else:
+        return int(str_memory)
+
+    if unit == 'K':
+        memory *= 1024
+    elif unit == 'M':
+        memory *= 1024 * 1024
+    elif unit == 'G':
+        memory *= 1024 * 1024 * 1024
+    elif unit == 'T':
+        memory *= 1024 * 1024 * 1024 * 1024
+    return memory
+
 
 def open_file(file_path):
     try:
