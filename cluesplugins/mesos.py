@@ -334,9 +334,9 @@ class lrms(LRMS):
                     state = NodeInfo.OFF
                     slots_count = self._node_slots
                     slots_free = self._node_slots
-                    if "cpus" in vnode:
-                        slots_count = int(vnode["cpus"])
-                        slots_free = int(vnode["cpus"])
+                    if "cpu" in vnode:
+                        slots_count = int(vnode["cpu"])
+                        slots_free = int(vnode["cpu"])
 
                     memory_total = self._node_memory
                     memory_free = self._node_memory
