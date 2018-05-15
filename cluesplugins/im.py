@@ -135,7 +135,7 @@ class powermanager(PowerManager):
 	def _delete_stopped_vm(self, node_name):
 		try:
 			del self._stopped_vms[node_name]
-			self._db.sql_query("DELETE FROM im_stopped_vms where node_name = '%s')" % node_name, True)
+			self._db.sql_query("DELETE FROM im_stopped_vms where node_name = '%s'" % node_name, True)
 		except:
 			_LOGGER.exception("Error trying to delete IM stopped VMs data.")
 
@@ -412,7 +412,13 @@ class powermanager(PowerManager):
 								_LOGGER.debug("Node %s is an additional not recovering it." % clues_node_name)
 							else:
 								self.recover(clues_node_name, node_found)
-					elif state in [VirtualMachine.OFF, VirtualMachine.UNKNOWN]:
+					elif state == VirtualMachine.OFF:
+						_LOGGER.warning("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
+						if clues_node_name in self._stopped_vms:
+							_LOGGER.info("Node %s in the list of Stopped nodes. Remove VM with id %s." % (clues_node_name, vm_id)) 
+							self.recover(clues_node_name, node_found)
+						# Otherwise Do not terminate this VM, let's wait to lifecycle to check if it must be terminated
+					elif state == VirtualMachine.UNKNOWN:
 						# Do not terminate this VM, let's wait to lifecycle to check if it must be terminated 
 						_LOGGER.warning("Node %s in VM with id %s is in state: %s" % (clues_node_name, vm_id, state))
 				else:
