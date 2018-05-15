@@ -131,6 +131,13 @@ class powermanager(PowerManager):
 		except:
 			_LOGGER.exception("Error trying to save IM stopped VMs data.")
 
+	def _delete_stopped_vm(self, node_name):
+		try:
+			del self._stopped_vms[node_name]
+			self._db.sql_query("DELETE FROM im_stopped_vms where node_name = '%s')" % node_name, True)
+		except:
+			_LOGGER.exception("Error trying to delete IM stopped VMs data.")
+
 	def _load_stopped_vms(self):
 		res = {}
 		try:
@@ -429,7 +436,6 @@ class powermanager(PowerManager):
 				if self._stopped_vms.get(nname):
 					ec3_reuse_nodes = True
 					vm_id = self._stopped_vms.get(nname)
-					#ec3_reuse_nodes = vm.radl.systems[0].getValue('ec3_reuse_nodes', 0)
 			
 			server = self._get_server()
 			auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
@@ -492,6 +498,9 @@ class powermanager(PowerManager):
 						elif vm_ids == 0:
 							_LOGGER.error("ERROR stopping node: %s. No VM has been stopped." % nname)
 					else:
+						if nname in self._stopped_vms:
+							self._delete_stopped_vm(nname)
+
 						(success, vm_ids) = server.RemoveResource(inf_id, vm.vm_id, auth_data)
 						if not success: 
 							_LOGGER.error("ERROR deleting node: %s: %s" % (nname,vm_ids))
