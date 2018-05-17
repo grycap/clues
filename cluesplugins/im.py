@@ -435,7 +435,7 @@ class powermanager(PowerManager):
 
 			if nname in vms:
 				_LOGGER.warning("Trying to launch an existing node %s. Ignoring it." % nname)
-				return True, nname
+				return False, nname
 			
 			ec3_reuse_nodes = False
 			if len(self._stopped_vms) > 0:
