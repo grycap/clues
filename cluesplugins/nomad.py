@@ -106,15 +106,15 @@ class lrms(LRMS):
                 "NOMAD_SERVER": "http://localhost:4646",
                 "NOMAD_HEADERS": "{}",
                 "NOMAD_API_VERSION": "/v1",
-                "NOMAD_API_URL_GET_SERVERS": "/agent/members", # master server
-                "NOMAD_API_URL_GET_CLIENTS": "/nodes", # master server
-                "NOMAD_API_URL_GET_CLIENT_INFO": "/node/$CLIENT_ID$", # master server
-                "NOMAD_API_URL_GET_CLIENT_STATUS": "/client/stats", # client node
-                "NOMAD_API_URL_GET_CLIENT_ALLOCATIONS": "/node/$CLIENT_ID$/allocations", # master server
-                "NOMAD_API_URL_GET_ALLOCATIONS": "/allocations", # master node
-                "NOMAD_API_URL_GET_JOBS": "/jobs", # master node
-                "NOMAD_API_URL_GET_JOBS_INFO": "/job/$JOB_ID$", # master node
-                "NOMAD_API_URL_GET_ALLOCATION_INFO": "/allocation", # master node
+                "NOMAD_API_URL_GET_SERVERS": "/agent/members", # Server node
+                "NOMAD_API_URL_GET_CLIENTS": "/nodes", # Server node
+                "NOMAD_API_URL_GET_CLIENT_INFO": "/node/$CLIENT_ID$", # Server node
+                "NOMAD_API_URL_GET_CLIENT_STATUS": "/client/stats", # Client node
+                "NOMAD_API_URL_GET_CLIENT_ALLOCATIONS": "/node/$CLIENT_ID$/allocations", # Server node
+                "NOMAD_API_URL_GET_ALLOCATIONS": "/allocations", # Server node
+                "NOMAD_API_URL_GET_JOBS": "/jobs", # Server node
+                "NOMAD_API_URL_GET_JOBS_INFO": "/job/$JOB_ID$", # Server node
+                "NOMAD_API_URL_GET_ALLOCATION_INFO": "/allocation", # Server node
                 "NOMAD_ACL_TOKEN": None,
                 "MAX_RETRIES": 10,
                 "NOMAD_AUTH_DATA": None,
@@ -165,17 +165,26 @@ class lrms(LRMS):
         
         LRMS.__init__(self, "TOKEN_%s" % self._server_url)
 
+
+    # CLUES API
+    def get_jobinfolist(self):
+        # Obtain server nodes
+        server_nodes_info = self._get_server_nodes_info() 
+
+        taskinfolist, jobs_by_server = self._get_jobinfolist(server_nodes_info)
+        return taskinfolist
+
+    def get_nodeinfolist(self):
+        # Obtain server nodes
+        server_nodes_info = self._get_server_nodes_info()
+
+        nodeinfolist = self._get_nodeinfolist(server_nodes_info)
+        return nodeinfolist
+
+
+    # AUX FUNCTIONS    
     def _get_NodeInfo (self, info_node, default_info_node):
-        
-        # Check state
-        state = NodeInfo.UNKNOWN
-        if (info_node['status'] == self._state_on and not info_node['any_job_is_running']):
-            state = NodeInfo.IDLE
-        elif (info_node['status'] == self._state_on and info_node['any_job_is_running']):
-            state = NodeInfo.USED
-        elif (info_node['status'] == self._state_off):
-            state = NodeInfo.OFF       
-        
+                
         # Check queues 
         keywords = default_info_node['keywords'] 
         queues = default_info_node['keywords']['queues'] 
@@ -192,33 +201,41 @@ class lrms(LRMS):
         memory_total = default_info_node['memory'] 
         memory_free = default_info_node['memory'] 
 
-        # Information of query
-        if ('client_status' in info_node): 
-            slots_count = len( info_node['client_status']['CPU'] )
-            memory_total = info_node['client_status']['Memory']['Total']
-            memory_free = info_node['client_status']['Memory']['Available']
-            slots_free = 0
-            for cpu in info_node['client_status']['CPU']:
-                slots_free += float(cpu['Idle']) / 100.0
-            if (memory_free <= 0 or slots_free <= 0):
-                state = NodeInfo.USED                   
-       
+        # Information obtained from queries
+        if 'slots_count' in info_node['resources']: 
+            slots_count = info_node['resources']['slots_count']
+        if 'memory_total' in info_node['resources']: 
+            memory_total = info_node['resources']['memory_total']        
+        if 'slots_free' in info_node['resources']: 
+            slots_free = slots_count - info_node['resources']['slots_used'] 
+        if 'memory_used' in info_node['resources']: 
+            memory_free = memory_total - info_node['resources']['memory_used']   
 
+        # Check state
+        state = NodeInfo.UNKNOWN
+        if (info_node['status'] == self._state_on and not info_node['any_job_is_running']):
+            state = NodeInfo.IDLE
+        elif (info_node['status'] == self._state_on and info_node['any_job_is_running']):
+            state = NodeInfo.USED
+        elif (info_node['status'] == self._state_off):
+            state = NodeInfo.OFF           
+	
+        #_LOGGER.debug(" name= " + info_node['name'] + ", slots_count= " + str(slots_count) + ", slots_free= " + str(slots_free) + ", memory_total= " + str(memory_total) + ", memory_free= " + str(memory_free) + ", keywords= " + str(keywords) + ", memory_used=" + str(info_node['resources']['memory_used'])  + ", slots_used=" + str(info_node['resources']['slots_used'])  )
         node = NodeInfo(info_node['name'], slots_count, slots_free, memory_total, memory_free, keywords)
         node.state = state
 
         return node
 
-    def _get_Master_nodes(self):
-        master_nodes = []
+    def _get_server_nodes_info(self):
+        server_nodes_info = []
         url = self._server_url + self._api_version + self._api_url_get_servers
         response = self._create_request('GET', url, auth_data=self._auth_data)
         if (response[ 'status_code' ] == 200):
             for node in response['json']['Members']:
-                master_nodes.append('http://'+node['Addr']+':'+self._http_port)
+                server_nodes_info.append('http://'+node['Addr']+':'+self._http_port)
         else:
-            _LOGGER.error("Error getting Nomad Master nodes addresses: %s: %s" % (response['status_code'], response['text']))
-        return master_nodes
+            _LOGGER.error("Error getting Nomad Server nodes addresses: %s: %s" % (response['status_code'], response['text']))
+        return server_nodes_info
 
     def _is_Client_runningAJob (self, server_node, client_id):
         url = server_node + self._api_version + self._api_url_get_clients_allocations.replace('$CLIENT_ID$', client_id )
@@ -229,10 +246,40 @@ class lrms(LRMS):
                     #_LOGGER.debug("_is_Client_runningAJob is TRUE")
                     return True
         else:
-            _LOGGER.error("Error getting information about allocations of client with ID=%s from Master node with URL=%s: %s: %s" % (client_id, server_node, response['status_code'], response['text']))
+            _LOGGER.error("Error getting information about allocations of client with ID=%s from Server node with URL=%s: %s: %s" % (client_id, server_node, response['status_code'], response['text']))
         return False
 
-    def _get_Clients_by_Master(self, server_node):
+    def _get_Client_resources (self, server_node, client_id):
+        client_addr = self._get_Client_address(server_node, client_id) 
+        if client_addr == None:
+            return {}
+            
+        resources = {}
+        # Querying Client node for getting the slots_count and memory_total
+        url = 'http://' + client_addr + self._api_version + self._api_url_get_clients_status
+        response = self._create_request('GET', url) 
+        if (response['status_code'] == 200):
+            resources['slots_count'] = len(response['json']['CPU'])
+            resources['memory_total'] = response['json']['Memory']['Total']
+        else:
+            _LOGGER.error("Error getting client_status from Client_url=%s: %s: %s" % (client_addr, response['status_code'], response['text']))
+
+        # Querying Client node for getting the slots_used and memory_used
+        url = server_node + self._api_version + self._api_url_get_clients_allocations.replace('$CLIENT_ID$', client_id )
+        response = self._create_request('GET', url) 
+        if (response['status_code'] == 200):
+            resources['slots_used'] = 0.0
+            resources['memory_used'] = 0.0
+            for alloc in response['json']:
+                if alloc['ClientStatus'] in ['pending', 'running']: # The job is running or will be soon
+                    resources['slots_used'] += ( float(alloc['Resources']['CPU']) / 100.0)
+                    resources['memory_used'] += float( _get_memory_in_bytes(str(alloc['Resources']['MemoryMB'])+"M"))
+        else:
+            _LOGGER.error("Error getting information about allocations of client with ID=%s from Server node with URL=%s: %s: %s" % (client_id, server_node, response['status_code'], response['text']))
+
+        return resources
+
+    def _get_Clients_by_Server(self, server_node):
         clients = {}
         url = server_node + self._api_version + self._api_url_get_clients
         response = self._create_request('GET', url) 
@@ -250,7 +297,7 @@ class lrms(LRMS):
                 if (client['Status'] == self._state_on):
                     clients[ client['ID'] ]['state'] = NodeInfo.IDLE
         else:
-            _LOGGER.error("Error getting information about the Clients of the Master node with URL=%s: %s: %s" % (server_node, response['status_code'], response['text']))
+            _LOGGER.error("Error getting information about the Clients of the Server node with URL=%s: %s: %s" % (server_node, response['status_code'], response['text']))
         return clients
 
     def _get_Client_address(self, server_node, client_id):
@@ -260,10 +307,10 @@ class lrms(LRMS):
         if (response['status_code'] == 200):
             addr = response['json']['HTTPAddr'] 
         else:
-            _LOGGER.error("Error getting client_addr from Master_url=%s and Client_ID=%s: %s: %s" % (server_node, client_id, response['status_code'], response['text']))
+            _LOGGER.error("Error getting client_addr from Server_url=%s and Client_ID=%s: %s: %s" % (server_node, client_id, response['status_code'], response['text']))
         return addr
 
-    def get_nodeinfolist(self):
+    def _get_nodeinfolist(self, server_nodes_info):
         ##_LOGGER.info("***** START - get_nodeinfolist ***** ")
         nodeinfolist = collections.OrderedDict()
         default_node_info = collections.OrderedDict()
@@ -303,31 +350,19 @@ class lrms(LRMS):
             _LOGGER.error("Error processing file %s: %s" % (self._nodes_info_file , str(ex)) )
 
         clients_by_server = {}
-
-        # Obtain server nodes
-        master_nodes = self._get_Master_nodes()       
-        
-        for server_node in master_nodes:
-            clients_by_server[ server_node ] = self._get_Clients_by_Master(server_node)  # Obtain ID, Name, Status, NodeClass and if the Client is running some job 
+        for server_node in server_nodes_info:
+            clients_by_server[ server_node ] = self._get_Clients_by_Server(server_node)  # Obtain ID, Name, Status, NodeClass and if the Client is running some job 
             # Obtain Resources and Queues
             for client_id in clients_by_server[ server_node ]:
                 info_client = clients_by_server[ server_node ][ client_id ]
                 if (info_client['state'] in [NodeInfo.IDLE, NodeInfo.USED]): # Client is ON
                     # Obtain Client node address for checking used resources
-                    client_addr = self._get_Client_address(server_node, client_id) 
-                    if client_addr:
-                        # Querying Client node for getting the status
-                        url = 'http://' + client_addr + self._api_version + self._api_url_get_clients_status
-                        response = self._create_request('GET', url) 
-                        if (response['status_code'] == 200):
-                            info_client['client_status'] = response['json']
-                        else:
-                            _LOGGER.error("Error getting client_status from Client_url=%s: %s: %s" % (client_addr, response['status_code'], response['text']))
+                    info_client ['resources'] = self._get_Client_resources (server_node, client_id)
 
                     if info_client['name'] in default_node_info: # Valid node for CLUES and IM
                         nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client, default_node_info[ info_client['name'] ])
                     else:
-                        _LOGGER.warning("Nomad Client with name '%s' founded using Nomad Server API but not exists this node in the file %s" % (info_client['name'] , self._nodes_info_file) )
+                        _LOGGER.warning("Nomad Client with name '%s' founded using Nomad Server API but not exists this node in the configuration file %s" % (info_client['name'] , self._nodes_info_file) )
         
         # Add nodes from nomad_info file to the list
         for namenode, node_info in default_node_info.items():
@@ -335,7 +370,7 @@ class lrms(LRMS):
                 nodeinfolist[ namenode ] = NodeInfo(namenode, node_info['cpus'], node_info['cpus'], node_info['memory'], node_info['memory'], node_info['keywords'])
                 nodeinfolist[ namenode ].state = node_info['state']
                 
-        
+        # Print all nodes in log with keywords
         for key, value in nodeinfolist.items():
             string = "%s + keywords={ " % (str(value) ) 
             for key2 in value.keywords:
@@ -345,8 +380,7 @@ class lrms(LRMS):
         ##_LOGGER.info("***** END - get_nodeinfolist ***** ")
         return nodeinfolist
 
-
-    def _get_Jobs_by_Master(self, server_node):
+    def _get_Jobs_by_Server(self, server_node):
         jobs = {}
         url = server_node + self._api_version + self._api_url_get_jobs
         response = self._create_request('GET', url) 
@@ -371,7 +405,7 @@ class lrms(LRMS):
                     else: 
                         jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['state'] = Request.SERVED
         else:
-            _LOGGER.error("Error getting jobs from Master node with URL = %s: %s: %s" % (server_node, response['status_code'], response['text']))
+            _LOGGER.error("Error getting jobs from Server node with URL = %s: %s: %s" % (server_node, response['status_code'], response['text']))
         return jobs
 
     def _get_TaskGroup_resources (self, jobs, server_node):
@@ -392,7 +426,7 @@ class lrms(LRMS):
                         
                         if warning_constraint: 
                             jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = 'no_queue'
-                            _LOGGER.warning("No '%s' contraint for taskgroup '%s' of the job '%s' or it isn't a valid queue from Master node with URL=%s. This job will not be added to the CLUES list" % (self._queue_constraint_target, taskgroup_id, job_id, server_node))
+                            _LOGGER.warning("No '%s' contraint for taskgroup '%s' of the job '%s' or it isn't a valid queue from Server node with URL=%s. This job will not be added to the CLUES list" % (self._queue_constraint_target, taskgroup_id, job_id, server_node))
 
                         # Obtain Resources of the taskgroup
                         jobs[job_id]['TaskGroups'][taskgroup_id]['cpu'] = 0.0
@@ -405,7 +439,7 @@ class lrms(LRMS):
 
                     
             else:
-                _LOGGER.error("Error getting job information with job_id = %s from Master node with URL = %s: %s: %s" % (job_id, server_node, response['status_code'], response['text']))  
+                _LOGGER.error("Error getting job information with job_id = %s from Server node with URL = %s: %s: %s" % (job_id, server_node, response['status_code'], response['text']))  
                 # Default values
                 for taskgroup_id in jobs[job_id]['TaskGroups'].keys():
                     jobs[job_id]['TaskGroups'][taskgroup_id]['cpu'] = 0.0
@@ -427,17 +461,14 @@ class lrms(LRMS):
         
         return job_info
 
-    def get_jobinfolist(self):
+    def _get_jobinfolist(self, server_nodes_info):
         taskinfolist = []
-        jobs_by_server = {}
-
-        # Obtain server nodes
-        master_nodes = self._get_Master_nodes()       
+        jobs_by_server = {}     
         
         # Obtain jobs id
-        for server_node in master_nodes:
+        for server_node in server_nodes_info:
             # Obtain job_id, job_name, taskgroup name and taskgroup state
-            jobs_by_server[ server_node ] = self._get_Jobs_by_Master(server_node)
+            jobs_by_server[ server_node ] = self._get_Jobs_by_Server(server_node)
 
             # Obtain task resources for each taskgroup 
             jobs_by_server[server_node] = self._get_TaskGroup_resources(jobs_by_server[server_node], server_node)
@@ -450,7 +481,8 @@ class lrms(LRMS):
                         taskinfolist.append( self._get_JobInfo( jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id] ) )
                     _LOGGER.debug(" *JOB %s ADDED* - task_name = %s, cpu = %.2f, memory = %.2f, queue = %s and state = %d " % ( added, jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['name'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['cpu'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['memory'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['queue'], jobs_by_server[server_node][job_id]['TaskGroups'][taskgroup_id]['state'] ) )
 
-        return taskinfolist
-    
+        return taskinfolist, jobs_by_server
+
 if __name__ == '__main__':
     pass
+
