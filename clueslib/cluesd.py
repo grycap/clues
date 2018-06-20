@@ -133,9 +133,13 @@ def _update_enable_status_for_nodes(_lrms_nodelist, _hosts_state):
             _lrms_nodelist[nname].enabled = False
             
     disabled = [ x for x, state in _hosts_state.items() if state == False ]
+    enabled = [ x for x, state in _hosts_state.items() if state == True ]
     for nname in disabled:
         if nname in _lrms_nodelist:
             _lrms_nodelist[nname].enabled = False
+    for nname in enabled:
+        if nname in _lrms_nodelist:
+            _lrms_nodelist[nname].enabled = True
             
 class MonitoringInfo():
     def __init__(self, nodelist, timestamp_nodelist, joblist, timestamp_joblist):
