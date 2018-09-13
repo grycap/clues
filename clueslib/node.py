@@ -228,7 +228,7 @@ class Node(NodeInfo, helpers.SerializableXML):
 
         kw_updated = False
         for kw in self.keywords:
-            if kw not in other.keywords:
+            if kw not in other.keywords or self.keywords[kw] != other.keywords[kw]:
                 kw_updated = True
         for kw in other.keywords:
             if kw not in self.keywords:
