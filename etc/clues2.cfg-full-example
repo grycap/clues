@@ -354,3 +354,84 @@ SLURM_PARTITION_COMMAND=/usr/local/bin/scontrol -o show partitions
 SLURM_NODES_COMMAND=/usr/local/bin/scontrol -o show nodes
 SLURM_JOBS_COMMAND=/usr/local/bin/scontrol -o show jobs
 SLURM_DEFAULT_QUEUE=wn
+
+#####################################################################################################################
+#
+# HOOKS
+#
+#####################################################################################################################
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# The hooks mechanism of CLUES enables to call specific applications when different events happen in the system. E.g. when a node is
+#   powered on or off. One immediate application of this system is to send an e-mail to the admin when a node has failed to be powered on.
+#
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[hooks]
+# Folder in which the scripts are found (the scripts are being ran from this folder; clues will change the working folder to this one prior to invoke the command)
+# The commands will be generally invoked as ./<command> e.g.: ./PRE_POWERON
+# If a command is specified using an absolute path, it will be invoked using that absolute path (e.g. PRE_POWERON=/path/to/my/app will be
+#   invoked as /path/to/my/app)
+WORKING_FOLDER=/etc/clues2/scripts
+
+# Time in seconds that CLUES will wait for the commands to be executed. If this time is exceeded, the command will be killed (i.e. kill -9)
+TIMEOUT_COMMAND=180
+
+# Called prior to execute the power_on action
+#   - call: ./PRE_POWERON <node>
+# PRE_POWERON=
+
+# Called after the power_on action has been executed (e.g. ipmi poweron) and includes the information about the success or not
+#   - call: ./POST_POWERON <node> <0: failed | 1: succeded> <name of the node finally powered on>
+# POST_POWERON=
+
+# Called prior to execute the power_off action
+#   - call: ./PRE_POWEROFF <node>
+# PRE_POWEROFF=
+
+# Called after the power_off action has been executed (e.g. ipmi poweroff) and includes the information about the success or not
+#   - call: ./POST_POWEROFF <node> <0: failed | 1: succeded> <name of the node finally powered off>
+# POST_POWEROFF=
+
+# Called when the monitoring system of CLUES considers that one node is in OFF state it is detected to be in ON state. That means
+# that the state of the node has unexpectedly changed from OFF to ON
+#   - call: ./UNEXPECTED_POWERON <node>
+# UNEXPECTED_POWERON=
+
+# Called when the monitoring system of CLUES considers that one node is in ON state but it is detected to be in OFF state. That means
+# that the state of the node has unexpectedly changed from ON to OFF
+#   - call: ./UNEXPECTED_POWEROFF <node>
+# UNEXPECTED_POWEROFF=
+
+# Called when a node has been tried to be powered off, but after a time is still detected as ON
+#   - call: ./ONERR <node> <times that the node has been tried to be powered off>
+# ONERR=
+
+# Called when a node has been tried to be powered on, but after a time is still detected as OFF
+#   - call: ./OFFERR <node> <times that the node has been tried to be powered on>
+# OFFERR=
+
+# Called when a node is finally detected to be ON after it has been requested to be powered on.
+#   - call: ./POWEREDON <node>
+# POWEREDON=
+
+# Called when a node is finally detected to be OFF after it has been requested to be powered off.
+#   - call: ./POWEREDOFF <node>
+# POWEREDOFF=
+
+# Called when a node has been missing by the monitoring system of CLUES
+#   - call: ./UNKNOWN <node>
+# UNKNOWN=
+
+# Called when a node gets the idle state from the used state
+#   - call: ./IDLE <node>
+# IDLE=
+
+# Called when a node gets the used state from the idle state
+#   - call: ./USED <node>
+# USED=
+
+# Called when a request for resources is queued in the system
+#   - call: ./REQUEST <id> <slots> <memory> <tasks> <max tasks per node> <; separated specific requests expressions>
+# REQUEST=

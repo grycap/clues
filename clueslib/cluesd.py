@@ -23,6 +23,7 @@ import time
 import schedulers
 import helpers
 import collections
+import hooks
 from configlib import _CONFIGURATION_MONITORING, _CONFIGURATION_CLUES
 from node import Node, NodeList, NodeInfo
 from request import JobList, RequestList, Request
@@ -208,6 +209,7 @@ class CluesDaemon:
         _update_enable_status_for_nodes(self._lrms_nodelist, self._db_system.get_hosts())
 
     def request(self, request):
+        hooks.HOOKS.request(request)
         self._requests_queue.append(request)
         _LOGGER.debug("new request: %s" % request)
         # cpyutils.eventloop.get_eventloop().add_event(schedulers.config_scheduling.PERIOD_SCHEDULE, "CONTROL EVENT - the request will be scheduled", stealth = True)
@@ -436,6 +438,7 @@ class CluesDaemon:
                 _LOGGER.warning("the node is already OFF or it is being powered off")
                 return True, n_id
 
+            hooks.HOOKS.pre_poweroff(n_id)
             success, nname = self._platform.power_off(n_id)
             if success:
                 if nname != n_id:
@@ -444,10 +447,14 @@ class CluesDaemon:
                     node = self._lrms_nodelist[n_id]
 
                 node.set_state(Node.POW_OFF)
+
+                hooks.HOOKS.post_poweroff(n_id, 1, nname)
                 return True, n_id
             else:
                 _LOGGER.warning("could not power off node %s. It will be considered ON, but with errors" % n_id)
                 node.set_state(Node.POW_OFF)
+                hooks.HOOKS.post_poweroff(n_id, 0, nname)
+
                 node.set_state(Node.ON_ERR)
                 return False, ""
         else:
@@ -465,6 +472,7 @@ class CluesDaemon:
                 _LOGGER.warning("the node is already ON or it is being powered on")
                 return True, n_id
             
+            hooks.HOOKS.pre_poweron(n_id)
             success, nname = self._platform.power_on(n_id)
             if success:
                 if nname != n_id:
@@ -473,10 +481,13 @@ class CluesDaemon:
                     node = self._lrms_nodelist[n_id]                
                 
                 node.set_state(Node.POW_ON)
+                hooks.HOOKS.post_poweron(n_id, 1, nname)
                 return True, n_id
             else:
                 _LOGGER.warning("could not power on node %s. It will be considered OFF, but with errors" % n_id)
                 node.set_state(Node.POW_ON)
+                hooks.HOOKS.post_poweron(n_id, 0, nname)
+
                 node.set_state(Node.OFF_ERR)
                 return False, ""
         else:
