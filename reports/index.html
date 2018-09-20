@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+    <script src="randomColor.js"></script>
+    <script type="text/javascript">
+      var rawdata = [ 
+  { "timestamp": 65, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 65, "nodename": "node01", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 65, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 65, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 75, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 75, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 75, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 75, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 80, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 80, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 80, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 80, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 85, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 85, "nodename": "node01", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 85, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 85, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 90, "nodename": "node02", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}
+, { "timestamp": 90, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 90, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 90, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 100, "nodename": "node02", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}
+, { "timestamp": 100, "nodename": "node01", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 100, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 100, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 105, "nodename": "node02", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}
+, { "timestamp": 105, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 105, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 105, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 115, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 115, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}
+, { "timestamp": 115, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 115, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 135, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 135, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}
+, { "timestamp": 135, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 135, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 145, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 145, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}
+, { "timestamp": 145, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}
+, { "timestamp": 145, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 150, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 150, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 150, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}
+, { "timestamp": 150, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 160, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 160, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 160, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}
+, { "timestamp": 160, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 165, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 165, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 165, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}
+, { "timestamp": 165, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 170, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 170, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 170, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 170, "nodename": "node04", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 175, "nodename": "node02", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 1024.00, "state" :1}
+, { "timestamp": 175, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}
+, { "timestamp": 175, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 175, "nodename": "node04", "slots": 4.00, "slots_used": 1.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 195, "nodename": "node02", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 1024.00, "state" :1}
+, { "timestamp": 195, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}
+, { "timestamp": 195, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}
+, { "timestamp": 195, "nodename": "node04", "slots": 4.00, "slots_used": 1.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 255, "nodename": "node02", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 1024.00, "state" :1}
+, { "timestamp": 255, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}
+, { "timestamp": 255, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}
+, { "timestamp": 255, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 260, "nodename": "node02", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 1024.00, "state" :1}
+, { "timestamp": 260, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}
+, { "timestamp": 260, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}
+, { "timestamp": 260, "nodename": "node04", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 310, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :6}
+, { "timestamp": 310, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}
+, { "timestamp": 310, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}
+, { "timestamp": 310, "nodename": "node04", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 725, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :6}
+, { "timestamp": 725, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 725, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}
+, { "timestamp": 725, "nodename": "node04", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}
+, { "timestamp": 735, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :6}
+, { "timestamp": 735, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 735, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}
+, { "timestamp": 735, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 745, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :6}
+, { "timestamp": 745, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 745, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 745, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 770, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 770, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 770, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 770, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 785, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 785, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 785, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 785, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 795, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 795, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 795, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 795, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 1055, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 1055, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 1055, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 1055, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 1090, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 1090, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 1090, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 1090, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 2540, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 2540, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2540, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 2540, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 2550, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 2550, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2550, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 2550, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2560, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
+, { "timestamp": 2560, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2560, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2560, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2585, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2585, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2585, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2585, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2600, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2600, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2600, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2600, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2610, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2610, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2610, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2610, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2870, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2870, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2870, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2870, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2905, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2905, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2905, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+, { "timestamp": 2905, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}
+];
+
+    </script>
+  </head>
+<body>
+    <h1>States</h1>
+    <canvas id="chartStates" width="400" height="200"></canvas>
+    <h1>Memory</h1>
+    <canvas id="chartMemory" width="400" height="200"></canvas>
+    <h1>Slots</h1>
+    <canvas id="chartSlots" width="400" height="200"></canvas>
+    <script>
+        //var rawdata = [ { "timestamp": 65, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 65, "nodename": "node01", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 65, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 65, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 105, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 105, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 105, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 105, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp":115, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 115, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}, { "timestamp": 115, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 115, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 135, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 135, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}, { "timestamp": 135, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 135, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 145, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 145, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}, { "timestamp": 145, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}, { "timestamp": 145, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 160, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 160, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}, { "timestamp": 160, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}, { "timestamp": 160, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 170, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 170, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}, { "timestamp": 170, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}, { "timestamp": 170, "nodename": "node04", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 725, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 725,"nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 725, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}, { "timestamp": 725, "nodename": "node04", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 735, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 735, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 735, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}, { "timestamp": 735, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 745, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 745, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 745, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 745, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 770, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, {"timestamp": 770, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 770, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 770, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 2540, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0},{ "timestamp": 2540, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2540, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 2540, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 2550, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state":0}, { "timestamp": 2550, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2550, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 2550, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2560, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 2560, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2560, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2560, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2585, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2585, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2585, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2585, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2} ];
+
+        var hostnames = [];
+
+        // Get the different hostnames and pre-process timestamps (because of the simulated data)
+        rawdata.forEach( function (v) {
+          v.timestamp = v.timestamp * 1000;
+          if (hostnames.indexOf(v.nodename) < 0)
+            hostnames.push(v.nodename);
+        });
+        hostnames.sort();
+
+        // Separate host data for each host and calculate the max values for memory and slots number
+        var total_v = {
+          slots: 0,
+          memory: 0
+        }
+
+        var hostdata = [];
+        for (h in hostnames) {
+          var hostname = hostnames[h];
+          var slots_current = 0;
+          var memory_current = 0;
+
+          hostdata[hostname] = rawdata.filter( function(v) {
+            if (v.nodename == hostname) {
+              if (v.slots > slots_current) slots_current = v.slots;
+              if (v.memory > memory_current) memory_current = v.memory;
+              return true;
+            }            
+            return false;
+          });
+
+          total_v.slots += slots_current;
+          total_v.memory += memory_current;
+        }
+
+        // var colorset = randomColor({count: hostnames.length, format: 'rgba', alpha: 0.8, hue: "red", luminosity: 'bright'})
+        var colorset = randomColor({count: hostnames.length, format: 'rgba', alpha: 0.8, luminosity: 'bright'});
+
+        // Now prepare the different datasets
+        var datasets = {
+          slots: [],
+          slots_used: [],
+          memory: [],
+          memory_used: [],
+          state: []
+        }
+
+        // Prepare the data regarding each host
+        for (h in hostnames) {
+          hostname = hostnames[h];
+          var thishost_slots={
+            label: [ "Slots in " + hostname ],
+            data: hostdata[hostname].map( (t) => ({x:t.timestamp, y: t.slots})),
+            steppedLine: true,
+            spanGaps: true,
+            pointRadius: 0,
+            yAxisID: "slots",
+            borderWidth: 0,
+            backgroundColor: "rgba(150,150,150,1)",
+            borderColor: "rgba(150,150,150,1)",
+          }
+          var thishost_slots_used={ 
+            label: [ "Slots used in " + hostname ],
+            data: hostdata[hostname].map( (t) => ({x:t.timestamp, y: t.slots_used})),
+            steppedLine: true,
+            spanGaps: false,
+            pointRadius: 0,
+            yAxisID: "slots_used",
+            backgroundColor: colorset[h]
+          }
+          var thishost_memory={ 
+            label: [ "Memory in " + hostname ],
+            data: hostdata[hostname].map( (t) => ({x:t.timestamp, y: t.memory})),
+            steppedLine: true,
+            spanGaps: false,
+            pointRadius: 0,
+            yAxisID: "memory",
+            backgroundColor: "rgba(150,150,150,1)",
+            borderColor: "rgba(150,150,150,1)",
+          }
+          var thishost_memory_used={ 
+            label: [ "Memory used in " + hostname ],
+            data: hostdata[hostname].map( (t) => ({x:t.timestamp, y: t.memory_used})),
+            steppedLine: true,
+            spanGaps: false,
+            pointRadius: 0,
+            yAxisID: "memory_used",
+            backgroundColor: colorset[h]
+          }
+          datasets.slots_used.push( thishost_slots_used );
+          datasets.slots.push( thishost_slots );
+          datasets.memory_used.push( thishost_memory_used );
+          datasets.memory.push( thishost_memory );
+        }
+
+        // Generate the info for the states
+        const states = {
+          mapping: {
+            "-2": "-2",
+            "-1": "-1",
+            "0": "0",
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "0",
+            "6": "2"
+          },
+          names: {
+            "-2": "error",
+            "-1": "unknown",
+            "0": "idle",
+            "1": "used",
+            "2": "off",
+            "3": "powering on",
+            "4": "powering off",
+            "5": "on (err)",
+            "6": "off (err)"
+          },
+          draw: [ "-2", "-1", "0", "1", "3", "4"]
+        };
+
+        var _colorset_states = randomColor({count: states.draw.length, format: 'rgba', alpha: 0.8, luminosity: 'bright'});
+        var colorset_states = [];
+        for (i in _colorset_states) {
+          colorset_states[states.draw[i]] = _colorset_states[i];
+        }
+
+        var stateValues = [];
+
+        var init_states = [];
+        for (i in states.names)
+          init_states[i] = 0;
+
+        rawdata.forEach(function(v) {
+          if (stateValues[v.timestamp]==undefined)
+            stateValues[v.timestamp]=Object.assign({}, init_states);
+          stateValues[v.timestamp][states.mapping[v.state]]++;
+        })
+
+        datasets.state = [];
+        states.draw.forEach(function (s) {
+          statename = states.names[s];
+          var data = [];
+          for (t in stateValues) {
+            data.push({x: parseInt(t), y: stateValues[t][s]})
+          }
+          var thisstate_count={
+            label: [ "Slots in " + statename ],
+            data: data,
+            steppedLine: true,
+            spanGaps: true,
+            pointRadius: 0,
+            borderWidth: 1,
+            backgroundColor: colorset_states[s],
+            borderColor: colorset_states[s],
+          }
+          datasets.state.push(thisstate_count);
+        })
+
+        // Now plot the chart for the states
+        var chartStates = new Chart(
+          $('#chartStates'), 
+          {
+            type: "line", 
+            data: {
+              datasets: [].concat(datasets.state)
+            }, 
+            options: {
+              scales: {
+                yAxes: [{
+                    stacked: true,
+                  }
+                ],          
+                xAxes: [{
+                  type: "time",
+                  distribution: "series",
+                  ticks: {
+                    source: "data"
+                  },
+                  bounds: "data",
+                  gridLines: {
+                    display: false
+                  }
+                }]        
+              }
+            }
+          });        
+
+        // Now plot the chart for hosts
+        var chartSlots = new Chart(
+          $('#chartSlots'), 
+          {
+            type: "line", 
+            data: {
+              datasets: [].concat(datasets.slots_used).concat(datasets.slots)
+            }, 
+            options: {
+              tooltips: {
+                enabled: false,
+                mode: 'dataset'
+              },
+              legend: {
+                labels: {
+                  filter: function (item, chart) {
+                    // This handler hides the slots available in the legend
+                    if (item.text[0].substring(0,8) == "Slots in") return null;
+                    return item;
+                  }
+                },
+                onClick: function (e, legendItem) {
+                    // This handler syncs the show of the number of slots used in one node with the slots available in that node
+                    var index = legendItem.datasetIndex;
+                    var nodename = legendItem.text[0].slice("Slots used in ".length);
+                    var ci = this.chart;
+                    var meta = ci.getDatasetMeta(index);
+                    meta.hidden = meta.hidden === null ? !meta.hidden : null;
+                    var hiddenval = meta.hidden
+
+                    ci.data.datasets.forEach(function(e,i) {
+                      if (i!==index) {
+                        var meta = ci.getDatasetMeta(i);
+                        if (e.label[0].slice(-nodename.length) == nodename) {
+                          meta.hidden = hiddenval;
+                        }
+                      }
+                    })
+                    ci.update();
+                }
+              },
+              scales: {
+                yAxes: [{
+                    id: "slots",
+                    stacked: true,
+                    ticks: {
+                      min: 0,
+                      max: total_v.slots
+                    }
+                  }, {
+                    display: false,
+                    id: "slots_used",
+                    stacked: true,
+                    ticks: {
+                      min: 0,
+                      max: total_v.slots
+                    }
+                }],          
+                xAxes: [{
+                  type: "time",
+                  distribution: "series",
+                  ticks: {
+                    source: "data"
+                  },
+                  bounds: "data",
+                  gridLines: {
+                    display: false
+                  }
+                }]        
+              }
+            }
+          });
+
+        // And now the chart for the memory
+        var chartMemory = new Chart(
+          $('#chartMemory'), 
+          {
+            type: "line", 
+            data: {
+              datasets: [].concat(datasets.memory_used).concat(datasets.memory)
+            }, 
+            options: {
+              legend: {
+                labels: {
+                  filter: function (item, chart) {
+                    // This handler hides the memory available in the legend
+                    if (item.text[0].substring(0,9) == "Memory in") return null;
+                    return item;
+                  }
+                },
+                onClick: function (e, legendItem) {
+                    // This handler syncs the show of the memory used in one node with the memory available in that node
+                    var index = legendItem.datasetIndex;
+                    var nodename = legendItem.text[0].slice("Memory used in ".length);
+                    var ci = this.chart;
+                    var meta = ci.getDatasetMeta(index);
+                    meta.hidden = meta.hidden === null ? !meta.hidden : null;
+                    var hiddenval = meta.hidden
+
+                    ci.data.datasets.forEach(function(e,i) {
+                      if (i!==index) {
+                        var meta = ci.getDatasetMeta(i);
+                        if (e.label[0].slice(-nodename.length) == nodename) {
+                          meta.hidden = hiddenval;
+                        }
+                      }
+                    })
+                    ci.update();
+                }    
+              },
+              scales: {
+                yAxes: [{
+                    id: "memory",
+                    stacked: true,
+                    ticks: {
+                      min: 0,
+                      max: total_v.memory
+                    }
+                  }, {
+                    display: false,
+                    id: "memory_used",
+                    stacked: true,
+                    ticks: {
+                      min: 0,
+                      max: total_v.memory
+                    }
+                }],          
+                xAxes: [{
+                  type: "time",
+                  distribution: "series",
+                  ticks: {
+                    source: "data"
+                  },
+                  bounds: "data",
+                  gridLines: {
+                    display: false
+                  },
+                  time: {
+                    displayFormats: {
+                      millisecond: 'x',
+                      second: 'X'
+                    }
+                  }                  
+                }]        
+              }
+            }
+          });
+    </script>
+</body>
+</html>
