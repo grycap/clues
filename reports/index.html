@@ -1,13 +1,134 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
-    <script src="randomColor.js"></script>
-    <script type="text/javascript">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <title>CLUES reports</title>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.2.0/css/bootstrap-slider.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.2.0/bootstrap-slider.js"></script>
+  <script src="randomColor.js"></script>
+
+  <style>
+    /*
+    * Base structure
+    */
+
+    /* Move down content because we have a fixed navbar that is 50px tall */
+    body {
+      padding-top: 50px;
+    }
+
+
+    /*
+    * Global add-ons
+    */
+
+    .sub-header {
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    /*
+    * Top navigation
+    * Hide default border to remove 1px line.
+    */
+    .navbar-fixed-top {
+      border: 0;
+    }
+
+    /*
+    * Sidebar
+    */
+
+    /* Hide for mobile, show later */
+    .sidebar {
+      display: none;
+    }
+    @media (min-width: 768px) {
+      .sidebar {
+        position: fixed;
+        top: 51px;
+        bottom: 0;
+        left: 0;
+        z-index: 1000;
+        display: block;
+        padding: 20px;
+        overflow-x: hidden;
+        overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+        background-color: #f5f5f5;
+        border-right: 1px solid #eee;
+      }
+    }
+
+    /* Sidebar navigation */
+    .nav-sidebar {
+      margin-right: -21px; /* 20px padding + 1px border */
+      margin-bottom: 20px;
+      margin-left: -20px;
+    }
+    .nav-sidebar > li > a {
+      padding-right: 20px;
+      padding-left: 20px;
+    }
+    .nav-sidebar > .active > a,
+    .nav-sidebar > .active > a:hover,
+    .nav-sidebar > .active > a:focus {
+      color: #fff;
+      background-color: #428bca;
+    }
+
+
+    /*
+    * Main content
+    */
+
+    .main {
+      padding: 20px;
+    }
+    @media (min-width: 768px) {
+      .main {
+        padding-right: 40px;
+        padding-left: 40px;
+      }
+    }
+    .main .page-header {
+      margin-top: 0;
+    }
+
+    .chart-container {
+      position: relative;
+      margin: auto;
+      height: 300px;
+      width: 80%;
+    }    
+  </style>
+
+  <script type="text/javascript">
       var rawdata = [ 
   { "timestamp": 65, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}
 , { "timestamp": 65, "nodename": "node01", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}
@@ -154,14 +275,146 @@
     </script>
   </head>
 <body>
-    <h1>States</h1>
-    <canvas id="chartStates" width="400" height="200"></canvas>
-    <h1>Memory</h1>
-    <canvas id="chartMemory" width="400" height="200"></canvas>
-    <h1>Slots</h1>
-    <canvas id="chartSlots" width="400" height="200"></canvas>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Project name</a>
+          </div>
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="#">Dashboard</a></li>
+              <li><a href="#">Settings</a></li>
+              <li><a href="#">Profile</a></li>
+              <li><a href="#">Help</a></li>
+            </ul>
+            <!--
+            <form class="navbar-form navbar-right">
+              <input type="text" class="form-control" placeholder="Search...">
+            </form>
+            -->
+          </div>
+        </div>
+      </nav>
+  
+      <div class="container-fluid">
+          <div class="row">
+            <div class="col-sm-3 col-md-2 sidebar">
+              <h2>General</h2>
+              <ul class="nav nav-sidebar">
+                <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
+              </ul>
+              <h2>Hosts</h2>
+              <ul class="nav nav-sidebar">
+                <li><a href="">Nav item</a></li>
+                <li><a href="">Nav item again</a></li>
+                <li><a href="">One more nav</a></li>
+                <li><a href="">Another nav item</a></li>
+                <li><a href="">More navigation</a></li>
+              </ul>
+            </div>
+            <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+              <h1 class="page-header">Overview</h1>
+    
+              <h2>States</h2>
+              <div class="chart-container">
+                <canvas id="chartStates"></canvas>
+                <input id="chartStatesSlider" style="width: 100%"
+                  data-provide="slider"
+                  data-slider-range="true"
+                  data-slider-tooltip="hide">    
+              </div>
+              <h2>Memory</h2>
+              <div class="chart-container">
+                <canvas id="chartMemory"></canvas>
+                <input id="chartMemorySlider" style="width: 100%"
+                  data-provide="slider"
+                  data-slider-range="true"
+                  data-slider-tooltip="hide">    
+              </div>
+              <h2>Slots</h2>
+              <div class="chart-container">
+                <canvas id="chartSlots"></canvas>
+                <input id="chartSlotsSlider" style="width: 100%"
+                  data-provide="slider"
+                  data-slider-range="true"
+                  data-slider-tooltip="hide">    
+              </div>              
+            </div>
+          </div>
+        </div>
+    
     <script>
-        //var rawdata = [ { "timestamp": 65, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 65, "nodename": "node01", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 65, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 65, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 105, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 105, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 105, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 105, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp":115, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 115, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}, { "timestamp": 115, "nodename": "node03", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 115, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 135, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 135, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}, { "timestamp": 135, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 135, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 145, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 145, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}, { "timestamp": 145, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}, { "timestamp": 145, "nodename": "node04", "slots": 0.00, "slots_used": 0.00, "memory": 0.00, "memory_used": 0.00, "state" :2}, { "timestamp": 160, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 160, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}, { "timestamp": 160, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}, { "timestamp": 160, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 170, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 170, "nodename": "node01", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 2048.00, "state" :1}, { "timestamp": 170, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}, { "timestamp": 170, "nodename": "node04", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 725, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 725,"nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 725, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}, { "timestamp": 725, "nodename": "node04", "slots": 4.00, "slots_used": 4.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 735, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 735, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 735, "nodename": "node03", "slots": 4.00, "slots_used": 3.00, "memory": 4096.00, "memory_used": 1536.00, "state" :1}, { "timestamp": 735, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 745, "nodename": "node02", "slots": 4.00, "slots_used": 2.00, "memory": 4096.00, "memory_used": 4096.00, "state" :1}, { "timestamp": 745, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 745, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 745, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 770, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, {"timestamp": 770, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 770, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 770, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 2540, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0},{ "timestamp": 2540, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2540, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 2540, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 2550, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state":0}, { "timestamp": 2550, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2550, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 2550, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2560, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :0}, { "timestamp": 2560, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2560, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2560, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2585, "nodename": "node02", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2585, "nodename": "node01", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2585, "nodename": "node03", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2}, { "timestamp": 2585, "nodename": "node04", "slots": 4.00, "slots_used": 0.00, "memory": 4096.00, "memory_used": 0.00, "state" :2} ];
+        $(document).ready(function() {
+          function sliderChange(e, chart) {
+            chart.options.scales.xAxes[0].time.min = moment(e.value.newValue[0]);
+            chart.options.scales.xAxes[0].time.max = moment(e.value.newValue[1]);
+            chart.update();
+          }
+          function minmax(o) {
+            var min = undefined;
+            var max = undefined;
+            o.forEach(function(v) {
+              if (min === undefined) min = v.x;
+              if (max === undefined) max = v.x;
+              if (v.x < min) min = v.x;
+              if (v.x > max) max = v.x;
+            });
+            return {min:min,max:max};
+          }
+          var chartStatesSlider = $("#chartStatesSlider").slider();
+
+          var minmax_states = minmax(chartStates.data.datasets[0].data); 
+          chartStatesSlider.slider('setAttribute', "min", minmax_states.min);
+          chartStatesSlider.slider('setAttribute',"max", minmax_states.max);
+          chartStatesSlider.slider('setValue',[minmax_states.min,minmax_states.max]);
+          chartStatesSlider.on('change', function(e) {sliderChange(e,chartStates)});
+
+          var chartMemorySlider = $("#chartMemorySlider").slider();
+          var minmax_memory = minmax(chartMemory.data.datasets[0].data); 
+          chartMemorySlider.slider('setAttribute', "min", minmax_memory.min);
+          chartMemorySlider.slider('setAttribute',"max", minmax_memory.max);
+          chartMemorySlider.slider('setValue',[minmax_memory.min,minmax_memory.max]);
+          chartMemorySlider.on('change', function(e) {sliderChange(e,chartMemory)});
+
+          var chartSlotsSlider = $("#chartSlotsSlider").slider();
+          var minmax_slots = minmax(chartSlots.data.datasets[0].data); 
+          chartSlotsSlider.slider('setAttribute', "min", minmax_slots.min);
+          chartSlotsSlider.slider('setAttribute',"max", minmax_slots.max);
+          chartSlotsSlider.slider('setValue',[minmax_slots.min,minmax_slots.max]);
+          chartSlotsSlider.on('change', function(e) {sliderChange(e,chartSlots)});
+        })
+        const states = {
+          mapping: {
+            "-2": "-2",
+            "-1": "-1",
+            "0": "0",
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "0",
+            "6": "2"
+          },
+          names: {
+            "-2": "error",
+            "-1": "unknown",
+            "0": "idle",
+            "1": "used",
+            "2": "off",
+            "3": "powering on",
+            "4": "powering off",
+            "5": "on (err)",
+            "6": "off (err)"
+          },
+          draw: [ "-2", "-1", "0", "1", "3", "4"],
+          avail: [ "0", "1", "4", "5" ]
+        };
 
         var hostnames = [];
 
@@ -194,9 +447,52 @@
             return false;
           });
 
+          hostdata.sort(function(a,b) {
+            if (a.timestamp < b.timestamp) return -1;
+            if (a.timestamp == b.timestamp) return 0;
+            return 1
+          })
+
           total_v.slots += slots_current;
           total_v.memory += memory_current;
         }
+
+        // This is because we supose an undefined number of states (in case CLUES adds more states)
+        var STATES_ZERO = [];
+        for (i in states.names)
+          STATES_ZERO[i] = 0;
+
+        // STATS for hosts
+        const STATS = {
+          state_count: Object.assign({}, STATES_ZERO),
+          state_time: Object.assign({}, STATES_ZERO)
+        }
+
+        hostnames.forEach(function(hostname) {
+          var host_stats = Object.assign({}, STATS);
+          currentdata = hostdata[hostname];
+          var current_state = undefined;
+          currentdata.forEach(function(data) {
+            if (current_state == undefined) {
+                  current_state = {
+                  state: data.state,
+                  time: data.timestamp
+                };
+              }
+            if (current_state.state != data.state) {
+              host_stats.state_count[data.state]++;
+              host_stats.state_time[data.state] += data.timestamp - current_state.time;
+              console.log("host:" + hostname + ", change at " + data.timestamp + ", to state: " + data.state + ", time: " + (data.timestamp - current_state.time))
+              current_state = {
+                state: data.state,
+                time: data.timestamp
+              };
+            }            
+          })
+          console.log(host_stats);
+        })
+
+
 
         // var colorset = randomColor({count: hostnames.length, format: 'rgba', alpha: 0.8, hue: "red", luminosity: 'bright'})
         var colorset = randomColor({count: hostnames.length, format: 'rgba', alpha: 0.8, luminosity: 'bright'});
@@ -215,7 +511,7 @@
           hostname = hostnames[h];
           var thishost_slots={
             label: [ "Slots in " + hostname ],
-            data: hostdata[hostname].map( (t) => ({x:t.timestamp, y: t.slots})),
+            data: hostdata[hostname].map( (t) => ({x:t.timestamp, y: (states.avail.indexOf(t.state.toString())>=0?t.slots:0)})),
             steppedLine: true,
             spanGaps: true,
             pointRadius: 0,
@@ -235,7 +531,7 @@
           }
           var thishost_memory={ 
             label: [ "Memory in " + hostname ],
-            data: hostdata[hostname].map( (t) => ({x:t.timestamp, y: t.memory})),
+            data: hostdata[hostname].map( (t) => ({x:t.timestamp, y: (states.avail.indexOf(t.state.toString())>=0?t.memory:0)})),
             steppedLine: true,
             spanGaps: false,
             pointRadius: 0,
@@ -259,32 +555,6 @@
         }
 
         // Generate the info for the states
-        const states = {
-          mapping: {
-            "-2": "-2",
-            "-1": "-1",
-            "0": "0",
-            "1": "1",
-            "2": "2",
-            "3": "3",
-            "4": "4",
-            "5": "0",
-            "6": "2"
-          },
-          names: {
-            "-2": "error",
-            "-1": "unknown",
-            "0": "idle",
-            "1": "used",
-            "2": "off",
-            "3": "powering on",
-            "4": "powering off",
-            "5": "on (err)",
-            "6": "off (err)"
-          },
-          draw: [ "-2", "-1", "0", "1", "3", "4"]
-        };
-
         var _colorset_states = randomColor({count: states.draw.length, format: 'rgba', alpha: 0.8, luminosity: 'bright'});
         var colorset_states = [];
         for (i in _colorset_states) {
@@ -293,13 +563,9 @@
 
         var stateValues = [];
 
-        var init_states = [];
-        for (i in states.names)
-          init_states[i] = 0;
-
         rawdata.forEach(function(v) {
           if (stateValues[v.timestamp]==undefined)
-            stateValues[v.timestamp]=Object.assign({}, init_states);
+            stateValues[v.timestamp]=Object.assign({}, STATES_ZERO);
           stateValues[v.timestamp][states.mapping[v.state]]++;
         })
 
@@ -323,6 +589,55 @@
           datasets.state.push(thisstate_count);
         })
 
+        // Legend do not support double click, so we'll simulate it
+        function isDblClick(obj, idx) {
+          var double_click = false;
+          var t = Date.now();
+          if (obj.click !== undefined) {
+            double_click = ((idx == obj.click.idx) && (t-obj.click.t < 500));
+          }
+          obj.click = {
+            t: t,
+            idx: idx
+          };
+          return double_click;
+        }
+
+        function onClick_cohide(e, legendItem, _this, text = null) {
+          var index = legendItem.datasetIndex;
+          var double_click = isDblClick(_this, index);
+          // This handler syncs the show of the number of slots used in one node with the slots available in that node
+          var nodename = null;
+          if (text!=null) {
+            nodename = legendItem.text[0].slice(text.length);
+          }
+          var ci = _this.chart;
+          var meta = ci.getDatasetMeta(index);
+          meta.hidden = meta.hidden === null ? !meta.hidden : null;
+          var hiddenval = meta.hidden
+
+          if (double_click) {
+            ci.data.datasets.forEach(function (e,i) {
+              var meta = ci.getDatasetMeta(i);
+              meta.hidden = true;
+            })
+            hiddenval = null;
+            meta.hidden = null;
+          }
+
+          if (text != null) {
+            ci.data.datasets.forEach(function(e,i) {
+              if (i!==index) {
+                var meta = ci.getDatasetMeta(i);
+                if (e.label[0].slice(-nodename.length) == nodename) {
+                  meta.hidden = hiddenval;
+                }
+              }
+            })
+          }
+          ci.update();
+        }
+
         // Now plot the chart for the states
         var chartStates = new Chart(
           $('#chartStates'), 
@@ -332,6 +647,12 @@
               datasets: [].concat(datasets.state)
             }, 
             options: {
+              maintainAspectRatio: false,
+              legend: {
+                onClick: function(e, legendItem) {
+                  onClick_cohide(e, legendItem, this);
+                }
+              },
               scales: {
                 yAxes: [{
                     stacked: true,
@@ -339,14 +660,21 @@
                 ],          
                 xAxes: [{
                   type: "time",
-                  distribution: "series",
+                  distribution: "linear",
                   ticks: {
-                    source: "data"
+                    source: "auto"
                   },
                   bounds: "data",
                   gridLines: {
                     display: false
-                  }
+                  },
+                  time: {
+                    displayFormats: {
+                      minute: 'X',
+                      millisecond: 'X',
+                      second: 'X'
+                    }
+                  }                  
                 }]        
               }
             }
@@ -361,10 +689,7 @@
               datasets: [].concat(datasets.slots_used).concat(datasets.slots)
             }, 
             options: {
-              tooltips: {
-                enabled: false,
-                mode: 'dataset'
-              },
+              maintainAspectRatio: false,
               legend: {
                 labels: {
                   filter: function (item, chart) {
@@ -374,23 +699,7 @@
                   }
                 },
                 onClick: function (e, legendItem) {
-                    // This handler syncs the show of the number of slots used in one node with the slots available in that node
-                    var index = legendItem.datasetIndex;
-                    var nodename = legendItem.text[0].slice("Slots used in ".length);
-                    var ci = this.chart;
-                    var meta = ci.getDatasetMeta(index);
-                    meta.hidden = meta.hidden === null ? !meta.hidden : null;
-                    var hiddenval = meta.hidden
-
-                    ci.data.datasets.forEach(function(e,i) {
-                      if (i!==index) {
-                        var meta = ci.getDatasetMeta(i);
-                        if (e.label[0].slice(-nodename.length) == nodename) {
-                          meta.hidden = hiddenval;
-                        }
-                      }
-                    })
-                    ci.update();
+                  onClick_cohide(e, legendItem, this, "Slots used in ");
                 }
               },
               scales: {
@@ -412,13 +721,20 @@
                 }],          
                 xAxes: [{
                   type: "time",
-                  distribution: "series",
+                  distribution: "linear",
                   ticks: {
-                    source: "data"
+                    source: "auto"
                   },
                   bounds: "data",
                   gridLines: {
                     display: false
+                  },
+                  time: {
+                    displayFormats: {
+                      minute: 'X',
+                      millisecond: 'X',
+                      second: 'X'
+                    }
                   }
                 }]        
               }
@@ -434,6 +750,7 @@
               datasets: [].concat(datasets.memory_used).concat(datasets.memory)
             }, 
             options: {
+              maintainAspectRatio: false,
               legend: {
                 labels: {
                   filter: function (item, chart) {
@@ -443,23 +760,7 @@
                   }
                 },
                 onClick: function (e, legendItem) {
-                    // This handler syncs the show of the memory used in one node with the memory available in that node
-                    var index = legendItem.datasetIndex;
-                    var nodename = legendItem.text[0].slice("Memory used in ".length);
-                    var ci = this.chart;
-                    var meta = ci.getDatasetMeta(index);
-                    meta.hidden = meta.hidden === null ? !meta.hidden : null;
-                    var hiddenval = meta.hidden
-
-                    ci.data.datasets.forEach(function(e,i) {
-                      if (i!==index) {
-                        var meta = ci.getDatasetMeta(i);
-                        if (e.label[0].slice(-nodename.length) == nodename) {
-                          meta.hidden = hiddenval;
-                        }
-                      }
-                    })
-                    ci.update();
+                  onClick_cohide(e, legendItem, this, "Memory used in ");
                 }    
               },
               scales: {
@@ -481,9 +782,9 @@
                 }],          
                 xAxes: [{
                   type: "time",
-                  distribution: "series",
+                  distribution: "linear",
                   ticks: {
-                    source: "data"
+                    source: "auto"
                   },
                   bounds: "data",
                   gridLines: {
@@ -491,7 +792,8 @@
                   },
                   time: {
                     displayFormats: {
-                      millisecond: 'x',
+                      minute: 'X',
+                      millisecond: 'X',
                       second: 'X'
                     }
                   }                  
