@@ -32,6 +32,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.2.0/bootstrap-slider.js"></script>
   <script src="randomColor.js"></script>
+  <!-- <script src="https://cdn.rawgit.com/simeydotme/donutty/288831fd/dist/donutty.js"></script>-->
+  <!--<script src="https://cdn.rawgit.com/simeydotme/donutty/09687f64/dist/donutty.js"></script>-->
+  <script src="donutty.js"></script>
+  <script src="clueschart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+
+  <!-- https://github.com/simeydotme/donutty -->
 
   <style>
     /*
@@ -126,6 +133,36 @@
       height: 300px;
       width: 80%;
     }    
+
+.chart-text {
+  font: 16px/1.4em Arial, sans-serif;
+  fill: #000;
+  -moz-transform: translateY(0.25em);
+  -ms-transform: translateY(0.25em);
+  -webkit-transform: translateY(0.25em);
+  transform: translateY(0.25em);
+}
+
+.chart-number {
+  font-size: 0.6em;
+  line-height: 1;
+  text-anchor: middle;
+  -moz-transform: translateY(-0.25em);
+  -ms-transform: translateY(-0.25em);
+  -webkit-transform: translateY(-0.25em);
+  transform: translateY(-0.25em);
+}
+
+.chart-label {
+  font-size: 0.2em;
+  text-transform: uppercase;
+  text-anchor: middle;
+  -moz-transform: translateY(0.7em);
+  -ms-transform: translateY(0.7em);
+  -webkit-transform: translateY(0.7em);
+  transform: translateY(0.7em);
+}
+
   </style>
 
   <script type="text/javascript">
@@ -344,12 +381,39 @@
                   data-provide="slider"
                   data-slider-range="true"
                   data-slider-tooltip="hide">    
-              </div>              
+              </div>    
+
+              <div id="hosts">
+                <h2>Hosts</h2>
+                <div v-for="host in hosts">
+                  <h3>{{host}}</h3>
+                  {{hosts_stats[host]}}
+                  {{hosts_stats[host].state_count[0]}}
+                  <div id="cluesc" style="width: 100px; height: 100px" data-clueschart :data-value=hosts_stats[host].state_count[0] data-text="idle" data-color="#f55525">
+                  </div>
+                </div>
+              </div>
+
+              <h2>Hosts</h2>
+              <h3>Node01</h3>
+              <div class="row">
+                <div class="col-sm-3">
+                  <div id="cluesc" style="width: 100px; height: 100px" data-clueschart data-value=70 data-text="idle" data-color="#f55525">
+                    </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
     
     <script>
+      var app = new Vue({
+        el: '#hosts',
+        data: {
+          hosts: [],
+          hosts_stats: []
+        }
+      })
         $(document).ready(function() {
           function sliderChange(e, chart) {
             chart.options.scales.xAxes[0].time.min = moment(e.value.newValue[0]);
@@ -426,6 +490,8 @@
         });
         hostnames.sort();
 
+        app.hosts = hostnames;
+
         // Separate host data for each host and calculate the max values for memory and slots number
         var total_v = {
           slots: 0,
@@ -468,10 +534,14 @@
           state_time: Object.assign({}, STATES_ZERO)
         }
 
+        var hosts_stats = [];
         hostnames.forEach(function(hostname) {
           var host_stats = Object.assign({}, STATS);
           currentdata = hostdata[hostname];
           var current_state = undefined;
+          var last_timestamp = undefined;
+          host_stats.state_time = Object.assign({}, STATES_ZERO);
+          host_stats.state_count = Object.assign({}, STATES_ZERO);
           currentdata.forEach(function(data) {
             if (current_state == undefined) {
                   current_state = {
@@ -488,9 +558,21 @@
                 time: data.timestamp
               };
             }            
+            last_timestamp = data.timestamp;
           })
+          host_stats.state_time[current_state.state] += last_timestamp - current_state.time;
+
+          var total_time = 0;
+          console.log("total time: " + total_time);
+          for (t in host_stats.state_time) {
+            total_time += host_stats.state_time[t];
+          }
+          // Object.keys(host_stats.state_time).forEach(function (v) { total_time += host_stats.state_time[v]});
+          console.log("host:" + hostname + ", change at " + last_timestamp + ", time: " + (last_timestamp - current_state.time))
           console.log(host_stats);
+          hosts_stats[hostname] = host_stats;
         })
+        app.hosts_stats = hosts_stats;
 
 
 
