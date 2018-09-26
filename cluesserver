@@ -405,7 +405,17 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
     from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("-s", "--simmulated-time", dest="RT_MODE", action="store_false", default=True, help="runs app in real time")
+    parser.add_option("-r", "--random-seed", dest="RANDOM_SEED", default=None, help="the seed to initialize the random number generator")
     (options, args) = parser.parse_args()
+
+    if (options.RANDOM_SEED is not None):
+        try:
+            options.RANDOM_SEED=int(options.RANDOM_SEED)
+        except:
+            raise Exception("invalid random seed %s (it must be an integer)" % options.RANDOM_SEED)
+        import random
+        _LOGGER.info("initialize random seed using parameter: %ld" % options.RANDOM_SEED )
+        random.seed(options.RANDOM_SEED)
 
     try:
         LOG_FILE=configserver._CONFIGURATION_GENERAL.LOG_FILE
