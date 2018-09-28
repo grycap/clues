@@ -3,11 +3,12 @@ Vue.component('piechart', {
   computed: {
       color: function() {
         switch (this.title) {
-          case "error": return "#ff6f69";
+          case "error(*)": return "#ff6f69";
           case "off": return "#88d8b0"
           case "idle": return "#ffcc5c";
           case "used": return "#696fff";
           case "unknown": return "#626364";
+          case "power cycle": return "#cc5cff";
           default: return "#96ceb4";
         }
       },
@@ -25,7 +26,7 @@ Vue.component('piechart', {
     <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" :stroke="color" stroke-width="5" :stroke-dasharray="percentage + ' ' + (100 - percentage)" stroke-dashoffset="25"></circle>
     <g class="chart-text">
         <text x="50%" y="50%" class="chart-number">
-          {{percentage}}%
+          {{percentage.toFixed(1)}}%
         </text>
         <text x="50%" y="50%" class="chart-label">
           <tspan x="50%" y="50%">

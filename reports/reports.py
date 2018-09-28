@@ -58,14 +58,14 @@ class Stats(object):
 		else:
 			return Stats(self._slots, self._slots_free, self._memory, self._memory_free, self.state, t)
 	def __str__(self):
-		return "%.2f/%.2f, %.2f/%.2f, %d" % (self._slots_used, self._slots, self._memory_used, self._memory, self.state)
+		return "[t: %d] %.2f/%.2f, %.2f/%.2f, %d" % (self.t, self._slots_used, self._slots, self._memory_used, self._memory, self.state)
 	def __repr__(self):
-		return "%.2f/%.2f, %.2f/%.2f, %d" % (self._slots_used, self._slots, self._memory_used, self._memory, self.state)
+		return "[t: %d] %.2f/%.2f, %.2f/%.2f, %d" % (self.t, self._slots_used, self._slots, self._memory_used, self._memory, self.state)
 
 connection_string = "sqlite:///home/calfonso/Programacion/git/clues/var/lib/clues2/clues.db"
 db = cpyutils.db.DB.create_from_string(connection_string)
 
-result, row_count, rows = db.sql_query("select * from host_monitoring")
+result, row_count, rows = db.sql_query("select * from host_monitoring order by timestamp_state")
 timeline={}
 hostnames = []
 

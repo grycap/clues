@@ -422,6 +422,7 @@ class CluesDaemon:
             _LOGGER.debug("Resetting the state of the node %s to %s" % (n_id, node.state2str[node.IDLE]))
 
             node.set_state(Node.IDLE, True)
+            self._db_system.store_node_info(node)
             return True, "Node %s reset to %s" % (n_id, node.state2str[node.state])
         else:
             return False, "Node is not managed by CLUES"
@@ -447,8 +448,9 @@ class CluesDaemon:
                     node = self._lrms_nodelist[n_id]
 
                 node.set_state(Node.POW_OFF)
-
+                self._db_system.store_node_info(node)
                 hooks.HOOKS.post_poweroff(n_id, 1, nname)
+
                 return True, n_id
             else:
                 _LOGGER.warning("could not power off node %s. It will be considered ON, but with errors" % n_id)
@@ -456,6 +458,7 @@ class CluesDaemon:
                 hooks.HOOKS.post_poweroff(n_id, 0, nname)
 
                 node.set_state(Node.ON_ERR)
+                self._db_system.store_node_info(node)
                 return False, ""
         else:
             return False, ""
@@ -481,6 +484,7 @@ class CluesDaemon:
                     node = self._lrms_nodelist[n_id]                
                 
                 node.set_state(Node.POW_ON)
+                self._db_system.store_node_info(node)
                 hooks.HOOKS.post_poweron(n_id, 1, nname)
                 return True, n_id
             else:
@@ -489,6 +493,7 @@ class CluesDaemon:
                 hooks.HOOKS.post_poweron(n_id, 0, nname)
 
                 node.set_state(Node.OFF_ERR)
+                self._db_system.store_node_info(node)
                 return False, ""
         else:
             return False, ""
@@ -542,10 +547,12 @@ class CluesDaemon:
         for n_id, node in self._lrms_nodelist.items():
             if (node.state in [ Node.OFF_ERR ]) and (node.power_on_operation_failed < schedulers.config_scheduling.RETRIES_POWER_ON):
                 node.set_state(Node.OFF, True)
+                self._db_system.store_node_info(node)
                 recoverable_nodes.append(n_id)
 
             if (node.state in [ Node.ON_ERR ]) and (node.power_off_operation_failed < schedulers.config_scheduling.RETRIES_POWER_OFF):
                 node.set_state(Node.IDLE, True)
+                self._db_system.store_node_info(node)
                 recoverable_nodes.append(n_id)
 
         if len(recoverable_nodes) > 0:

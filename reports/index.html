@@ -10,192 +10,201 @@
   <title>CLUES reports</title>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
-
-  <!-- Latest compiled and minified CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-
-  <!-- Optional theme -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/ui-lightness/jquery-ui.css">
+  <link rel="stylesheet" href="https://bootswatch.com/4/yeti/bootstrap.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+  <link rel="stylesheet" href="noUiSlider-12.0.0/dist/nouislider.min.css">
   <link rel="stylesheet" href="reports.css">
 
-  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-  <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-  <![endif]-->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.js"></script>
 
-  <!-- Latest compiled and minified JavaScript -->
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.2.0/css/bootstrap-slider.min.css">
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.2.0/bootstrap-slider.js"></script>
   <script src="randomColor.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
   <script src="cluescharts.js"></script>
   <script src="piechart.js"></script>
+  <script src="minibarchart.js"></script>
   <script src="cluesdata.js"></script>
   <script src="cluesstats.js"></script>
+  <script src="noUiSlider-12.0.0/dist/nouislider.min.js"></script>
 
+    <!--
+      http://www.daterangepicker.com/
+      https://vuejsexamples.com/a-vue-component-using-bootstrap-4-styles-for-date-range-selection/
+    -->
+  <script>
+Vue.component('chartplaceholder', {
+  props: [ 'name' ],
+  template: `   
+  <div class="chart-container">
+    <canvas :id="'chart'+name"></canvas>
+    <div class="row">
+      <div :id="'min-chart'+name+'Slider'" class="col col-lg-1 text-right">1</div>
+      <div class="col col-lg-10">
+        <div :id="'chart'+name+'Slider'" style="width: 100%">
+        </div>
+      </div>
+      <div :id="'max-chart'+name+'Slider'" class="col col-lg-1 text-left">2</div>
+    </div>
+  </div>  `
+})
+  </script>
   </head>
 <body>
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container-fluid">
-          <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#">Project name</a>
+  <!-- Modal -->
+  <div class="modal fade" id="waitDialog" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-body text-center">
+            <h5>Please Wait while Processing Data</h5>
+            <div class="progress">
+              <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
           </div>
-          <div id="navbar" class="navbar-collapse collapse">
-            <ul class="nav navbar-nav navbar-right">
-              <li><a href="#">Dashboard</a></li>
-              <li><a href="#">Settings</a></li>
-              <li><a href="#">Profile</a></li>
-              <li><a href="#">Help</a></li>
+        </div>
+      </div>
+    </div>
+  <div id="wrapper" class="toggled">
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <ul class="sidebar-nav">
+                <li class="sidebar-brand">
+                    <a href="#">
+                        Start Bootstrap
+                    </a>
+                </li>
+                <li><a href="#">Overview</a></li>
+                <li v-for="host in hostnames"><a :href="'#sec'+host">{{host}}</a></li>
             </ul>
-            <!--
-            <form class="navbar-form navbar-right">
-              <input type="text" class="form-control" placeholder="Search...">
-            </form>
-            -->
-          </div>
         </div>
-      </nav>
-  
-      <div id="mainapp" class="container-fluid">
-          <div class="row">
-            <div class="col-sm-3 col-md-2 sidebar">
-              <h2>General</h2>
-              <ul class="nav nav-sidebar">
-                <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
-              </ul>
-              <h2>Hosts</h2>
-              <ul class="nav nav-sidebar">
-                  <li v-for="host in hostnames" ><a :href="'#sec'+host">{{host}}</a></li>
-              </ul>
-            </div>
-            <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-              <h1 class="page-header">Overview</h1>
-    
-              <h2>States</h2>
-              <div class="chart-container">
-                <canvas id="chartStates"></canvas>
-                <input id="chartStatesSlider" style="width: 100%"
-                  data-provide="slider"
-                  data-slider-range="true"
-                  data-slider-tooltip="hide">    
-              </div>
-              <h2>Memory</h2>
-              <div class="chart-container">
-                <canvas id="chartMemory"></canvas>
-                <input id="chartMemorySlider" style="width: 100%"
-                  data-provide="slider"
-                  data-slider-range="true"
-                  data-slider-tooltip="hide">    
-              </div>
-              <h2>Slots</h2>
-              <div class="chart-container">
-                <canvas id="chartSlots"></canvas>
-                <input id="chartSlotsSlider" style="width: 100%"
-                  data-provide="slider"
-                  data-slider-range="true"
-                  data-slider-tooltip="hide">    
-              </div>    
+        <!-- /#sidebar-wrapper -->
 
-              <div id="hosts">
-                <h2>Hosts</h2>
-                <div v-for="host in hostnames">
-                  <h3 :id="'sec'+host">{{host}}</h3>
-                  <h4>Summary:</h4>
-                  <div class="row">
-                    <div class="col-sm-2 text-right">Times powered off</div>
-                    <div class="col-sm-4">{{states_stats[host]._stats_state[2]}}</div>
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+                <h1>CLUES stats</h1>
+                <h2>States</h2>
+                <chartplaceholder name="States"></chartplaceholder>
+                <h2>Memory</h2>
+                <chartplaceholder name="Memory"></chartplaceholder>
+                <h2>Slots</h2>
+                <chartplaceholder name="Slots"></chartplaceholder>                    
+                <div id="hosts">
+                  <h2>Hosts</h2>
+                  <div >
+                      <div class="card-columns" >
+                        <div class="card h-100" :id="'sec'+host" v-for="host in hostnames">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">{{host}}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">STATS (*)</h6>
+                                <table class="table table-sm">
+                                    <tbody>
+                                      <tr>
+                                        <td></td>
+                                        <td>Times powered on</td>
+                                        <td>{{states_stats[host]._stats_state[2]}}</td>
+                                      </tr>
+                                      <tr>
+                                        <th colspan="3">Usage of memory</th>
+                                      </tr>
+                                      <tr>
+                                        <td></td>
+                                        <td>Mean memory used</td>
+                                        <td>{{hosts_stats[host].memory_used.mean}}</td>
+                                      </tr>
+                                      <tr>
+                                        <td></td>
+                                        <td>Mean memory used (while on)</td>
+                                        <td>{{hosts_stats[host].memory_used.mean_accepted}}</td>
+                                      </tr>
+                                      <tr>
+                                        <th colspan="3">Time in memory intervals</th>
+                                      </tr>
+                                      <tr>
+                                        <td></td>
+                                        <td colspan=2>
+                                            <minibarchart :labels="[1,2,3,4].map((x)=>('<='+hosts_stats[host].memory_used._divider*x + 'Mb'))" :values="hosts_stats[host].memory_used.intervals.slice(0).map((x)=>(x/1000.0))"></minibarchart>
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <th colspan="3">Usage of slots</th>
+                                      </tr>
+                                      <tr>
+                                        <td></td>
+                                        <td>Mean slots used</td>
+                                        <td>{{hosts_stats[host].slots_used.mean}}</td>
+                                      </tr>
+                                      <tr>
+                                        <td></td>
+                                        <td>Mean slots used (while on)</td>
+                                        <td>{{hosts_stats[host].slots_used.mean_accepted}}</td>
+                                      </tr>
+                                      <tr>
+                                        <th colspan="3">Time in slots intervals</th>
+                                      </tr>
+                                      <tr>
+                                        <td></td>
+                                        <td colspan=2>
+                                            <minibarchart :labels="[1,2,3,4].map((x)=>('<= '+hosts_stats[host].slots_used._divider*x + ' slots'))" :values="hosts_stats[host].slots_used.intervals.slice(0).map((x)=>(x/1000.0))"></minibarchart>
+                                        </td>
+                                      </tr>
+                                      </tbody>
+                                  </table>
+                                  
+                                  <h5 class="card-title">time in each state</h5>
+                                  <h6 class="card-subtitle mb-2 text-muted">while powered on</h6>
+                                  <div class="row">
+                                    <div class="col-4 offset-2">
+                                      <piechart :duration="states_stats[host]._stats_time['0']" :percentage="states_stats[host]._stats_pct_time['0']" title="idle"></piechart>
+                                    </div>  
+                                    <div class="col-4">
+                                      <piechart :duration="states_stats[host]._stats_time['1']" :percentage="states_stats[host]._stats_pct_time['1']" title="used"></piechart>
+                                    </div>  
+                                  </div> 
+                                  <h5 class="card-title">time in each state</h5>
+                                  <h6 class="card-subtitle mb-2 text-muted">for the whole time</h6>
+                                  <div class="row">
+                                      <div class="col-4">
+                                        <piechart :duration="states_stats[host]._stats_time['0']" :percentage="states_stats[host]._stats_pct_time_total['0']" title="idle"></piechart>
+                                      </div>  
+                                      <div class="col-4">
+                                        <piechart :duration="states_stats[host]._stats_time['1'] + states_stats[host]._stats_time['5']" :percentage="states_stats[host]._stats_pct_time_total['1'] + states_stats[host]._stats_pct_time_total['5']" title="used"></piechart>
+                                      </div>  
+                                      <div class="col-4">
+                                        <piechart :duration="states_stats[host]._stats_time['3'] + states_stats[host]._stats_time['4']" :percentage="states_stats[host]._stats_pct_time_total['3'] + states_stats[host]._stats_pct_time_total['4']" title="power cycle"></piechart>
+                                      </div>  
+                                    </div>
+                                    <div class="row">
+                                      <div class="col-4">
+                                        <piechart :duration="states_stats[host]._stats_time['2'] + states_stats[host]._stats_time['6']" :percentage="states_stats[host]._stats_pct_time_total['2'] + states_stats[host]._stats_pct_time_total['6']" title="off"></piechart>
+                                      </div>  
+                                      <div class="col-4">
+                                        <piechart :duration="states_stats[host]._stats_time['-2'] + states_stats[host]._stats_time['5'] + states_stats[host]._stats_time['6']" :percentage="states_stats[host]._stats_pct_time_total['-2'] + states_stats[host]._stats_pct_time_total['5'] + states_stats[host]._stats_pct_time_total['6']" title="error(*)"></piechart>
+                                      </div>  
+                                      <div class="col-4">
+                                        <piechart :duration="states_stats[host]._stats_time['-1']" :percentage="states_stats[host]._stats_pct_time_total['-1']" title="unknown"></piechart>
+                                      </div>  
+                                    </div>                                    
+                              </div>
+                              <div class="card-footer">
+                                  <small class="text-muted">(*) memory and slots stats for the node are valid if they have been activated in CLUES server</small>
+                              </div>
+                        </div>
+                      </div>
                   </div>
-                  <div class="row">
-                    <div class="col-sm-2 text-right">Mean memory used</div>
-                    <div class="col-sm-4">{{hosts_stats[host].memory_used.mean}}</div>
-                    <div class="col-sm-2 text-right">Mean memory used (while on)</div>
-                    <div class="col-sm-4">{{hosts_stats[host].memory_used.mean_accepted}}</div>
-                  </div>
-                  <div class="row">
-                    <div class="col-sm-2 col-sm-offset-2">0</div>
-                    <div class="col-sm-2">&lt;= {{hosts_stats[host].memory_used._divider}}</div>
-                    <div class="col-sm-2">&lt;= {{hosts_stats[host].memory_used._divider * 2}}</div>
-                    <div class="col-sm-2">&lt;= {{hosts_stats[host].memory_used._divider * 3}}</div>
-                    <div class="col-sm-2">&lt;= {{hosts_stats[host].memory_used._divider * 4}}</div>
-                  </div>
-                  <div class="row">
-                    <div class="col-sm-2 text-right">seconds</div>
-                    <div class="col-sm-2">{{hosts_stats[host].memory_used.intervals[-1] / 1000.0}}</div>
-                    <div class="col-sm-2">{{hosts_stats[host].memory_used.intervals[0] / 1000.0}}</div>
-                    <div class="col-sm-2">{{hosts_stats[host].memory_used.intervals[1] / 1000.0}}</div>
-                    <div class="col-sm-2">{{hosts_stats[host].memory_used.intervals[2] / 1000.0}}</div>
-                    <div class="col-sm-2">{{hosts_stats[host].memory_used.intervals[3] / 1000.0}}</div>
-                  </div>
-                  <div class="row">
-                    <div class="col-sm-2 text-right">Mean slots used</div>
-                    <div class="col-sm-4">{{hosts_stats[host].slots_used.mean}}</div>
-                    <div class="col-sm-2 text-right">Mean slots used (while on)</div>
-                    <div class="col-sm-4">{{hosts_stats[host].slots_used.mean_accepted}}</div>
-                  </div>
-                  <div class="row">
-                    <div class="col-sm-2 col-sm-offset-2">0</div>
-                    <div class="col-sm-2">&lt;= {{hosts_stats[host].slots_used._divider}}</div>
-                    <div class="col-sm-2">&lt;= {{hosts_stats[host].slots_used._divider * 2}}</div>
-                    <div class="col-sm-2">&lt;= {{hosts_stats[host].slots_used._divider * 3}}</div>
-                    <div class="col-sm-2">&lt;= {{hosts_stats[host].slots_used._divider * 4}}</div>
-                  </div>
-                  <div class="row">
-                    <div class="col-sm-2 text-right">seconds</div>
-                    <div class="col-sm-2">{{hosts_stats[host].slots_used.intervals[-1] / 1000.0}}</div>
-                    <div class="col-sm-2">{{hosts_stats[host].slots_used.intervals[0] / 1000.0}}</div>
-                    <div class="col-sm-2">{{hosts_stats[host].slots_used.intervals[1] / 1000.0}}</div>
-                    <div class="col-sm-2">{{hosts_stats[host].slots_used.intervals[2] / 1000.0}}</div>
-                    <div class="col-sm-2">{{hosts_stats[host].slots_used.intervals[3] / 1000.0}}</div>
-                  </div>
-                  <h4>Time in each state (for the whole time)</h4>
-                  <div class="row">
-                    <div class="col-sm-2">
-                      <piechart :duration="states_stats[host]._stats_time['2'] + states_stats[host]._stats_time['6']" :percentage="states_stats[host]._stats_pct_time_total['2'] + states_stats[host]._stats_pct_time_total['6']" title="off"></piechart>
-                    </div>  
-                    <div class="col-sm-2">
-                      <piechart :duration="states_stats[host]._stats_time['0']" :percentage="states_stats[host]._stats_pct_time_total['0']" title="idle"></piechart>
-                    </div>  
-                    <div class="col-sm-2">
-                      <piechart :duration="states_stats[host]._stats_time['1']" :percentage="states_stats[host]._stats_pct_time_total['1']" title="used"></piechart>
-                    </div>  
-                    <div class="col-sm-2">
-                      <piechart :duration="states_stats[host]._stats_time['-2']" :percentage="states_stats[host]._stats_pct_time_total['-2']" title="error"></piechart>
-                    </div>  
-                    <div class="col-sm-2">
-                      <piechart :duration="states_stats[host]._stats_time['-1']" :percentage="states_stats[host]._stats_pct_time_total['-1']" title="unknown"></piechart>
-                    </div>  
-                  </div>  
-                  <h4>Time in each state (while powered on)</h4>
-                  <div class="row">
-                    <div class="col-sm-2 col-sm-offset-3">
-                      <piechart :duration="states_stats[host]._stats_time['0']" :percentage="states_stats[host]._stats_pct_time['0']" title="idle"></piechart>
-                    </div>  
-                    <div class="col-sm-2">
-                      <piechart :duration="states_stats[host]._stats_time['1']" :percentage="states_stats[host]._stats_pct_time['1']" title="used"></piechart>
-                    </div>  
-                  </div>                    
                 </div>
-              </div>
             </div>
-          </div>
         </div>
+        <!-- /#page-content-wrapper -->
+    </div>  
     
     <script>
         var app = new Vue({
-          el: '#mainapp',
+          el: '#wrapper',
           data: {
             hostnames: [],
             states_stats: [],
@@ -203,12 +212,19 @@
           }
         })
 
-        $(document).ready(function() {
-          function sliderChange(e, chart) {
-            chart.options.scales.xAxes[0].time.min = moment(e.value.newValue[0]);
-            chart.options.scales.xAxes[0].time.max = moment(e.value.newValue[1]);
+        function run_the_process(progress) {
+          progress.progress(0);
+          preprocess();
+          progress.progress(80);
+
+          function sliderChange(chart, sliderName, event, ui){
+            $('#min-'+sliderName).text((ui.values[0]/1000).toFixed(0));
+            $('#max-'+sliderName).text((ui.values[1]/1000).toFixed(0));
+            chart.options.scales.xAxes[0].time.min = moment(ui.values[0]);
+            chart.options.scales.xAxes[0].time.max = moment(ui.values[1]);
             chart.update();
           }
+
           function minmax(o) {
             var min = undefined;
             var max = undefined;
@@ -220,27 +236,82 @@
             });
             return {min:min,max:max};
           }
-          var chartStatesSlider = $("#chartStatesSlider").slider();
-
           var minmax_states = minmax(chartStates.data.datasets[0].data); 
-          chartStatesSlider.slider('setAttribute', "min", minmax_states.min);
-          chartStatesSlider.slider('setAttribute',"max", minmax_states.max);
-          chartStatesSlider.slider('setValue',[minmax_states.min,minmax_states.max]);
-          chartStatesSlider.on('change', function(e) {sliderChange(e,chartStates)});
+          $("#chartStatesSlider").slider({
+            range:true,
+            min:minmax_states.min,
+            max:minmax_states.max,
+            values:[minmax_states.min, minmax_states.max],
+            step:1,
+            create: (event, ui) => sliderChange(chartMemory, "chartStatesSlider", event, {values:[minmax_states.min, minmax_states.max]}),
+            slide: (event, ui) => sliderChange(chartStates, "chartStatesSlider", event, ui)
+          });
+          /*
+          noUiSlider.create($("#chartStatesSlider")[0], {
+              start: [minmax_states.min, minmax_states.max],
+              connect: true,
+              range: {
+                  'min': minmax_states.min,
+                  'max': minmax_states.max
+              }
+          });         
+          $("#chartStatesSlider")[0].noUiSlider.on('update', function(values, handle, unencoded, tap, positions) {
+            chartStates.options.scales.xAxes[0].time.min = moment(parseFloat(values[0]));
+            chartStates.options.scales.xAxes[0].time.max = moment(parseFloat(values[1]));
+            chartStates.update();
+          });
+          */
+          var minmax_states = minmax(chartMemory.data.datasets[0].data); 
+          $("#chartMemorySlider").slider({
+            range:true,
+            min:minmax_states.min,
+            max:minmax_states.max,
+            tooltips: [true, true],
+            values:[minmax_states.min, minmax_states.max],
+            step:1,
+            create: (event, ui) => sliderChange(chartMemory, "chartMemorySlider", event, {values:[minmax_states.min, minmax_states.max]}),
+            slide: (event, ui) => sliderChange(chartMemory, "chartMemorySlider", event, ui)
+          });         
+          var minmax_states = minmax(chartSlots.data.datasets[0].data); 
+          $("#chartSlotsSlider").slider({
+            range:true,
+            min:minmax_states.min,
+            max:minmax_states.max,
+            values:[minmax_states.min, minmax_states.max],
+            step:1,
+            create: (event, ui) => sliderChange(chartMemory, "chartSlotsSlider", event, {values:[minmax_states.min, minmax_states.max]}),
+            slide: (event, ui) => sliderChange(chartSlots, "chartSlotsSlider", event, ui)
+          });          
+          progress.progress(100);
+        }
 
-          var chartMemorySlider = $("#chartMemorySlider").slider();
-          var minmax_memory = minmax(chartMemory.data.datasets[0].data); 
-          chartMemorySlider.slider('setAttribute', "min", minmax_memory.min);
-          chartMemorySlider.slider('setAttribute',"max", minmax_memory.max);
-          chartMemorySlider.slider('setValue',[minmax_memory.min,minmax_memory.max]);
-          chartMemorySlider.on('change', function(e) {sliderChange(e,chartMemory)});
+        function WaitDialog(id, fnc_work) {
+          this.waitDialog = $('#' + id);
+          this.fnc_work = fnc_work;
+          this.progress = function(pct) {
+            this.waitDialog.find('.progress-bar').css('width', pct + '%');
+          }
+          this.update = function() {
+            this.waitDialog.on('shown.bs.modal', function (e) {
+              fnc_work(this);
+              this.waitDialog.modal('hide');
+            }.bind(this));
+            this.waitDialog.modal('show');
+          };
+          return this;
+        }
 
-          var chartSlotsSlider = $("#chartSlotsSlider").slider();
-          var minmax_slots = minmax(chartSlots.data.datasets[0].data); 
-          chartSlotsSlider.slider('setAttribute', "min", minmax_slots.min);
-          chartSlotsSlider.slider('setAttribute',"max", minmax_slots.max);
-          chartSlotsSlider.slider('setValue',[minmax_slots.min,minmax_slots.max]);
-          chartSlotsSlider.on('change', function(e) {sliderChange(e,chartSlots)});
+        function update_interface() {
+          var waitDialog = $('#waitDialog');
+          waitDialog.on('shown.bs.modal', function (e) {
+            run_the_process();
+            waitDialog.modal('hide');
+          });
+          waitDialog.modal('show');
+        }
+
+        $(document).ready(function() {
+          (new WaitDialog('waitDialog', run_the_process)).update();
         })
 
         const states = {
@@ -267,207 +338,209 @@
             "6": "off (err)"
           },
           draw: [ "-2", "-1", "0", "1", "3", "4"],
-          avail: [ "0", "1", "4", "5" ],
+          avail: [ "0", "1", "5" ],
           stats: [ "-2", "-1", "0", "2" ]
         };
 
-        // Separate host data for each host and calculate the max values for memory and slots number
-        var states_stats = {};
-        var total_v = {
-          slots: 0,
-          memory: 0
-        }
-        var hostnames = Object.keys(cluesdata).sort();
-        var hosts_stats = [];
-        hostnames.forEach( function(hostname) {
-          // We need the data sorted for the rest of our calculations
-          cluesdata[hostname].sort(function(a,b) {
-            if (a.t < b.t) return -1;
-            if (a.t == b.t) return 0;
-            return 1
-          })
-        
-          // Remove timestamp outliers
-          var valid_timestamps = filterOutliers(cluesdata[hostname].map(v => v.t));
-          cluesdata[hostname] = cluesdata[hostname].filter((v) => valid_timestamps.indexOf(v.t)>=0);
+        function preprocess() {
+          // Separate host data for each host and calculate the max values for memory and slots number
+          var states_stats = {};
+          var total_v = {
+            slots: 0,
+            memory: 0
+          }
+          var hostnames = Object.keys(cluesdata).sort();
+          var hosts_stats = [];
+          hostnames.forEach( function(hostname) {
+            // We need the data sorted for the rest of our calculations
+            cluesdata[hostname].sort(function(a,b) {
+              if (a.t < b.t) return -1;
+              if (a.t == b.t) return 0;
+              return 1
+            })
+          
+            // Remove timestamp outliers
+            var valid_timestamps = filterOutliers(cluesdata[hostname].map(v => v.t));
+            cluesdata[hostname] = cluesdata[hostname].filter((v) => valid_timestamps.indexOf(v.t)>=0);
 
-          // We need to grab the maximum amount of slots and memory
-          var slots_current = 0;
-          var memory_current = 0;
-          cluesdata[hostname].forEach(function(v) {
-            if (v.slots > slots_current) slots_current = v.slots;
-            if (v.memory > memory_current) memory_current = v.memory;
-            v.state = states.mapping[v.state];
-            v.t = v.t * 1000;
-          })
+            // We need to grab the maximum amount of slots and memory
+            var slots_current = 0;
+            var memory_current = 0;
+            cluesdata[hostname].forEach(function(v) {
+              if (v.slots > slots_current) slots_current = v.slots;
+              if (v.memory > memory_current) memory_current = v.memory;
+              v.state = states.mapping[v.state];
+              v.t = v.t * 1000;
+            })
 
-          // We need the total amount of slots
-          total_v.slots += slots_current;
-          total_v.memory += memory_current;
+            // We need the total amount of slots
+            total_v.slots += slots_current;
+            total_v.memory += memory_current;
 
-          // Now we'll calculate the individual stats for each host
-          states_stats[hostname] = new StatesStats(hostname, (current_state, current_time) => states.avail.indexOf(current_state.state.toString())>=0);
-          states_stats[hostname].get_from_hostdata(cluesdata[hostname]);
-          for (var s in states.names) {
-            // Complete the stats, to avoid undefineds in later usage of the stats
-            if (states_stats[hostname]._stats_state[s] == undefined) {
-              states_stats[hostname]._stats_state[s] = 0;
-              states_stats[hostname]._stats_time[s] = 0;
-              states_stats[hostname]._stats_pct_time[s] = 0;
-              states_stats[hostname]._stats_pct_time_total[s] = 0;
+            // Now we'll calculate the individual stats for each host
+            states_stats[hostname] = new StatesStats(hostname, (current_state, current_time) => states.avail.indexOf(current_state.state.toString())>=0);
+            states_stats[hostname].get_from_hostdata(cluesdata[hostname]);
+            for (var s in states.names) {
+              // Complete the stats, to avoid undefineds in later usage of the stats
+              if (states_stats[hostname]._stats_state[s] == undefined) {
+                states_stats[hostname]._stats_state[s] = 0;
+                states_stats[hostname]._stats_time[s] = 0;
+                states_stats[hostname]._stats_pct_time[s] = 0;
+                states_stats[hostname]._stats_pct_time_total[s] = 0;
+              }
             }
-          }
 
-          hosts_stats[hostname] = {
-            memory_used: new AreaStats(cluesdata[hostname].map((v)=>({x:v.t,y:v.memory_used,state:v.state})), (a,b) => (a.y == b.y && a.state == b.state), memory_current, (current, x) => states.avail.indexOf(current.state.toString())>=0),
-            slots_used: new AreaStats(cluesdata[hostname].map((v)=>({x:v.t,y:v.slots_used,state:v.state})), (a,b) => (a.y == b.y && a.state == b.state), slots_current, (current, x) => states.avail.indexOf(current.state.toString())>=0)
-          }
-        })
-
-        app.hostnames = hostnames;
-        app.states_stats = states_stats;
-        app.hosts_stats = hosts_stats;
-
-        var color_array = randomColor({count: hostnames.length, format: 'rgba', alpha: 0.8, luminosity: 'bright'});
-        var i = 0;
-        var colorset = [];
-        hostnames.forEach(function(hostname) { colorset[hostname] = color_array[i++]; })
-
-        // Now prepare the different datasets for the charts
-        var datasets = {
-          slots: [],
-          slots_used: [],
-          memory: [],
-          memory_used: [],
-          state: []
-        }
-
-        ///////////////////////////////////////////////////
-        // Prepare the charts for the slots and memory
-        ///////////////////////////////////////////////////
-        hostnames.forEach(function(hostname) {
-          var thishost_slots={
-            label: [ "Slots in " + hostname ],
-            data: cluesdata[hostname].map( (t) => ({x:t.t, y: (states.avail.indexOf(t.state.toString())>=0?t.slots:0)})),
-            steppedLine: true,
-            spanGaps: true,
-            pointRadius: 0,
-            yAxisID: "slots",
-            borderWidth: 0,
-            backgroundColor: "rgba(150,150,150,1)",
-            borderColor: "rgba(150,150,150,1)",
-          }
-          var thishost_slots_used={ 
-            label: [ "Slots used in " + hostname ],
-            data: cluesdata[hostname].map( (t) => ({x:t.t, y: t.slots_used})),
-            steppedLine: true,
-            spanGaps: false,
-            pointRadius: 0,
-            yAxisID: "slots_used",
-            backgroundColor: colorset[hostname]
-          }
-          var thishost_memory={ 
-            label: [ "Memory in " + hostname ],
-            data: cluesdata[hostname].map( (t) => ({x:t.t, y: (states.avail.indexOf(t.state.toString())>=0?t.memory:0)})),
-            steppedLine: true,
-            spanGaps: false,
-            pointRadius: 0,
-            yAxisID: "memory",
-            backgroundColor: "rgba(150,150,150,1)",
-            borderColor: "rgba(150,150,150,1)",
-          }
-          var thishost_memory_used={ 
-            label: [ "Memory used in " + hostname ],
-            data: cluesdata[hostname].map( (t) => ({x:t.t, y: t.memory_used})),
-            steppedLine: true,
-            spanGaps: false,
-            pointRadius: 0,
-            yAxisID: "memory_used",
-            backgroundColor: colorset[hostname]
-          }
-
-          datasets.slots_used.push( thishost_slots_used );
-          datasets.slots.push( thishost_slots );
-          datasets.memory_used.push( thishost_memory_used );
-          datasets.memory.push( thishost_memory );
-        })
-
-        // Generate the info for the states
-        var _colorset_states = randomColor({count: states.draw.length, format: 'rgba', alpha: 0.8, luminosity: 'bright'});
-        var colorset_states = [];
-        for (i in _colorset_states) {
-          colorset_states[states.draw[i]] = _colorset_states[i];
-        }
-
-        ///////////////////////////////////////////////////
-        // Now prepare the chart for the change of states
-        ///////////////////////////////////////////////////
-        var state_values = []
-        hostnames.forEach(function(hostname) {
-          cluesdata[hostname].forEach(function(data) {
-            if (state_values[data.t] == undefined) {
-              state_values[data.t]=[];
-              for (var i in states.names)
-                state_values[data.t][i] = 0;
+            hosts_stats[hostname] = {
+              memory_used: new AreaStats(cluesdata[hostname].map((v)=>({x:v.t,y:v.memory_used,state:v.state})), (a,b) => (a.y == b.y && a.state == b.state), memory_current, (current, x) => states.avail.indexOf(current.state.toString())>=0),
+              slots_used: new AreaStats(cluesdata[hostname].map((v)=>({x:v.t,y:v.slots_used,state:v.state})), (a,b) => (a.y == b.y && a.state == b.state), slots_current, (current, x) => states.avail.indexOf(current.state.toString())>=0)
             }
-            state_values[data.t][states.mapping[data.state]]++;
           })
-        })
 
-        datasets.state = [];
-        states.draw.forEach(function (s) {
-          statename = states.names[s];
-          var data = [];
-          for (t in state_values) {
-            data.push({x: parseInt(t), y: state_values[t][s]})
+          app.hostnames = hostnames;
+          app.states_stats = states_stats;
+          app.hosts_stats = hosts_stats;
+
+          var color_array = randomColor({count: hostnames.length, format: 'rgba', alpha: 0.8, luminosity: 'bright'});
+          var i = 0;
+          var colorset = [];
+          hostnames.forEach(function(hostname) { colorset[hostname] = color_array[i++]; })
+
+          // Now prepare the different datasets for the charts
+          var datasets = {
+            slots: [],
+            slots_used: [],
+            memory: [],
+            memory_used: [],
+            state: []
           }
-          var thisstate_count={
-            label: [ "Slots in " + statename ],
-            data: data,
-            steppedLine: true,
-            spanGaps: true,
-            pointRadius: 0,
-            borderWidth: 1,
-            backgroundColor: colorset_states[s],
-            borderColor: colorset_states[s],
+
+          ///////////////////////////////////////////////////
+          // Prepare the charts for the slots and memory
+          ///////////////////////////////////////////////////
+          hostnames.forEach(function(hostname) {
+            var thishost_slots={
+              label: [ "Slots in " + hostname ],
+              data: cluesdata[hostname].map( (t) => ({x:t.t, y: (states.avail.indexOf(t.state.toString())>=0?t.slots:0)})),
+              steppedLine: true,
+              spanGaps: true,
+              pointRadius: 0,
+              yAxisID: "slots",
+              borderWidth: 0,
+              backgroundColor: "rgba(150,150,150,1)",
+              borderColor: "rgba(150,150,150,1)",
+            }
+            var thishost_slots_used={ 
+              label: [ "Slots used in " + hostname ],
+              data: cluesdata[hostname].map( (t) => ({x:t.t, y: t.slots_used})),
+              steppedLine: true,
+              spanGaps: false,
+              pointRadius: 0,
+              yAxisID: "slots_used",
+              backgroundColor: colorset[hostname]
+            }
+            var thishost_memory={ 
+              label: [ "Memory in " + hostname ],
+              data: cluesdata[hostname].map( (t) => ({x:t.t, y: (states.avail.indexOf(t.state.toString())>=0?t.memory:0)})),
+              steppedLine: true,
+              spanGaps: false,
+              pointRadius: 0,
+              yAxisID: "memory",
+              backgroundColor: "rgba(150,150,150,1)",
+              borderColor: "rgba(150,150,150,1)",
+            }
+            var thishost_memory_used={ 
+              label: [ "Memory used in " + hostname ],
+              data: cluesdata[hostname].map( (t) => ({x:t.t, y: t.memory_used})),
+              steppedLine: true,
+              spanGaps: false,
+              pointRadius: 0,
+              yAxisID: "memory_used",
+              backgroundColor: colorset[hostname]
+            }
+
+            datasets.slots_used.push( thishost_slots_used );
+            datasets.slots.push( thishost_slots );
+            datasets.memory_used.push( thishost_memory_used );
+            datasets.memory.push( thishost_memory );
+          })
+
+          // Generate the info for the states
+          var _colorset_states = randomColor({count: states.draw.length, format: 'rgba', alpha: 0.8, luminosity: 'bright'});
+          var colorset_states = [];
+          for (i in _colorset_states) {
+            colorset_states[states.draw[i]] = _colorset_states[i];
           }
-          datasets.state.push(thisstate_count);
-        })
 
-        ///////////////////////////////////////////////////
-        // Create the charts
-        ///////////////////////////////////////////////////
+          ///////////////////////////////////////////////////
+          // Now prepare the chart for the change of states
+          ///////////////////////////////////////////////////
+          var state_values = []
+          hostnames.forEach(function(hostname) {
+            cluesdata[hostname].forEach(function(data) {
+              if (state_values[data.t] == undefined) {
+                state_values[data.t]=[];
+                for (var i in states.names)
+                  state_values[data.t][i] = 0;
+              }
+              state_values[data.t][states.mapping[data.state]]++;
+            })
+          })
 
-        chartStates = StackedLineChart(
-          "chartStates", 
-          [].concat(datasets.state),
-          [ "states" ],
-          (e, legendItem) => onClick_cohide(e, legendItem, chartStates)
-        )
+          datasets.state = [];
+          states.draw.forEach(function (s) {
+            statename = states.names[s];
+            var data = [];
+            for (t in state_values) {
+              data.push({x: parseInt(t), y: state_values[t][s]})
+            }
+            var thisstate_count={
+              label: [ "Slots in " + statename ],
+              data: data,
+              steppedLine: true,
+              spanGaps: true,
+              pointRadius: 0,
+              borderWidth: 1,
+              backgroundColor: colorset_states[s],
+              borderColor: colorset_states[s],
+            }
+            datasets.state.push(thisstate_count);
+          })
 
-        chartSlots = StackedLineChart(
-          "chartSlots", 
-          [].concat(datasets.slots_used).concat(datasets.slots),
-          [ "slots", "slots_used" ],
-          (e, legendItem) => onClick_cohide(e, legendItem, chartSlots, "Slots used in "),
-          (item, chart) => (item.text[0].substring(0,8) == "Slots in")?null:item
-        )
-        chartSlots.options.scales.yAxes[1].display = false;
-        chartSlots.options.scales.yAxes[0].ticks.max = total_v.slots;
-        chartSlots.options.scales.yAxes[1].ticks.max = total_v.slots;
-        chartSlots.update();
+          ///////////////////////////////////////////////////
+          // Create the charts
+          ///////////////////////////////////////////////////
 
-        chartMemory = StackedLineChart(
-          "chartMemory", 
-          [].concat(datasets.memory_used).concat(datasets.memory),
-          [ "memory", "memory_used" ],
-          (e, legendItem) => onClick_cohide(e, legendItem, chartMemory, "Memory used in "),
-          (item, chart) => (item.text[0].substring(0,9) == "Memory in")?null:item
-        )
-        chartMemory.options.scales.yAxes[1].display = false;
-        chartMemory.options.scales.yAxes[0].ticks.max = total_v.memory;
-        chartMemory.options.scales.yAxes[1].ticks.max = total_v.memory;
-        chartMemory.update();
+          chartStates = StackedLineChart(
+            "chartStates", 
+            [].concat(datasets.state),
+            [ "states" ],
+            (e, legendItem) => onClick_cohide(e, legendItem, chartStates)
+          )
+
+          chartSlots = StackedLineChart(
+            "chartSlots", 
+            [].concat(datasets.slots_used).concat(datasets.slots),
+            [ "slots", "slots_used" ],
+            (e, legendItem) => onClick_cohide(e, legendItem, chartSlots, "Slots used in "),
+            (item, chart) => (item.text[0].substring(0,8) == "Slots in")?null:item
+          )
+          chartSlots.options.scales.yAxes[1].display = false;
+          chartSlots.options.scales.yAxes[0].ticks.max = total_v.slots;
+          chartSlots.options.scales.yAxes[1].ticks.max = total_v.slots;
+          chartSlots.update();
+
+          chartMemory = StackedLineChart(
+            "chartMemory", 
+            [].concat(datasets.memory_used).concat(datasets.memory),
+            [ "memory", "memory_used" ],
+            (e, legendItem) => onClick_cohide(e, legendItem, chartMemory, "Memory used in "),
+            (item, chart) => (item.text[0].substring(0,9) == "Memory in")?null:item
+          )
+          chartMemory.options.scales.yAxes[1].display = false;
+          chartMemory.options.scales.yAxes[0].ticks.max = total_v.memory;
+          chartMemory.options.scales.yAxes[1].ticks.max = total_v.memory;
+          chartMemory.update();
+        }
     </script>
 </body>
 </html>

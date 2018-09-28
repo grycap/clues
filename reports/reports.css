@@ -1,95 +1,130 @@
-    /*
-    * Base structure
-    */
+/*!
+ * Start Bootstrap - Simple Sidebar (https://startbootstrap.com/template-overviews/simple-sidebar)
+ * Copyright 2013-2017 Start Bootstrap
+ * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap-simple-sidebar/blob/master/LICENSE)
+ */
 
-    /* Move down content because we have a fixed navbar that is 50px tall */
-    body {
-      padding-top: 50px;
-    }
+ body {
+  overflow-x: hidden;
+}
 
+#wrapper {
+  padding-left: 0;
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+  -o-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
 
-    /*
-    * Global add-ons
-    */
+#wrapper.toggled {
+  padding-left: 250px;
+}
 
-    .sub-header {
-      padding-bottom: 10px;
-      border-bottom: 1px solid #eee;
-    }
+#sidebar-wrapper {
+  z-index: 1000;
+  position: fixed;
+  left: 250px;
+  width: 0;
+  height: 100%;
+  margin-left: -250px;
+  overflow-y: auto;
+  background: #000;
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+  -o-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
 
-    /*
-    * Top navigation
-    * Hide default border to remove 1px line.
-    */
-    .navbar-fixed-top {
-      border: 0;
-    }
+#wrapper.toggled #sidebar-wrapper {
+  width: 250px;
+}
 
-    /*
-    * Sidebar
-    */
+#page-content-wrapper {
+  width: 100%;
+  position: absolute;
+  padding: 15px;
+}
 
-    /* Hide for mobile, show later */
-    .sidebar {
-      display: none;
-    }
-    @media (min-width: 768px) {
-      .sidebar {
-        position: fixed;
-        top: 51px;
-        bottom: 0;
-        left: 0;
-        z-index: 1000;
-        display: block;
-        padding: 20px;
-        overflow-x: hidden;
-        overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
-        background-color: #f5f5f5;
-        border-right: 1px solid #eee;
-      }
-    }
+#wrapper.toggled #page-content-wrapper {
+  position: absolute;
+  margin-right: -250px;
+}
 
-    /* Sidebar navigation */
-    .nav-sidebar {
-      margin-right: -21px; /* 20px padding + 1px border */
-      margin-bottom: 20px;
-      margin-left: -20px;
-    }
-    .nav-sidebar > li > a {
-      padding-right: 20px;
-      padding-left: 20px;
-    }
-    .nav-sidebar > .active > a,
-    .nav-sidebar > .active > a:hover,
-    .nav-sidebar > .active > a:focus {
-      color: #fff;
-      background-color: #428bca;
-    }
+/* Sidebar Styles */
+.sidebar-nav {
+  position: absolute;
+  top: 0;
+  width: 250px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 
+.sidebar-nav li {
+  text-indent: 20px;
+  line-height: 40px;
+}
 
-    /*
-    * Main content
-    */
+.sidebar-nav li a {
+  display: block;
+  text-decoration: none;
+  color: #999999;
+}
 
-    .main {
-      padding: 20px;
-    }
-    @media (min-width: 768px) {
-      .main {
-        padding-right: 40px;
-        padding-left: 40px;
-      }
-    }
-    .main .page-header {
-      margin-top: 0;
-    }
+.sidebar-nav li a:hover {
+  text-decoration: none;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
 
-    .chart-container {
-      position: relative;
-      margin: auto;
-      height: 300px;
-      width: 80%;
-    }    
+.sidebar-nav li a:active, .sidebar-nav li a:focus {
+  text-decoration: none;
+}
+
+.sidebar-nav>.sidebar-brand {
+  height: 65px;
+  font-size: 18px;
+  line-height: 60px;
+}
+
+.sidebar-nav>.sidebar-brand a {
+  color: #999999;
+}
+
+.sidebar-nav>.sidebar-brand a:hover {
+  color: #fff;
+  background: none;
+}
+
+@media(min-width:768px) {
+  #wrapper {
+    padding-left: 0;
+  }
+  #wrapper.toggled {
+    padding-left: 250px;
+  }
+  #sidebar-wrapper {
+    width: 0;
+  }
+  #wrapper.toggled #sidebar-wrapper {
+    width: 250px;
+  }
+  #page-content-wrapper {
+    padding: 20px;
+    position: relative;
+  }
+  #wrapper.toggled #page-content-wrapper {
+    position: relative;
+    margin-right: 0;
+  }
+}
+
+.chart-container {
+  position: relative;
+  margin: auto;
+  height: 300px;
+  width: 80%;
+}    
 
 .chart-text {
   font: 16px/1.4em Arial, sans-serif;
@@ -126,4 +161,49 @@
   margin-top: -75px; 
   height: 75px; 
   visibility: hidden; 
+}
+
+h2 {
+  margin-top: 20px;
+}
+
+.table {
+  margin: auto;
+  float: none;
+}
+
+.progress {
+  margin-bottom: 3px;
+}
+
+.progress-bar {
+  color: #000;
+}
+
+.progress-label {
+  margin-right: 1.2rem;
+}
+
+@media (min-width: 576px) {
+  .card-columns {
+      column-count: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .card-columns {
+      column-count: 1;
+  }
+}
+
+@media (min-width: 992px) {
+  .card-columns {
+      column-count: 2;
+  }
+}
+
+@media (min-width: 1200px) {
+  .card-columns {
+      column-count: 2;
+  }
 }

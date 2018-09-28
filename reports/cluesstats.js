@@ -64,8 +64,8 @@ function StatesStats(hostname, accept_interval = function(current_state, current
     this._stats_time[this._current_state.state] += this._end_time - this._current_state.time;            
     var total_time = this._end_time - this._start_time;
     for (s in this._stats_time) {
-      this._stats_pct_time[s] = Math.round(1000.0 * this._stats_time[s] / this._time_avail)/10.0;
-      this._stats_pct_time_total[s] = Math.round(1000.0 * this._stats_time[s] / total_time)/10.0;
+      this._stats_pct_time[s] = (Math.round(1000.0 * this._stats_time[s] / this._time_avail)/10.0);
+      this._stats_pct_time_total[s] = (Math.round(1000.0 * this._stats_time[s] / total_time)/10.0);
     }
   }
 
