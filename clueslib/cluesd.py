@@ -274,8 +274,8 @@ class CluesDaemon:
             nodeinfo = node.get_nodeinfo()
 
             if n_id in self._lrms_nodelist:
-                _, state_changed = self._lrms_nodelist[n_id].update_info(nodeinfo)
-                if state_changed:
+                _, state_changed, resources_changed = self._lrms_nodelist[n_id].update_info(nodeinfo)
+                if state_changed or resources_changed:
                     nodes_changed.append(n_id)
             else:
                 _LOGGER.warning("node %s has just appeared" % n_id)

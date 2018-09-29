@@ -72,7 +72,7 @@ hostnames = []
 if result:
 	# Read the data from the database and create the data structure (Stats)
 	for (name, timestamp_state, slots_count, slots_free, memory_total, memory_free, state, timestamp, x) in rows:
-		timestamp_state = int(timestamp_state)
+		timestamp_state = int(timestamp)
 		s = Stats(slots_count, slots_free, memory_total, memory_free, state, timestamp)
 		if timestamp_state not in timeline.keys():
 			timeline[timestamp_state] = {}
@@ -110,7 +110,7 @@ if result:
 				t_s = "%d" % t
 				hostdata[hostname].append(timeline[t][hostname].toJSONobj())
 
-	import simplejson as json
+	import json
 	print json.dumps(hostdata)
 
 	'''
