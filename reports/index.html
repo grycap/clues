@@ -112,12 +112,12 @@ Vue.component('chartplaceholder', {
                                       <tr>
                                         <td></td>
                                         <td>Mean memory used</td>
-                                        <td>{{hosts_stats[host].memory_used.mean}}</td>
+                                        <td>{{hosts_stats[host].memory_used.mean.toFixed(2)}}</td>
                                       </tr>
                                       <tr>
                                         <td></td>
                                         <td>Mean memory used (while on)</td>
-                                        <td>{{hosts_stats[host].memory_used.mean_accepted}}</td>
+                                        <td>{{hosts_stats[host].memory_used.mean_accepted.toFixed(2)}}</td>
                                       </tr>
                                       <tr>
                                         <th colspan="3">Time in memory intervals</th>
@@ -134,12 +134,12 @@ Vue.component('chartplaceholder', {
                                       <tr>
                                         <td></td>
                                         <td>Mean slots used</td>
-                                        <td>{{hosts_stats[host].slots_used.mean}}</td>
+                                        <td>{{hosts_stats[host].slots_used.mean.toFixed(2)}}</td>
                                       </tr>
                                       <tr>
                                         <td></td>
                                         <td>Mean slots used (while on)</td>
-                                        <td>{{hosts_stats[host].slots_used.mean_accepted}}</td>
+                                        <td>{{hosts_stats[host].slots_used.mean_accepted.toFixed(2)}}</td>
                                       </tr>
                                       <tr>
                                         <th colspan="3">Time in slots intervals</th>
