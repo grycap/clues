@@ -9,43 +9,333 @@
   <meta name="author" content="Carlos de Alfonso">
   <title>CLUES reports</title>
 
-  <!--
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <link rel="stylesheet" href="https://bootswatch.com/4/yeti/bootstrap.min.css">
-  -->
-
-  <script src="dist/jquery.min.js"></script> 
-  <link rel="stylesheet" href="dist/jquery-ui.css">
-  <link rel="stylesheet" href="dist/bootstrap.min.css">
-
-  <link rel="stylesheet" href="reports.css">
-  <link rel="stylesheet" href="waitanimation.css">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
   
-
-  <!--
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
-  -->
-  <script src="dist/bootstrap.js"></script>
-  <script src="dist/jquery-ui.min.js"></script>
-  <script src="dist/moment.js"></script>
-  <script src="dist/Chart.js"></script>
-  <script src="dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.min.js"></script>
 
   <script src="randomColor.js"></script>
-
   <script src="cluescharts.js"></script>
   <script src="piechart.js"></script>
   <script src="minibarchart.js"></script>
-  <script src="cluesdata.js"></script>
   <script src="cluesstats.js"></script>
+  <script src="cluesdata.js"></script>
+
+  <!--
+    NOTE: the style is inlined to enable compatibility with the CLUES server realtime stats
+      * the cluesserver class has constraints on how the files are returned, and browsers need
+        to be informed about the content-type of the files (in the case of stylesheets)
+  -->
   <style>
+ body {
+  overflow-x: hidden;
+}
+
+#wrapper {
+  padding-left: 0;
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+  -o-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+#wrapper.toggled {
+  padding-left: 250px;
+}
+
+#sidebar-wrapper {
+  z-index: 1000;
+  position: fixed;
+  left: 250px;
+  width: 0;
+  height: 100%;
+  margin-left: -250px;
+  overflow-y: auto;
+  background: #000;
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+  -o-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+  width: 250px;
+}
+
+#page-content-wrapper {
+  width: 100%;
+  position: absolute;
+  padding: 15px;
+}
+
+#wrapper.toggled #page-content-wrapper {
+  position: absolute;
+  margin-right: -250px;
+}
+
+/* Sidebar Styles */
+.sidebar-nav {
+  position: absolute;
+  top: 0;
+  width: 250px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sidebar-nav li {
+  text-indent: 20px;
+  line-height: 40px;
+}
+
+.sidebar-nav li a {
+  display: block;
+  text-decoration: none;
+  color: #999999;
+}
+
+.sidebar-nav li a:hover {
+  text-decoration: none;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-nav li a:active, .sidebar-nav li a:focus {
+  text-decoration: none;
+}
+
+.sidebar-nav>.sidebar-brand {
+  height: 65px;
+  font-size: 18px;
+  line-height: 60px;
+}
+
+.sidebar-nav>.sidebar-brand a {
+  color: #999999;
+}
+
+.sidebar-nav>.sidebar-brand a:hover {
+  color: #fff;
+  background: none;
+}
+
+@media(min-width:768px) {
+  #wrapper {
+    padding-left: 0;
+  }
+  #wrapper.toggled {
+    padding-left: 250px;
+  }
+  #sidebar-wrapper {
+    width: 0;
+  }
+  #wrapper.toggled #sidebar-wrapper {
+    width: 250px;
+  }
+  #page-content-wrapper {
+    padding: 20px;
+    position: relative;
+  }
+  #wrapper.toggled #page-content-wrapper {
+    position: relative;
+    margin-right: 0;
+  }
+}
+
+.chart-container {
+  position: relative;
+  margin: auto;
+  height: 300px;
+  width: 80%;
+}    
+
+.chart-text {
+  font: 16px/1.4em Arial, sans-serif;
+  fill: #000;
+  -moz-transform: translateY(0.25em);
+  -ms-transform: translateY(0.25em);
+  -webkit-transform: translateY(0.25em);
+  transform: translateY(0.25em);
+}
+
+.chart-number {
+  font-size: 0.6em;
+  line-height: 1;
+  text-anchor: middle;
+  -moz-transform: translateY(-0.25em);
+  -ms-transform: translateY(-0.25em);
+  -webkit-transform: translateY(-0.25em);
+  transform: translateY(-0.25em);
+}
+
+.chart-label {
+  font-size: 0.2em;
+  text-transform: uppercase;
+  text-anchor: middle;
+  -moz-transform: translateY(0.7em);
+  -ms-transform: translateY(0.7em);
+  -webkit-transform: translateY(0.7em);
+  transform: translateY(0.7em);
+}
+
+*[id]:before { /* https://stackoverflow.com/a/24298427 */
+  display: block; 
+  content: " "; 
+  margin-top: -75px; 
+  height: 75px; 
+  visibility: hidden; 
+}
+
+h2 {
+  margin-top: 20px;
+}
+
+.table {
+  margin: auto;
+  float: none;
+}
+
+.progress {
+  margin-bottom: 3px;
+}
+
+.progress-bar {
+  color: #000;
+}
+
+.progress-label {
+  margin-right: 1.2rem;
+}
+
+@media (min-width: 576px) {
+  .card-columns {
+      column-count: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .card-columns {
+      column-count: 1;
+  }
+}
+
+@media (min-width: 992px) {
+  .card-columns {
+      column-count: 2;
+  }
+}
+
+@media (min-width: 1200px) {
+  .card-columns {
+      column-count: 2;
+  }
+}    
+/* https://bootsnipp.com/snippets/featured/animated-loading */
+
+#loading {
+  /* background: #f4f4f2 url("img/page-bg.png") repeat scroll 0 0; */
+  height: 100px;
+  left: 0;
+  margin: auto;
+  top: 0;
+  width: 100%;
+}
+.bokeh {
+  border: 0.01em solid rgba(150, 150, 150, 0.1);
+  border-radius: 50%;
+  font-size: 100px;
+  height: 1em;
+  list-style: outside none none;
+  margin: 0 auto;
+  position: relative;
+  top: 35%;
+  width: 1em;
+  z-index: 2147483647;
+}
+.bokeh li {
+  border-radius: 50%;
+  height: 0.2em;
+  position: absolute;
+  width: 0.2em;
+}
+.bokeh li:nth-child(1) {
+  animation: 1.13s linear 0s normal none infinite running rota, 3.67s ease-in-out 0s alternate none infinite running opa;
+  background: #00c176 none repeat scroll 0 0;
+  left: 50%;
+  margin: 0 0 0 -0.1em;
+  top: 0;
+  transform-origin: 50% 250% 0;
+}
+.bokeh li:nth-child(2) {
+  animation: 1.86s linear 0s normal none infinite running rota, 4.29s ease-in-out 0s alternate none infinite running opa;
+  background: #ff003c none repeat scroll 0 0;
+  margin: -0.1em 0 0;
+  right: 0;
+  top: 50%;
+  transform-origin: -150% 50% 0;
+}
+.bokeh li:nth-child(3) {
+  animation: 1.45s linear 0s normal none infinite running rota, 5.12s ease-in-out 0s alternate none infinite running opa;
+  background: #fabe28 none repeat scroll 0 0;
+  bottom: 0;
+  left: 50%;
+  margin: 0 0 0 -0.1em;
+  transform-origin: 50% -150% 0;
+}
+.bokeh li:nth-child(4) {
+  animation: 1.72s linear 0s normal none infinite running rota, 5.25s ease-in-out 0s alternate none infinite running opa;
+  background: #88c100 none repeat scroll 0 0;
+  margin: -0.1em 0 0;
+  top: 50%;
+  transform-origin: 250% 50% 0;
+}
+@keyframes opa {
+12% {
+  opacity: 0.8;
+}
+19.5% {
+  opacity: 0.88;
+}
+37.2% {
+  opacity: 0.64;
+}
+40.5% {
+  opacity: 0.52;
+}
+52.7% {
+  opacity: 0.69;
+}
+60.2% {
+  opacity: 0.6;
+}
+66.6% {
+  opacity: 0.52;
+}
+70% {
+  opacity: 0.63;
+}
+79.9% {
+  opacity: 0.6;
+}
+84.2% {
+  opacity: 0.75;
+}
+91% {
+  opacity: 0.87;
+}
+}
+
+@keyframes rota {
+100% {
+  transform: rotate(360deg);
+}
+}
 #show-sidebar {
     position: fixed;
     left: 0;
@@ -58,6 +348,10 @@
 
 .page-wrapper.toggled #show-sidebar {
     left: -40px;
+}
+
+.slidertag {
+  font-size: 0.7rem;
 }
 </style>
   </head>
@@ -245,12 +539,12 @@
 <div class="chart-container">
   <canvas :id="'chart'+name"></canvas>
   <div class="row">
-    <div :id="'min-chart'+name+'Slider'" class="col col-lg-1 text-right">1</div>
+    <div :id="'min-chart'+name+'Slider'" class="slidertag col col-lg-1 text-right">1</div>
     <div class="col col-lg-10">
       <div :id="'chart'+name+'Slider'" style="width: 100%">
       </div>
     </div>
-    <div :id="'max-chart'+name+'Slider'" class="col col-lg-1 text-left">2</div>
+    <div :id="'max-chart'+name+'Slider'" class="slidertag col col-lg-1 text-left">2</div>
   </div>
 </div>  `
     })
@@ -270,8 +564,8 @@
       progress.progress(80);
 
       function sliderChange(chart, sliderName, event, ui) {
-        $('#min-' + sliderName).text((ui.values[0] / 1000).toFixed(0));
-        $('#max-' + sliderName).text((ui.values[1] / 1000).toFixed(0));
+        $('#min-' + sliderName).text(moment(ui.values[0]).format('D/M/YYYY HH:mm:ss'));//.text((ui.values[0] / 1000).toFixed(0));
+        $('#max-' + sliderName).text(moment(ui.values[1]).format('D/M/YYYY HH:mm:ss'));//.text((ui.values[1] / 1000).toFixed(0));
         chart.options.scales.xAxes[0].time.min = moment(ui.values[0]);
         chart.options.scales.xAxes[0].time.max = moment(ui.values[1]);
         chart.update();

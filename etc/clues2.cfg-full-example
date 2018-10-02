@@ -62,6 +62,9 @@ POWERMANAGER_CLASS=cluesplugins.ipmi
 # Host in which CLUES is 
 CLUES_HOST=
 
+# Path to the reports web files (they will be seved under /reports path, except for the special file cluesdata.js file)
+PATH_REPORTS_WEB=/etc/clues2/reports
+
 [monitoring]
 # Max time to wait to power on a node. Once passed this time, if the monitor still reports a off state, CLUES will consider that the power-on command for the node has failed
 MAX_WAIT_POWERON=300
