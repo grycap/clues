@@ -74,12 +74,13 @@ class Stats(object):
 def get_reports_data(connection_string, FROM, TO):
 	db = cpyutils.db.DB.create_from_string(connection_string)
 
-	# We'll get the max timestamp just to check whether we have access to the db
+	# We'll get the max and min timestamp, and so check whether we have access to the db or not
 	max_timestamp = 0
-	result, row_count, rows = db.sql_query("select max(timestamp) from host_monitoring")
+	result, row_count, rows = db.sql_query("select max(timestamp),min(timestamp) from host_monitoring")
 
 	if result:
 		max_timestamp = rows[0][0]
+		min_timestamp = rows[0][1]
 	else:
 		raise Exception("failed to read from the database")
 
@@ -139,6 +140,6 @@ def get_reports_data(connection_string, FROM, TO):
 					t_s = "%d" % t
 					hostdata[hostname].append(timeline[t][hostname].toJSONobj())
 
-		return hostdata
+		return hostdata, min_timestamp, max_timestamp
 	else:
-		return None
+		return None, None, None

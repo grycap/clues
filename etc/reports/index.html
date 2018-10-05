@@ -5,20 +5,25 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="description" content="CLUES reports">
   <meta name="author" content="Carlos de Alfonso">
   <title>CLUES reports</title>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.0-alpha14/css/tempusdominus-bootstrap-4.min.css" />
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <link rel="stylesheet" href="https://bootswatch.com/4/yeti/bootstrap.min.css">
-  
+
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.0-alpha14/js/tempusdominus-bootstrap-4.min.js"></script>
 
   <script src="randomColor.js"></script>
   <script src="cluescharts.js"></script>
@@ -125,6 +130,26 @@
   background: none;
 }
 
+.sidebar-nav>.sidebar-title {
+  height: 65px;
+  font-size: 18px;
+  line-height: 60px;
+  color: #cccccc;
+}
+
+/*
+  Fix to show the datetime picker
+*/
+
+.sidebar-nav label {
+  color: #cccccc;
+}
+
+.sidebar-nav li>div, .sidebar-nav li>div td {
+  text-indent: 0px;
+  line-height: 0px;
+}
+
 @media(min-width:768px) {
   #wrapper {
     padding-left: 0;
@@ -154,6 +179,10 @@
   height: 300px;
   width: 80%;
 }    
+
+.canvas-container {
+  height: 250px;
+}
 
 .chart-text {
   font: 16px/1.4em Arial, sans-serif;
@@ -379,6 +408,47 @@ h2 {
       </div>
     </div>
   </div>
+
+<!-- Modal -->
+<div class="modal fade " id="notsupported" tabindex="-1" role="dialog" aria-labelledby="notsupportedlabel" aria-hidden="true">
+    <div class="modal-dialog " role="document">
+      <div class="modal-content text-danger">
+        <div class="modal-header">
+          <h5 class="modal-title" id="notsupportedlabel">Sorry</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body ">
+          This feature is not supported in the offline version.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Accept</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade " id="fewvalues" tabindex="-1" role="dialog" aria-labelledby="fewvalueslabel" aria-hidden="true">
+      <div class="modal-dialog " role="document">
+        <div class="modal-content text-danger">
+          <div class="modal-header">
+            <h5 class="modal-title" id="fewvalueslabel">Sorry</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body ">
+            Few values to show. Please wait for more stats or select a wider time interval.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Accept</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+
   <div id="wrapper" class="toggled">
     <!-- Sidebar -->
     <a id="show-sidebar" class="btn btn-sm btn-dark" href="#">
@@ -395,15 +465,108 @@ h2 {
           </a>
         </li>
         <li><a href="#">Overview</a></li>
+        <li class="sidebar-title">
+            Hosts
+        </li>
         <li v-for="host in hostnames"><a :href="'#sec'+host">{{host}}</a></li>
+        <li class="sidebar-title">
+          Filter Dates
+        </li>
+        <li>
+            <div class="container">
+              <div class="form-group">
+                <label for="datetimepicker-from">From</label>
+                <div class="input-group date" id="datetimepicker-from" data-target-input="nearest">
+                    <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker-from"/>
+                    <div class="input-group-append" data-target="#datetimepicker-from" data-toggle="datetimepicker">
+                      <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    </div>
+                </div>
+              </div>         
+            </div>
+        </li>
+        <li>
+            <div class="container">
+              <div class="form-group">
+                <label for="datetimepicker-to">To</label>
+                <div class="input-group date" id="datetimepicker-to" data-target-input="nearest">
+                    <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker-to"/>
+                    <div class="input-group-append" data-target="#datetimepicker-to" data-toggle="datetimepicker">
+                      <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    </div>
+                </div>
+              </div>         
+            </div>
+        </li>
+        <li>
+          <div class="container">
+          <form id="filterdates" method="GET">
+          <input type="hidden" id="date-from" name="from">
+          <input type="hidden" id="date-to" name="to">
+          <input type="hidden" id="secret" name="secret">
+          <button id="update-dates" type="submit" class="btn btn-dark">
+            <span>Update</span>
+          </button>
+          <button id="reset-dates" type="submit" class="btn btn-dark">
+              <span>Reset</span>
+            </button>
+            </form>
+          </div>
+      </li>
+
       </ul>
     </div>
+
+    <script>
+       $(function () {
+          $('#datetimepicker-to').datetimepicker({
+            icons: {
+              time: "far fa-clock"
+            },
+            format: 'D/M/YYYY HH:mm:ss'
+          });
+          $('#datetimepicker-from').datetimepicker({
+            icons: {
+              time: "far fa-clock"
+            },
+            format: 'D/M/YYYY HH:mm:ss'
+          });
+          $("#datetimepicker-from").on("change.datetimepicker", function (e) {
+              $('#datetimepicker-to').datetimepicker('minDate', e.date);
+          });
+          $("#datetimepicker-to").on("change.datetimepicker", function (e) {
+              $('#datetimepicker-from').datetimepicker('maxDate', e.date);
+          });
+
+          /** The time unit in CLUES is expressed in Seconds, while moment expects milliseconds */
+          var url = new URL(window.location.href);
+          var from = url.searchParams.get('from');
+          var to = url.searchParams.get('to');
+          if (!from || from < mintime_avail) from = mintime_avail;
+          if (!to || to > maxtime_avail) to = maxtime_avail;
+
+          $('#datetimepicker-from').datetimepicker('minDate', moment(mintime_avail * 1000));
+          $('#datetimepicker-from').datetimepicker('date', moment(from * 1000));
+          
+          $('#datetimepicker-to').datetimepicker('maxDate', moment(maxtime_avail * 1000));
+          $('#datetimepicker-to').datetimepicker('date', moment(to * 1000));
+        });
+    </script>
     <!-- /#sidebar-wrapper -->
 
     <!-- Page Content -->
     <div id="page-content-wrapper">
       <div class="container-fluid">
-        <h1>CLUES stats</h1>
+        <h1>
+          <div class="row">
+          <div class="col-11">CLUES stats</div>
+          <div class="col-1">
+            <a href="#" id="refreshpage" class="pull-left" role="button">
+                <span class="fas fa-sync-alt"></span>
+            </a>
+          </div>
+        </div>
+        </h1>
         <h2>States</h2>
         <chartplaceholder name="States"></chartplaceholder>
         <h2>Memory</h2>
@@ -446,6 +609,7 @@ h2 {
                         <td colspan=2>
                           <minibarchart :labels="[1,2,3,4].map((x)=>('<='+hosts_stats[host].memory_used._divider*x + 'Mb'))"
                             :values="hosts_stats[host].memory_used.intervals.slice(0).map((x)=>(x/1000.0))"></minibarchart>
+                            
                         </td>
                       </tr>
                       <tr>
@@ -537,14 +701,21 @@ h2 {
       props: ['name'],
       template: `   
 <div class="chart-container">
+  <div class="canvas-container">
   <canvas :id="'chart'+name"></canvas>
+  </div>
   <div class="row">
-    <div :id="'min-chart'+name+'Slider'" class="slidertag col col-lg-1 text-right">1</div>
-    <div class="col col-lg-10">
-      <div :id="'chart'+name+'Slider'" style="width: 100%">
+    <div :id="'min-chart'+name+'Slider'" class="slidertag col col-lg-1 offset-1 text-right">1</div>
+    <div class="col col-lg-8">
+      <div :id="'chart'+name+'Slider'" class="chartslider" style="width: 100%">
       </div>
     </div>
     <div :id="'max-chart'+name+'Slider'" class="slidertag col col-lg-1 text-left">2</div>
+    <div class="col col-1">
+      <button type="button" class="btn-filter btn btn-sm btn-secondary">
+        <i class="fas fa-filter">
+      </button>
+    </div>
   </div>
 </div>  `
     })
@@ -560,7 +731,10 @@ h2 {
 
     function run_the_process(progress) {
       progress.progress(0);
-      preprocess();
+      if (!preprocess()) {
+        $('#fewvalues').modal('show');
+        return;
+      };
       progress.progress(80);
 
       function sliderChange(chart, sliderName, event, ui) {
@@ -690,6 +864,12 @@ h2 {
     };
 
     function preprocess() {
+      var url = new URL(window.location.href);
+      var from = parseFloat(url.searchParams.get('from'));
+      var to = parseFloat(url.searchParams.get('to'));
+      if (!from || from < mintime_avail) from = mintime_avail;
+      if (!to || to > maxtime_avail) to = maxtime_avail;
+
       // Separate host data for each host and calculate the max values for memory and slots number
       var states_stats = {};
       var total_v = {
@@ -698,6 +878,7 @@ h2 {
       }
       var hostnames = Object.keys(cluesdata).sort();
       var hosts_stats = [];
+      var fewValues = false;
       hostnames.forEach(function (hostname) {
         // We need the data sorted for the rest of our calculations
         cluesdata[hostname].sort(function (a, b) {
@@ -706,9 +887,46 @@ h2 {
           return 1
         })
 
+        // Get the minimum real value
+        var minval_e = undefined;
+        cluesdata[hostname].forEach(function(v) {
+          if (minval_e == undefined) minval_e = v;
+          if ((v.t > minval_e.t) && (v.t <= from))
+            minval_e = v;
+        })
+
         // Remove timestamp outliers
-        var valid_timestamps = filterOutliers(cluesdata[hostname].map(v => v.t));
+        var valid_timestamps = filterOutliers(cluesdata[hostname].filter( v => v.t >= from && v.t <= to).map(v => v.t));
+        if (valid_timestamps.length == 0) {
+          cluesdata[hostname] = [];
+          states_stats[hostname] = new StatesStats(hostname);
+          states_stats[hostname].get_from_hostdata(cluesdata[hostname]);
+          console.log(cluesdata[hostname])
+          console.log(states_stats[hostname]);
+          hosts_stats[hostname] = {
+            memory_used: new AreaStats([]),
+            slots_used: new AreaStats([])
+          }
+          fewValues = true;
+          return;
+        }
         cluesdata[hostname] = cluesdata[hostname].filter((v) => valid_timestamps.indexOf(v.t) >= 0);
+
+        // Add "from" and "to" timesteps to the series
+        if (cluesdata[hostname].length>0) {
+          var minval = cluesdata[hostname][0];
+          var maxval = cluesdata[hostname][cluesdata[hostname].length - 1];
+          if (minval.t > from) {
+            minval_e = Object.assign({}, minval_e);
+            minval_e.t = from;
+            cluesdata[hostname].unshift(minval_e);
+          }
+          if (maxval.t < to) {
+            maxval = Object.assign({}, maxval);
+            maxval.t = to;
+            cluesdata[hostname].push(maxval);
+          }
+        }
 
         // We need to grab the maximum amount of slots and memory
         var slots_current = 0;
@@ -887,6 +1105,7 @@ h2 {
       chartMemory.options.scales.yAxes[0].ticks.max = total_v.memory;
       chartMemory.options.scales.yAxes[1].ticks.max = total_v.memory;
       chartMemory.update();
+      return !fewValues;
     }
     $("#close-sidebar").click(function(e) {
         e.preventDefault();
@@ -896,6 +1115,37 @@ h2 {
         e.preventDefault();
         $("#wrapper").toggleClass("toggled");
     });
+    $(function() {
+      var secret = new URL(window.location.href).searchParams.get('secret');
+      if (secret) {
+        $('#secret').val(secret);
+      }
+    })
+    $(function() {
+      $('#update-dates').click(function(e) {
+        /** CLUES timestamps are expressed in seconds */
+        var t = $('#datetimepicker-from').datetimepicker('date');
+        $('#date-from').val(t?t.format("X"):"");
+        t = $('#datetimepicker-to').datetimepicker('date');
+        $('#date-to').val(t?t.format("X"):"");
+      })
+      $('#reset-dates').click(function(e) {
+        $('#date-from').val("");
+        $('#date-to').val("");
+      });
+      $('.btn-filter').click(function(e) {
+        var values = $(e.target).closest('.row').find('.ui-slider').slider("values");
+        if (values.length == 2) {
+          $('#date-from').val(Math.floor(values[0]/1000));
+          $('#date-to').val(Math.floor(values[1]/1000));
+        }
+        $('form#filterdates').submit();
+      })
+      $('#refreshpage').click(function(e){
+        e.preventDefault();
+        location.reload();
+      })
+    })
     </script>
 </body>
 </html>

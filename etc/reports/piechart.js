@@ -20,6 +20,9 @@
 Vue.component('piechart', {
   props: [ 'percentage', 'title', 'duration'],
   computed: {
+      _percentage: function() {
+        return this.percentage == undefined || isNaN(this.percentage) ?0:this.percentage;
+      },
       color: function() {
         switch (this.title) {
           case "error(*)": return "#ff6f69";
@@ -42,10 +45,10 @@ Vue.component('piechart', {
   <svg width="100%" height="100%" viewBox="0 0 42 42" class="donut">
     <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
     <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#d2d3d4" stroke-width="5"></circle>
-    <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" :stroke="color" stroke-width="5" :stroke-dasharray="percentage + ' ' + (100 - percentage)" stroke-dashoffset="25"></circle>
+    <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" :stroke="color" stroke-width="5" :stroke-dasharray="_percentage + ' ' + (100 - _percentage)" stroke-dashoffset="25"></circle>
     <g class="chart-text">
         <text x="50%" y="50%" class="chart-number">
-          {{percentage.toFixed(1)}}%
+          {{_percentage.toFixed(1)}}%
         </text>
         <text x="50%" y="50%" class="chart-label">
           <tspan x="50%" y="50%">

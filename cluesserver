@@ -137,11 +137,11 @@ try:
             filename = "/".join(url).lstrip('/').replace('../', '')
             _LOGGER.debug("web request: %s" % filename)
             if filename == "cluesdata.js":
-                hostdata = clueslib.reports.get_reports_data(_CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
+                hostdata, min_t, max_t = clueslib.reports.get_reports_data(_CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
                 if hostdata is None:
                     return "failed to get data from the database"
                 else:
-                    return "var cluesdata=%s" % json.dumps(hostdata)
+                    return "var cluesdata=%s;\n" % json.dumps(hostdata) + "var mintime_avail=%d;\n" % min_t + "var maxtime_avail=%d;\n" % max_t
             else:
                 if _CONFIGURATION_GENERAL.PATH_REPORTS_WEB == "":
                     return "reports are deactivated"

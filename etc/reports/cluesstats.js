@@ -74,13 +74,16 @@ function StatesStats(hostname, accept_interval = function(current_state, current
     this._end_time = data.t;
   }
   this.end_serie = function() {
-    if (this._accept_interval(this._current_state))
-      this._time_avail += this._end_time - this._current_state.time;
 
-    if (this._stats_time[this._current_state.state] == undefined) 
-      this._stats_time[this._current_state.state] = 0;
+    if (this._current_state !== undefined) {
+      if (this._accept_interval(this._current_state))
+        this._time_avail += this._end_time - this._current_state.time;
 
-    this._stats_time[this._current_state.state] += this._end_time - this._current_state.time;            
+      if (this._stats_time[this._current_state.state] == undefined) 
+        this._stats_time[this._current_state.state] = 0;
+
+      this._stats_time[this._current_state.state] += this._end_time - this._current_state.time;            
+    }
 
     var total_time = this._end_time - this._start_time;
     for (s in this._stats_time) {
@@ -179,18 +182,20 @@ const AreaStats = function(dataset, equality_fnc = function (a,b) { return a == 
   }
 
   this.end_serie = function() {
-      if (this._accept_interval(this.current_value, this.end_x)) {
-        this.accepted_x += (this.end_x - this.current_value.x)
-        this.area += (this.end_x - this.current_value.x) * this.current_value.y;
+    if (this.current_state !== undefined && this._accept_interval(this.current_value, this.end_x)) {
+      this.accepted_x += (this.end_x - this.current_value.x)
+      this.area += (this.end_x - this.current_value.x) * this.current_value.y;
 
-        if (this._divider != 0) {
-          var category = Math.ceil( this.current_value.y / this._divider) - 1;
-          this.intervals[category] += (this.end_x - this.current_value.x);
-        }
+      if (this._divider != 0) {
+        var category = Math.ceil( this.current_value.y / this._divider) - 1;
+        this.intervals[category] += (this.end_x - this.current_value.x);
       }
+    }
 
-    this.mean = this.area / parseFloat(this.end_x - this.start_x);
-    this.mean_accepted = this.area / parseFloat(this.accepted_x);
+    if (this.end_x !== undefined && this.start_x !== undefined) {
+      this.mean = this.area / parseFloat(this.end_x - this.start_x);
+      this.mean_accepted = this.area / parseFloat(this.accepted_x);
+    }
   }
 
   this.get_from_dataset = function(dataset) {

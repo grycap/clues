@@ -25,7 +25,8 @@ if __name__ == "__main__":
 	parser.add_argument("DATABASE", metavar="<database file>", default=None, help="the database file that has generated CLUES")
 	parser.add_argument("-f", "--from", dest="FROM", default=0, type=int, help="the starting timestamp for the stats (a negative value means that we want that delta time from the end of the stats; see --to argument)")
 	parser.add_argument("-t", "--to", dest="TO", default=0, help="the end timestamp for the stats (use the special value 'now' to get the curren time, or '0' to get the last timestamp in the stats, or a negative value to get a relative end from the maximum value in the stats)")
-	parser.add_argument("-j", "--prepare-javascript", dest="JSVAR", default=None, help="prepare the output as if it was a javascript variable, and set the name of the variable")
+	parser.add_argument("-j", "--prepare-reports", dest="PREPAREJS", action="store_true", default=False, help="prepare the output for the reports: set the javascript variables needed in the offline web page")
+
 	options = parser.parse_args()
 
 	if options.DATABASE is None:
@@ -48,11 +49,14 @@ if __name__ == "__main__":
 			sys.exit(1)
 
 	connection_string = "sqlite://%s" % options.DATABASE
-	hostdata = clueslib.reports.get_reports_data(connection_string, options.FROM, options.TO)
+	hostdata, min_t, max_t = clueslib.reports.get_reports_data(connection_string, options.FROM, options.TO)
 	if hostdata is None:
 		raise Exception("failed to get data from the database")
 	else:
-		if options.JSVAR is not None:
-			print "var %s=%s;" % (options.JSVAR, json.dumps(hostdata))
+		if options.PREPAREJS:
+			print "var cluesdata=%s;" % json.dumps(hostdata)
+			print "var mintime_avail=%d;" % min_t
+			print "var maxtime_avail=%d;" % max_t
+
 		else:
 			print json.dumps(hostdata)
