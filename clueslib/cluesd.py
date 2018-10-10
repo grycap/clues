@@ -79,7 +79,8 @@ class DBSystem(DBSystem_dummy):
     def _create_db(self):
         result1, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS hostdata(name varchar(128) PRIMARY KEY, enabled bool)", True)
         result2, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS host_monitoring(name varchar(128), timestamp_state INTEGER, slots_count INTEGER, slots_free INTEGER, memory_total INTEGER, memory_free INTEGER, state INTEGER, timestamp INTEGER, x INTEGER PRIMARY KEY)", True)
-        return (result1 and result2)
+        result3, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS requests(reqid varchar, timestamp_created INTEGER, timestamp_state INTEGER, state INTEGER, slots INTEGER, memory INTEGER, expressions varchar, taskcount INTEGER, maxtaskspernode INTEGER, jobid varchar, nodes varchar, x INTEGER PRIMARY KEY)", True)
+        return (result1 and result2 and result3)
 
     def enable_host(self, host, enable = True):
         if not self._get_hosts(): return False
@@ -109,7 +110,28 @@ class DBSystem(DBSystem_dummy):
         
         if host_data.name not in self._hosts:
             self.enable_host(host_data.name, True)
-        
+
+    def store_request_info(self, request):
+        import json
+        result, _, _ = self._db.sql_query("INSERT INTO requests(reqid, timestamp_created, timestamp_state, state, slots, memory, expressions, taskcount, maxtaskspernode, jobid, nodes) VALUES (\"%s\", %s, %s, %d, %d, %d, '%s', %d, %d, \"%s\", '%s')" % \
+        (request.id, \
+        request.timestamp_created, \
+        request.timestamp_state, \
+        request.state, \
+        request.resources.resources.slots, \
+        request.resources.resources.memory, \
+        json.dumps(request.resources.resources.requests), \
+        request.resources.taskcount, \
+        request.resources.maxtaskspernode, \
+        request.job_id if request.job_id is not None else "null", \
+        json.dumps(request.job_nodes_ids)), True)
+        return result
+
+    def update_request_info(self, request):
+        result, _, _ = self._db.sql_query("UPDATE requests SET timestamp_state = %d, state = %d WHERE reqid = \"%s\"" % \
+        ( request.timestamp_state, request.state, request.id ), True)
+        return result
+
     def retrieve_latest_monitoring_data(self):
         result, row_count, rows = self._db.sql_query("select max(timestamp), m.*, d.enabled from host_monitoring as m left join hostdata as d on m.name=d.name group by m.name")
         _nodes = collections.OrderedDict()
@@ -210,6 +232,7 @@ class CluesDaemon:
 
     def request(self, request):
         hooks.HOOKS.request(request)
+        self._db_system.store_request_info(request)
         self._requests_queue.append(request)
         _LOGGER.debug("new request: %s" % request)
         # cpyutils.eventloop.get_eventloop().add_event(schedulers.config_scheduling.PERIOD_SCHEDULE, "CONTROL EVENT - the request will be scheduled", stealth = True)
@@ -365,6 +388,7 @@ class CluesDaemon:
         for req in self._requests_queue:
             # These are jobs that are kept because the job list is incremental and it is not substituted
             if (req.state in [ Request.NOT_SERVED, Request.SERVED, Request.DISSAPEARED ]) and ((now - req.timestamp_state) > _CONFIGURATION_MONITORING.COOLDOWN_SERVED_REQUESTS):
+                self._db_system.update_request_info(req)
                 r_ids_to_delete.append(req.id)
                 
         for r_id in r_ids_to_delete:

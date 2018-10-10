@@ -71,6 +71,44 @@ class Stats(object):
 		else:
 			return Stats(self._slots, self._slots_free, self._memory, self._memory_free, self.state, t)
 
+def get_requests_data(connection_string, FROM, TO):
+	db = cpyutils.db.DB.create_from_string(connection_string)
+
+	# We'll get the max and min timestamp, and so check whether we have access to the db or not
+	max_timestamp = 0
+	result, row_count, rows = db.sql_query("select max(timestamp_created),min(timestamp_created) from requests")
+
+	if result:
+		max_timestamp = rows[0][0]
+		min_timestamp = rows[0][1]
+	else:
+		raise Exception("failed to read from the database")
+
+	# Now correct the values of TO and FROM
+	if TO == 0:
+		TO = max_timestamp
+	elif TO < 0:
+		TO = max_timestamp + TO
+
+	if FROM < 0:
+		FROM = TO + FROM
+	if FROM < 0:
+		FROM = 0
+	if FROM < min_timestamp:
+		FROM = min_timestamp
+
+	# Finally get the data from the database
+	result, row_count, rows = db.sql_query("select * from requests where timestamp_created >= %d and timestamp_created <= %d order by timestamp_created" % (FROM, TO) )
+	timeline={}
+	hostnames = []
+
+	if result:
+		# Read the data from the database and create the data structure (Stats)
+		for (reqid, timestamp_created, timestamp_state, state, slots, memory, expressions, taskcount, maxtaskspernode, jobid, nodes, x) in rows:
+			pass
+
+
+
 def get_reports_data(connection_string, FROM, TO):
 	db = cpyutils.db.DB.create_from_string(connection_string)
 
