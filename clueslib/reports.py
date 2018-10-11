@@ -99,15 +99,29 @@ def get_requests_data(connection_string, FROM, TO):
 
 	# Finally get the data from the database
 	result, row_count, rows = db.sql_query("select * from requests where timestamp_created >= %d and timestamp_created <= %d order by timestamp_created" % (FROM, TO) )
-	timeline={}
-	hostnames = []
 
+	requests = []
 	if result:
 		# Read the data from the database and create the data structure (Stats)
 		for (reqid, timestamp_created, timestamp_state, state, slots, memory, expressions, taskcount, maxtaskspernode, jobid, nodes, x) in rows:
-			pass
-
-
+			requests.append(\
+			{
+				"id": reqid,\
+				"t_created": timestamp_created,\
+				"state": state,\
+				"t_state": timestamp_state,\
+				"slots": slots,\
+				"memory": memory,\
+				"requirements": expressions,\
+				"taskcount": taskcount,\
+				"maxtaskspernode": maxtaskspernode,\
+				"jobid": jobid,\
+				"nodes": nodes\
+			}\
+			)
+		return requests, min_timestamp, max_timestamp
+	else:
+		return None, None, None
 
 def get_reports_data(connection_string, FROM, TO):
 	db = cpyutils.db.DB.create_from_string(connection_string)

@@ -138,10 +138,14 @@ try:
             _LOGGER.debug("web request: %s" % filename)
             if filename == "cluesdata.js":
                 hostdata, min_t, max_t = clueslib.reports.get_reports_data(_CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
+                requests, min_t_r, max_t_r = clueslib.reports.get_requests_data(_CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
                 if hostdata is None:
                     return "failed to get data from the database"
                 else:
-                    return "var cluesdata=%s;\n" % json.dumps(hostdata) + "var mintime_avail=%d;\n" % min_t + "var maxtime_avail=%d;\n" % max_t
+                    if min_t is None: min_t = 0
+                    if max_t is None: max_t = 0
+                    return "var cluesdata=%s;\n" % json.dumps(hostdata) + "var mintime_avail=%d;\n" % min_t + "var maxtime_avail=%d;\n" % max_t + \
+                        "var requests=%s;\n" % json.dumps(requests)
             else:
                 if _CONFIGURATION_GENERAL.PATH_REPORTS_WEB == "":
                     return "reports are deactivated"

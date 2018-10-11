@@ -79,10 +79,13 @@ function StatesStats(hostname, accept_interval = function(current_state, current
       if (this._accept_interval(this._current_state))
         this._time_avail += this._end_time - this._current_state.time;
 
-      if (this._stats_time[this._current_state.state] == undefined) 
+      if (this._stats_state[this._current_state.state] == undefined)
+        this._stats_state[this._current_state.state] = 0;
+      if (this._stats_time[this._current_state.state] == undefined)
         this._stats_time[this._current_state.state] = 0;
 
-      this._stats_time[this._current_state.state] += this._end_time - this._current_state.time;            
+      this._stats_time[this._current_state.state] += this._end_time - this._current_state.time;
+      this._stats_state[this._current_state.state]++;
     }
 
     var total_time = this._end_time - this._start_time;

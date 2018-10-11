@@ -757,7 +757,7 @@ h2 {
         return { min: min, max: max };
       }
 
-      var minmax_states = minmax(chartStates.data.datasets[0].data);
+      var minmax_states = minmax(chartStates.data.datasets[1].data);
       $("#chartStatesSlider").slider({
         range: true,
         min: minmax_states.min,
@@ -901,8 +901,6 @@ h2 {
           cluesdata[hostname] = [];
           states_stats[hostname] = new StatesStats(hostname);
           states_stats[hostname].get_from_hostdata(cluesdata[hostname]);
-          console.log(cluesdata[hostname])
-          console.log(states_stats[hostname]);
           hosts_stats[hostname] = {
             memory_used: new AreaStats([]),
             slots_used: new AreaStats([])
@@ -1030,11 +1028,19 @@ h2 {
       })
 
       // Generate the info for the states
-      var _colorset_states = randomColor({ count: states.draw.length, format: 'rgba', alpha: 0.8, luminosity: 'bright' });
-      var colorset_states = [];
-      for (i in _colorset_states) {
-        colorset_states[states.draw[i]] = _colorset_states[i];
-      }
+      
+      // The color for the states match the pie chart colors
+      const colorset_states = {
+        "-2": "#ff6f69",
+        "-1": "#d2d3d4",
+        "0": "#ffcc5c",
+        "1": "#696fff",
+        "2": "#88d8b0",
+        "3": "#ccff5c",
+        "4": "#cc5cff",
+        "5": "#bb991c",
+        "6": "#44a880"
+      };
 
       ///////////////////////////////////////////////////
       // Now prepare the chart for the change of states
@@ -1072,15 +1078,121 @@ h2 {
       })
 
       ///////////////////////////////////////////////////
+      // REQUESTS
+      ///////////////////////////////////////////////////
+      var max_r = {
+        min_slots: undefined,
+        max_slots: undefined,
+        min_memory: undefined,
+        max_memory: undefined,
+        max_size: undefined,
+        min_size: undefined
+      }
+
+      // We gather the data to normalize the slots and memory between 0 and 1
+      requests.forEach(function(r) {
+        if (max_r.min_slots == undefined || r.slots < max_r.min_slots) max_r.min_slots = r.slots;
+        if (max_r.max_slots == undefined || r.slots > max_r.max_slots) max_r.max_slots = r.slots;
+        if (max_r.min_memory == undefined || r.memory < max_r.min_memory) max_r.min_memory = r.memory;
+        if (max_r.max_memory == undefined || r.memory > max_r.max_memory) max_r.max_memory = r.memory;
+      })
+
+      var diff_slots = max_r.max_slots - max_r.min_slots;
+      var diff_memory = max_r.max_memory - max_r.min_memory;
+      if (diff_slots == 0) diff_slots = 1;
+      if (diff_memory == 0) diff_memory = 1;
+
+      requests = requests.map(function(r) {
+        r.n_slots = (r.slots - max_r.min_slots) * 1.0 / diff_slots;
+        r.n_memory = (r.memory - max_r.min_memory) * 1.0 / diff_memory;
+
+        // The size is divided in sqrt(2) and sum 1 to get an interval 1-2; in this way, the
+        //  size is always greater than zero
+        r.size = r.taskcount * (1 + 0.707106781 * Math.sqrt(r.n_slots * r.n_slots + r.n_memory * r.n_memory));
+        if (max_r.max_size == undefined || r.size > max_r.max_size) max_r.max_size = r.size;
+        if (max_r.min_size == undefined || r.size < max_r.min_size) max_r.min_size = r.size;
+        return r
+      })
+
+      var diff_size = max_r.max_size - max_r.min_size;
+      if (diff_size == 0) diff_size = 1;
+
+      // Now we put each request in the y axis to show the number of requests at each timestamp
+      //  * probably this will not have much sense, but in the simulator it has; at this time the
+      //    requests are accumulated in per-second slots
+      requests.sort(function (a, b) {
+          if (a.t_created < b.t_created) return -1;
+          if (a.t_created == b.t_created) return 0;
+          return 1
+      })
+
+      var cur_t = undefined;
+      var cur_i = 0;
+      requests = requests.map(function(r) {
+        if (cur_t == undefined || cur_t != Math.round(r.t_created)) {
+          cur_t = Math.round(r.t_created);
+          cur_i = 0;
+        }
+        cur_i++;
+        r.t_i=cur_i;
+
+        // The timestamps from CLUES are expressed in seconds; we need them in milliseconds
+        r.t_created = r.t_created * 1000;
+        r.t_state = r.t_state * 1000;
+
+        r.size = 1.0 + ((r.size - max_r.min_size) / diff_size);
+        return r;
+      })
+
+
+      var requests_dataset = {
+        label: ["Requests" ],
+        data: requests.map((r) => ({x: r.t_created, y: r.t_i, r: r.size * 5.0, slots: r.slots, memory: r.memory, tasks: r.taskcount})),
+        steppedLine: false,
+        spanGaps: false,
+        pointRadius: 2,
+        yAxisID: "requests",
+        borderWidth: 2,
+        backgroundColor: "rgba(150,255,150,0.1)",
+        borderColor: "rgba(50,150,50,0.5)",
+        type: "bubble",
+        fill: false,
+        showLine: false
+      }
+      console.log(requests_dataset);
+
+      ///////////////////////////////////////////////////
       // Create the charts
       ///////////////////////////////////////////////////
 
       chartStates = StackedLineChart(
         "chartStates",
-        [].concat(datasets.state),
-        ["states"],
+        [].concat(requests_dataset).concat(datasets.state),
+        ["states", "requests"],
         (e, legendItem) => onClick_cohide(e, legendItem, chartStates)
       )
+
+      chartStates.options.tooltips = {
+        callbacks: {
+          label: function (tooltipItem, data) {
+            if (tooltipItem.datasetIndex != 0) {
+              return "";
+            }
+            var label = ""
+
+            var d = data.datasets[0].data[tooltipItem.index];
+            label += `slots: ${d.slots} ; mem: ${d.memory}; n: ${d.tasks}`
+            return label;
+          }
+        }
+      }
+
+      chartStates.options.scales.yAxes[1].position = "right";
+      chartStates.options.scales.yAxes[1].scaleLabel = {
+        display: true,
+        labelString: "# of requests in each second"
+      }
+      chartStates.update();
 
       chartSlots = StackedLineChart(
         "chartSlots",
