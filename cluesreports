@@ -54,12 +54,9 @@ if __name__ == "__main__":
 		raise Exception("failed to get data from the database")
 	else:
 		requests, _, _ = clueslib.reports.get_requests_data(connection_string, options.FROM, options.TO)
+		result = {"hostevents":hostdata,"requests":requests, "mintime_avail": min_t, "maxtime_avail": max_t}
 		if options.PREPAREJS:
-			print "var cluesdata=%s;" % json.dumps(hostdata)
-			print "var mintime_avail=%d;" % min_t
-			print "var maxtime_avail=%d;" % max_t
-			print "var requests=%s;" % json.dumps(requests)
-
+			print "var cluesdata=%s;" % json.dumps(result)
 		else:
 			# Dump in JSON format
-			print json.dumps({"cluesdata":hostdata,"requests":requests})
+			print json.dumps(result)

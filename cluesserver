@@ -144,8 +144,8 @@ try:
                 else:
                     if min_t is None: min_t = 0
                     if max_t is None: max_t = 0
-                    return "var cluesdata=%s;\n" % json.dumps(hostdata) + "var mintime_avail=%d;\n" % min_t + "var maxtime_avail=%d;\n" % max_t + \
-                        "var requests=%s;\n" % json.dumps(requests)
+                    result = {"hostevents":hostdata,"requests":requests, "mintime_avail": min_t, "maxtime_avail": max_t}
+                    return "var cluesdata=%s;" % json.dumps(result)
             else:
                 if _CONFIGURATION_GENERAL.PATH_REPORTS_WEB == "":
                     return "reports are deactivated"

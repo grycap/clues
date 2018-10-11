@@ -470,6 +470,10 @@ h2 {
         </li>
         <li v-for="host in hostnames"><a :href="'#sec'+host">{{host}}</a></li>
         <li class="sidebar-title">
+          Requests
+        </li>
+        <li><a href="#requests">Stats</a></li>
+        <li class="sidebar-title">
           Filter Dates
         </li>
         <li>
@@ -542,13 +546,13 @@ h2 {
           var url = new URL(window.location.href);
           var from = url.searchParams.get('from');
           var to = url.searchParams.get('to');
-          if (!from || from < mintime_avail) from = mintime_avail;
-          if (!to || to > maxtime_avail) to = maxtime_avail;
+          if (!from || from < cluesdata.mintime_avail) from = cluesdata.mintime_avail;
+          if (!to || to > cluesdata.maxtime_avail) to = cluesdata.maxtime_avail;
 
-          $('#datetimepicker-from').datetimepicker('minDate', moment(mintime_avail * 1000));
+          $('#datetimepicker-from').datetimepicker('minDate', moment(cluesdata.mintime_avail * 1000));
           $('#datetimepicker-from').datetimepicker('date', moment(from * 1000));
           
-          $('#datetimepicker-to').datetimepicker('maxDate', moment(maxtime_avail * 1000));
+          $('#datetimepicker-to').datetimepicker('maxDate', moment(cluesdata.maxtime_avail * 1000));
           $('#datetimepicker-to').datetimepicker('date', moment(to * 1000));
         });
     </script>
@@ -692,6 +696,116 @@ h2 {
             </div>
           </div>
         </div>
+        <div id="requests">
+          <h2>Requests</h2>
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <h5 class="card-title">Stats</h5>
+              <table class="table table-sm">
+                <tbody>
+                  <tr>
+                    <td>Total requests</td>
+                    <td>{{requests_stats.total}}</td>
+                  </tr>
+                  <tr>
+                    <td>Arrival rate</td>
+                    <td>{{(requests_stats.total/requests_stats.time_period).toFixed(3)}} reqs. per second</td>
+                  </tr>
+                  <tr>
+                    <td>Mean time to be attended</td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">Mean size</th>
+                  </tr>
+                  <tr>
+                    <td>Slots</td>
+                    <td>{{(requests_stats.size_info.max_slots/requests_stats.time_period).toFixed(3)}}</td>
+                  </tr>
+                  <tr>
+                    <td>Memory</td>
+                    <td>{{(requests_stats.size_info.max_memory/requests_stats.time_period).toFixed(3)}}</td>
+                  </tr>
+                  <tr>
+                    <td>Task count</td>
+                    <td>{{(requests_stats.size_info.max_taskcount/requests_stats.time_period).toFixed(3)}}</td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">Max. size</th>
+                  </tr>
+                  <tr>
+                    <td>Slots</td>
+                    <td>{{requests_stats.size_info.max_slots}}</td>
+                  </tr>
+                  <tr>
+                    <td>Memory</td>
+                    <td>{{requests_stats.size_info.max_memory}}</td>
+                  </tr>
+                  <tr>
+                    <td>Task count</td>
+                    <td>{{requests_stats.size_info.max_taskcount}}</td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">Min. size</th>
+                  </tr>
+                  <tr>
+                    <td>Slots</td>
+                    <td>{{requests_stats.size_info.min_slots}}</td>
+                  </tr>
+                  <tr>
+                    <td>Memory</td>
+                    <td>{{requests_stats.size_info.min_memory}}</td>
+                  </tr>
+                  <tr>
+                    <td>Task count</td>
+                    <td>{{requests_stats.size_info.min_taskcount}}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <h5 class="card-title">States for the requests</h5>
+              <table class="table table-sm">
+                <tbody>
+                  <tr>
+                    <td></td>
+                    <td>Pending</td>
+                    <td>Attended</td>
+                    <td>Served</td>
+                    <td>Discarded</td>
+                    <td>Other</td>
+                  </tr>
+                  <tr>
+                    <td>Total</td>
+                    <td>{{requests_stats.requests_states["0"]}}</td>
+                    <td>{{requests_stats.requests_states["1"]}}</td>
+                    <td>{{requests_stats.requests_states["2"]}}</td>
+                    <td>{{requests_stats.requests_states["-3"]}}</td>
+                    <td>{{["3", "-1", "-2", "-4"].reduce((x,y) => (parseInt(x)+requests_stats.requests_states[y]))}}</td>
+                  </tr>
+                  <tr>
+                    <td>Mean</td>
+                    <td>{{(requests_stats.requests_states["0"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(requests_stats.requests_states["1"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(requests_stats.requests_states["2"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(requests_stats.requests_states["-3"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(["3", "-1", "-2", "-4"].reduce((x,y) => (parseInt(x)+requests_stats.requests_states[y]))/requests_stats.total).toFixed(3)}}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+<!--
+    PENDING = 0
+    ATTENDED = 1        # It is being attended (its resources are being activated)
+    SERVED = 2          # The request has been fully attended: its resources have been powered on and the request has been freed
+    BLOCKED = 3         # The request could be served, but the scheduler has blocked it (maybe because there are other requests pending from powering on resources)
+    DISSAPEARED = -1    # The request has dissapeared: it was observed (i.e. a job) and now it cannot be observed, but it is not kown if it has been served
+    NOT_SERVED = -2
+    DISCARDED = -3       # The request has been discarded by the server, probably because it has been attended too many times without success
+    UNKNOWN = -4
+-->
+
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     </div>  
@@ -725,7 +839,35 @@ h2 {
       data: {
         hostnames: [],
         states_stats: [],
-        hosts_stats: []
+        hosts_stats: [],
+        requests_stats: {
+          total: 0,
+          time_interval: 0,
+          size_info: {
+            // This is a placeholder
+            min_slots: undefined,
+            max_slots: undefined,
+            accum_slots: 0,
+            min_memory: undefined,
+            max_memory: undefined,
+            accum_memory: 0,
+            min_taskcount: undefined,
+            max_taskcount: undefined,
+            accum_taskcount: 0,
+            max_size: undefined,
+            min_size: undefined,
+          },
+          requests_states: {
+            "0": 0,
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "-1": 0,
+            "-2": 0,
+            "-3": 0,
+            "-4": 0
+          }
+        },
       }
     })
 
@@ -867,8 +1009,8 @@ h2 {
       var url = new URL(window.location.href);
       var from = parseFloat(url.searchParams.get('from'));
       var to = parseFloat(url.searchParams.get('to'));
-      if (!from || from < mintime_avail) from = mintime_avail;
-      if (!to || to > maxtime_avail) to = maxtime_avail;
+      if (!from || from < cluesdata.mintime_avail) from = cluesdata.mintime_avail;
+      if (!to || to > cluesdata.maxtime_avail) to = cluesdata.maxtime_avail;
 
       // Separate host data for each host and calculate the max values for memory and slots number
       var states_stats = {};
@@ -876,12 +1018,12 @@ h2 {
         slots: 0,
         memory: 0
       }
-      var hostnames = Object.keys(cluesdata).sort();
+      var hostnames = Object.keys(cluesdata.hostevents).sort();
       var hosts_stats = [];
       var fewValues = false;
       hostnames.forEach(function (hostname) {
         // We need the data sorted for the rest of our calculations
-        cluesdata[hostname].sort(function (a, b) {
+        cluesdata.hostevents[hostname].sort(function (a, b) {
           if (a.t < b.t) return -1;
           if (a.t == b.t) return 0;
           return 1
@@ -889,18 +1031,18 @@ h2 {
 
         // Get the minimum real value
         var minval_e = undefined;
-        cluesdata[hostname].forEach(function(v) {
+        cluesdata.hostevents[hostname].forEach(function(v) {
           if (minval_e == undefined) minval_e = v;
           if ((v.t > minval_e.t) && (v.t <= from))
             minval_e = v;
         })
 
         // Remove timestamp outliers
-        var valid_timestamps = filterOutliers(cluesdata[hostname].filter( v => v.t >= from && v.t <= to).map(v => v.t));
+        var valid_timestamps = filterOutliers(cluesdata.hostevents[hostname].filter( v => v.t >= from && v.t <= to).map(v => v.t));
         if (valid_timestamps.length == 0) {
-          cluesdata[hostname] = [];
+          cluesdata.hostevents[hostname] = [];
           states_stats[hostname] = new StatesStats(hostname);
-          states_stats[hostname].get_from_hostdata(cluesdata[hostname]);
+          states_stats[hostname].get_from_hostdata(cluesdata.hostevents[hostname]);
           hosts_stats[hostname] = {
             memory_used: new AreaStats([]),
             slots_used: new AreaStats([])
@@ -908,28 +1050,28 @@ h2 {
           fewValues = true;
           return;
         }
-        cluesdata[hostname] = cluesdata[hostname].filter((v) => valid_timestamps.indexOf(v.t) >= 0);
+        cluesdata.hostevents[hostname] = cluesdata.hostevents[hostname].filter((v) => valid_timestamps.indexOf(v.t) >= 0);
 
         // Add "from" and "to" timesteps to the series
-        if (cluesdata[hostname].length>0) {
-          var minval = cluesdata[hostname][0];
-          var maxval = cluesdata[hostname][cluesdata[hostname].length - 1];
+        if (cluesdata.hostevents[hostname].length>0) {
+          var minval = cluesdata.hostevents[hostname][0];
+          var maxval = cluesdata.hostevents[hostname][cluesdata.hostevents[hostname].length - 1];
           if (minval.t > from) {
             minval_e = Object.assign({}, minval_e);
             minval_e.t = from;
-            cluesdata[hostname].unshift(minval_e);
+            cluesdata.hostevents[hostname].unshift(minval_e);
           }
           if (maxval.t < to) {
             maxval = Object.assign({}, maxval);
             maxval.t = to;
-            cluesdata[hostname].push(maxval);
+            cluesdata.hostevents[hostname].push(maxval);
           }
         }
 
         // We need to grab the maximum amount of slots and memory
         var slots_current = 0;
         var memory_current = 0;
-        cluesdata[hostname].forEach(function (v) {
+        cluesdata.hostevents[hostname].forEach(function (v) {
           if (v.slots > slots_current) slots_current = v.slots;
           if (v.memory > memory_current) memory_current = v.memory;
           v.state = states.mapping[v.state];
@@ -942,7 +1084,7 @@ h2 {
 
         // Now we'll calculate the individual stats for each host
         states_stats[hostname] = new StatesStats(hostname, (current_state, current_time) => states.avail.indexOf(current_state.state.toString()) >= 0);
-        states_stats[hostname].get_from_hostdata(cluesdata[hostname]);
+        states_stats[hostname].get_from_hostdata(cluesdata.hostevents[hostname]);
         for (var s in states.names) {
           // Complete the stats, to avoid undefineds in later usage of the stats
           if (states_stats[hostname]._stats_state[s] == undefined) {
@@ -954,14 +1096,91 @@ h2 {
         }
 
         hosts_stats[hostname] = {
-          memory_used: new AreaStats(cluesdata[hostname].map((v) => ({ x: v.t, y: v.memory_used, state: v.state })), (a, b) => (a.y == b.y && a.state == b.state), memory_current, (current, x) => states.avail.indexOf(current.state.toString()) >= 0),
-          slots_used: new AreaStats(cluesdata[hostname].map((v) => ({ x: v.t, y: v.slots_used, state: v.state })), (a, b) => (a.y == b.y && a.state == b.state), slots_current, (current, x) => states.avail.indexOf(current.state.toString()) >= 0)
+          memory_used: new AreaStats(cluesdata.hostevents[hostname].map((v) => ({ x: v.t, y: v.memory_used, state: v.state })), (a, b) => (a.y == b.y && a.state == b.state), memory_current, (current, x) => states.avail.indexOf(current.state.toString()) >= 0),
+          slots_used: new AreaStats(cluesdata.hostevents[hostname].map((v) => ({ x: v.t, y: v.slots_used, state: v.state })), (a, b) => (a.y == b.y && a.state == b.state), slots_current, (current, x) => states.avail.indexOf(current.state.toString()) >= 0)
         }
       })
+
+      /////////////////////////////////////////////
+      // Stats for the requests
+      /////////////////////////////////////////////
+
+      var requests_stats = {
+        total: cluesdata.requests.length,
+        time_period: to - from,
+        size_info: {},
+        requests_states: {
+          "0": 0,
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "-1": 0,
+          "-2": 0,
+          "-3": 0,
+          "-4": 0
+        }
+      }
+
+      var max_r = {
+        min_slots: undefined,
+        max_slots: undefined,
+        accum_slots: 0,
+        min_memory: undefined,
+        max_memory: undefined,
+        accum_memory: 0,
+        min_taskcount: undefined,
+        max_taskcount: undefined,
+        accum_taskcount: 0,
+
+        // The size is for the charts
+        max_size: undefined,
+        min_size: undefined,
+      }
+
+      var time_to_be_served = 0;
+      /*
+    PENDING = 0
+    ATTENDED = 1        # It is being attended (its resources are being activated)
+    SERVED = 2          # The request has been fully attended: its resources have been powered on and the request has been freed
+    BLOCKED = 3         # The request could be served, but the scheduler has blocked it (maybe because there are other requests pending from powering on resources)
+    DISSAPEARED = -1    # The request has dissapeared: it was observed (i.e. a job) and now it cannot be observed, but it is not kown if it has been served
+    NOT_SERVED = -2
+    DISCARDED = -3       # The request has been discarded by the server, probably because it has been attended too many times without success
+    UNKNOWN = -4
+      */
+
+      // We gather the data to get the max and min values
+      cluesdata.requests.forEach(function(r) {
+        if (max_r.min_slots == undefined || r.slots < max_r.min_slots) max_r.min_slots = r.slots;
+        if (max_r.max_slots == undefined || r.slots > max_r.max_slots) max_r.max_slots = r.slots;
+        if (max_r.min_memory == undefined || r.memory < max_r.min_memory) max_r.min_memory = r.memory;
+        if (max_r.max_memory == undefined || r.memory > max_r.max_memory) max_r.max_memory = r.memory;
+        if (max_r.min_taskcount == undefined || r.taskcount < max_r.min_taskcount) max_r.min_taskcount = r.taskcount;
+        if (max_r.max_taskcount == undefined || r.taskcount > max_r.max_taskcount) max_r.max_taskcount = r.taskcount;
+
+        // TODO: revise: should we accumulate the total amount of memory or not?
+        max_r.accum_memory += r.memory * r.taskcount;
+        max_r.accum_slots += r.slots * r.taskcount;
+        max_r.accum_taskcount += r.taskcount;
+
+        if (r.state !== undefined && r.state !== null && r.state != 'null') {
+          requests_stats.requests_states[r.state]++;
+          if (r.state == 2) {
+            // if the request has been served
+            time_to_be_served += r.t_state - r.t_created;
+          }
+          if (r.state < 0) {
+            // if the request could not be served
+          }
+        }
+      })
+
+      requests_stats.size_info = max_r;
 
       app.hostnames = hostnames;
       app.states_stats = states_stats;
       app.hosts_stats = hosts_stats;
+      app.requests_stats = requests_stats;
 
       var color_array = randomColor({ count: hostnames.length, format: 'rgba', alpha: 0.8, luminosity: 'bright' });
       var i = 0;
@@ -983,7 +1202,7 @@ h2 {
       hostnames.forEach(function (hostname) {
         var thishost_slots = {
           label: ["Slots in " + hostname],
-          data: cluesdata[hostname].map((t) => ({ x: t.t, y: (states.avail.indexOf(t.state.toString()) >= 0 ? t.slots : 0) })),
+          data: cluesdata.hostevents[hostname].map((t) => ({ x: t.t, y: (states.avail.indexOf(t.state.toString()) >= 0 ? t.slots : 0) })),
           steppedLine: true,
           spanGaps: true,
           pointRadius: 0,
@@ -994,7 +1213,7 @@ h2 {
         }
         var thishost_slots_used = {
           label: ["Slots used in " + hostname],
-          data: cluesdata[hostname].map((t) => ({ x: t.t, y: t.slots_used })),
+          data: cluesdata.hostevents[hostname].map((t) => ({ x: t.t, y: t.slots_used })),
           steppedLine: true,
           spanGaps: false,
           pointRadius: 0,
@@ -1003,7 +1222,7 @@ h2 {
         }
         var thishost_memory = {
           label: ["Memory in " + hostname],
-          data: cluesdata[hostname].map((t) => ({ x: t.t, y: (states.avail.indexOf(t.state.toString()) >= 0 ? t.memory : 0) })),
+          data: cluesdata.hostevents[hostname].map((t) => ({ x: t.t, y: (states.avail.indexOf(t.state.toString()) >= 0 ? t.memory : 0) })),
           steppedLine: true,
           spanGaps: false,
           pointRadius: 0,
@@ -1013,7 +1232,7 @@ h2 {
         }
         var thishost_memory_used = {
           label: ["Memory used in " + hostname],
-          data: cluesdata[hostname].map((t) => ({ x: t.t, y: t.memory_used })),
+          data: cluesdata.hostevents[hostname].map((t) => ({ x: t.t, y: t.memory_used })),
           steppedLine: true,
           spanGaps: false,
           pointRadius: 0,
@@ -1047,7 +1266,7 @@ h2 {
       ///////////////////////////////////////////////////
       var state_values = []
       hostnames.forEach(function (hostname) {
-        cluesdata[hostname].forEach(function (data) {
+        cluesdata.hostevents[hostname].forEach(function (data) {
           if (state_values[data.t] == undefined) {
             state_values[data.t] = [];
             for (var i in states.names)
@@ -1078,31 +1297,14 @@ h2 {
       })
 
       ///////////////////////////////////////////////////
-      // REQUESTS
+      // REQUESTS charts
       ///////////////////////////////////////////////////
-      var max_r = {
-        min_slots: undefined,
-        max_slots: undefined,
-        min_memory: undefined,
-        max_memory: undefined,
-        max_size: undefined,
-        min_size: undefined
-      }
-
-      // We gather the data to normalize the slots and memory between 0 and 1
-      requests.forEach(function(r) {
-        if (max_r.min_slots == undefined || r.slots < max_r.min_slots) max_r.min_slots = r.slots;
-        if (max_r.max_slots == undefined || r.slots > max_r.max_slots) max_r.max_slots = r.slots;
-        if (max_r.min_memory == undefined || r.memory < max_r.min_memory) max_r.min_memory = r.memory;
-        if (max_r.max_memory == undefined || r.memory > max_r.max_memory) max_r.max_memory = r.memory;
-      })
-
       var diff_slots = max_r.max_slots - max_r.min_slots;
       var diff_memory = max_r.max_memory - max_r.min_memory;
       if (diff_slots == 0) diff_slots = 1;
       if (diff_memory == 0) diff_memory = 1;
 
-      requests = requests.map(function(r) {
+      cluesdata.requests = cluesdata.requests.map(function(r) {
         r.n_slots = (r.slots - max_r.min_slots) * 1.0 / diff_slots;
         r.n_memory = (r.memory - max_r.min_memory) * 1.0 / diff_memory;
 
@@ -1120,7 +1322,7 @@ h2 {
       // Now we put each request in the y axis to show the number of requests at each timestamp
       //  * probably this will not have much sense, but in the simulator it has; at this time the
       //    requests are accumulated in per-second slots
-      requests.sort(function (a, b) {
+      cluesdata.requests.sort(function (a, b) {
           if (a.t_created < b.t_created) return -1;
           if (a.t_created == b.t_created) return 0;
           return 1
@@ -1128,7 +1330,7 @@ h2 {
 
       var cur_t = undefined;
       var cur_i = 0;
-      requests = requests.map(function(r) {
+      cluesdata.requests = cluesdata.requests.map(function(r) {
         if (cur_t == undefined || cur_t != Math.round(r.t_created)) {
           cur_t = Math.round(r.t_created);
           cur_i = 0;
@@ -1147,19 +1349,18 @@ h2 {
 
       var requests_dataset = {
         label: ["Requests" ],
-        data: requests.map((r) => ({x: r.t_created, y: r.t_i, r: r.size * 5.0, slots: r.slots, memory: r.memory, tasks: r.taskcount})),
+        data: cluesdata.requests.map((r) => ({x: r.t_created, y: r.t_i, r: r.size * 5.0, slots: r.slots, memory: r.memory, tasks: r.taskcount})),
         steppedLine: false,
         spanGaps: false,
         pointRadius: 2,
         yAxisID: "requests",
         borderWidth: 2,
-        backgroundColor: "rgba(150,255,150,0.1)",
-        borderColor: "rgba(50,150,50,0.5)",
+        backgroundColor: "rgba(100,255,100,0.3)",
+        borderColor: "rgba(255,100,50,0.7)",
         type: "bubble",
         fill: false,
         showLine: false
       }
-      console.log(requests_dataset);
 
       ///////////////////////////////////////////////////
       // Create the charts
