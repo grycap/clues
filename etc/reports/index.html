@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="https://bootswatch.com/4/yeti/bootstrap.min.css">
 
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
@@ -606,7 +607,7 @@ h2 {
                         <td>{{hosts_stats[host].memory_used.mean_accepted.toFixed(2)}}</td>
                       </tr>
                       <tr>
-                        <th colspan="3">Time in memory intervals</th>
+                        <th colspan="3">Time in memory intervals <i data-toggle="tooltip" title="Time in which the node has been observed to have its memory used according to quartile intervals (e.g. in a 4 Gb. node, the time using 1Gb, 2Gb, 3Gb or 4 Gb)" class="fa fa-question-circle" aria-hidden="true"></i></th>
                       </tr>
                       <tr>
                         <td></td>
@@ -630,7 +631,7 @@ h2 {
                         <td>{{hosts_stats[host].slots_used.mean_accepted.toFixed(2)}}</td>
                       </tr>
                       <tr>
-                        <th colspan="3">Time in slots intervals</th>
+                        <th colspan="3">Time in slots intervals <i data-toggle="tooltip" title="Time in which the node has been observed to have its cores used according to quartile intervals (e.g. in a 4 core node, the time using 1 core, 2 cores, 3 cores or 4 cores)" class="fa fa-question-circle" aria-hidden="true"></i></th>
                       </tr>
                       <tr>
                         <td></td>
@@ -643,7 +644,7 @@ h2 {
                   </table>
 
                   <h5 class="card-title">time in each state</h5>
-                  <h6 class="card-subtitle mb-2 text-muted">while powered on</h6>
+                  <h6 class="card-subtitle mb-2 text-muted">while powered on <i data-toggle="tooltip" title="This time is only while powered on, so the possible states are: idle, used or on-err" class="fa fa-question-circle" aria-hidden="true"></i></h6>
                   <div class="row">
                     <div class="col-4 offset-2">
                       <piechart :duration="states_stats[host]._stats_time['0']" :percentage="states_stats[host]._stats_pct_time['0']"
@@ -762,36 +763,19 @@ h2 {
                   </tr>
                 </tbody>
               </table>
-              <h5 class="card-title">States for the requests</h5>
+              <h5 class="card-title">Stat for the requests</h5>
               <table class="table table-sm">
                 <tbody>
                   <tr>
+                    <th colspan="6">States in which the requests leave CLUES</th>
+                  </tr>
+                  <tr>
                     <td></td>
-                    <td>Pending</td>
-                    <td>Attended</td>
-                    <td>Served</td>
-                    <td>Discarded</td>
-                    <td>Other</td>
-                  </tr>
-                  <tr>
-                    <td>Total</td>
-                    <td>{{requests_stats.requests_states["0"]}}</td>
-                    <td>{{requests_stats.requests_states["1"]}}</td>
-                    <td>{{requests_stats.requests_states["2"]}}</td>
-                    <td>{{requests_stats.requests_states["-3"]}}</td>
-                    <td>{{["3", "-1", "-2", "-4"].reduce((x,y) => (parseInt(x)+requests_stats.requests_states[y]))}}</td>
-                  </tr>
-                  <tr>
-                    <td>Mean</td>
-                    <td>{{(requests_stats.requests_states["0"]/requests_stats.total).toFixed(3)}}</td>
-                    <td>{{(requests_stats.requests_states["1"]/requests_stats.total).toFixed(3)}}</td>
-                    <td>{{(requests_stats.requests_states["2"]/requests_stats.total).toFixed(3)}}</td>
-                    <td>{{(requests_stats.requests_states["-3"]/requests_stats.total).toFixed(3)}}</td>
-                    <td>{{(["3", "-1", "-2", "-4"].reduce((x,y) => (parseInt(x)+requests_stats.requests_states[y]))/requests_stats.total).toFixed(3)}}</td>
-                  </tr>
-                </tbody>
-              </table>
-
+                    <td>Pending <i data-toggle="tooltip" title="Requests that are still pending (not attended yet)" class="fa fa-question-circle" aria-hidden="true"></i></td>
+                    <td>Attended <i data-toggle="tooltip" title="Requests that have been attended (the resources requested are being powered on)" class="fa fa-question-circle" aria-hidden="true"></i></td>
+                    <td>Served <i data-toggle="tooltip" title="Requests that have been fully attended (i.e. CLUES has powered on resources for them and the jobs have been released to the LRMS)" class="fa fa-question-circle" aria-hidden="true"></i></td>
+                    <td>Discarded <i data-toggle="tooltip" title="Requests that have been discarded and they have been released to the LRMS (e.g. CLUES cannot find enough resources to power on)" class="fa fa-question-circle" aria-hidden="true"></i></td>
+                    <td>Other <i data-toggle="tooltip" title="Other states: Not served (the request exceeded the max. time to wait for resources), Blocked (the requests are pending from previous requests), Dissapeared (the requests have dissapeared in CLUES) and Unknown (Other cases)" class="fa fa-info-circle" aria-hidden="true"></i></td>
 <!--
     PENDING = 0
     ATTENDED = 1        # It is being attended (its resources are being activated)
@@ -803,6 +787,73 @@ h2 {
     UNKNOWN = -4
 -->
 
+
+                  </tr>
+                  <tr>
+                    <td>Total</td>
+                    <td>{{requests_stats.requests_states["0"]}}</td>
+                    <td>{{requests_stats.requests_states["1"]}}</td>
+                    <td>{{requests_stats.requests_states["2"]}}</td>
+                    <td>{{requests_stats.requests_states["-3"]}}</td>
+                    <td>{{["3", "-1", "-2", "-4"].reduce((x,y) => (x+requests_stats.requests_states[y]), 0)}}</td>
+                  </tr>
+                  <tr>
+                    <td>Percentage</td>
+                    <td>{{(100 * requests_stats.requests_states["0"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(100 * requests_stats.requests_states["1"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(100 * requests_stats.requests_states["2"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(100 * requests_stats.requests_states["-3"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(100 * ["3", "-1", "-2", "-4"].reduce((x,y) => (x+requests_stats.requests_states[y]), 0)/requests_stats.total).toFixed(3)}}</td>
+                  </tr>
+                  <tr>
+                    <td>Total time</td>
+                    <td>{{requests_stats.requests_times.accum["0"].toFixed(3)}}</td>
+                    <td>{{requests_stats.requests_times.accum["1"].toFixed(3)}}</td>
+                    <td>{{requests_stats.requests_times.accum["2"].toFixed(3)}}</td>
+                    <td>{{requests_stats.requests_times.accum["-3"].toFixed(3)}}</td>
+                    <td>{{["3", "-1", "-2", "-4"].reduce((x,y) => (x+requests_stats.requests_times.accum[y]), 0).toFixed(3)}}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <table class="table table-sm">
+                <tbody>
+                  <!--
+                    tiempo "used" / # requests
+                    tiempo de request en clues (hasta un estado distinto a undefined) (maximo, minimo, medio)
+                    tiempo de request en clues hasta "served" (maximo, minimo, medio)
+                  -->
+                  <tr>
+                    <th colspan="2">Time to serve the requests <i data-toggle="tooltip" title="The requests considered are those that have finalized in SERVED state" class="fa fa-question-circle" aria-hidden="true"></i></th>
+                  </tr>
+                  <tr>
+                    <td>Mean time to be served</td>
+                    <td>{{requests_stats.requests_times.served.mean}}</td>
+                  </tr>
+                  <tr>
+                    <td>Maximum time to be served</td>
+                    <td>{{requests_stats.requests_times.served.max}}</td>
+                  </tr>
+                  <tr>
+                    <td>Minimum time to be served</td>
+                    <td>{{requests_stats.requests_times.served.min}}</td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">Time of the requests in CLUES</th>
+                  </tr>
+                  <tr>
+                    <td>Mean time in CLUES <i data-toggle="tooltip" title="The request get to any state" class="fa fa-question-circle" aria-hidden="true"></i></td>
+                    <td>{{requests_stats.requests_times.in_clues.mean}}</td>
+                  </tr>
+                  <tr>
+                    <td>Maximum time in CLUES</td>
+                    <td>{{requests_stats.requests_times.in_clues.max}}</td>
+                  </tr>
+                  <tr>
+                    <td>Minimum time in CLUES</td>
+                    <td>{{requests_stats.requests_times.in_clues.min}}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -858,14 +909,24 @@ h2 {
             min_size: undefined,
           },
           requests_states: {
-            "0": 0,
-            "1": 0,
-            "2": 0,
-            "3": 0,
-            "-1": 0,
-            "-2": 0,
-            "-3": 0,
-            "-4": 0
+            "0": 0, "1": 0, "2": 0, "3": 0, "-1": 0, "-2": 0, "-3": 0, "-4": 0 
+          },
+          requests_times: {
+            accum: {
+            "0": 0, "1": 0, "2": 0, "3": 0, "-1": 0, "-2": 0, "-3": 0, "-4": 0 
+            },
+            max: {
+            "0": undefined, "1": undefined, "2": undefined, "3": undefined, "-1": undefined, "-2": undefined, "-3": undefined, "-4": undefined
+            },
+            min: {
+            "0": undefined, "1": undefined, "2": undefined, "3": undefined, "-1": undefined, "-2": undefined, "-3": undefined, "-4": undefined
+            },
+            in_clues: {
+              max: undefined, min: undefined, mean: undefined
+            },
+            served: {
+              max: undefined, min: undefined, mean: undefined
+            }
           }
         },
       }
@@ -1011,7 +1072,9 @@ h2 {
       var to = parseFloat(url.searchParams.get('to'));
       if (!from || from < cluesdata.mintime_avail) from = cluesdata.mintime_avail;
       if (!to || to > cluesdata.maxtime_avail) to = cluesdata.maxtime_avail;
-
+      var from_ms = from * 1000;
+      var to_ms = to * 1000;
+      
       // Separate host data for each host and calculate the max values for memory and slots number
       var states_stats = {};
       var total_v = {
@@ -1099,6 +1162,7 @@ h2 {
           memory_used: new AreaStats(cluesdata.hostevents[hostname].map((v) => ({ x: v.t, y: v.memory_used, state: v.state })), (a, b) => (a.y == b.y && a.state == b.state), memory_current, (current, x) => states.avail.indexOf(current.state.toString()) >= 0),
           slots_used: new AreaStats(cluesdata.hostevents[hostname].map((v) => ({ x: v.t, y: v.slots_used, state: v.state })), (a, b) => (a.y == b.y && a.state == b.state), slots_current, (current, x) => states.avail.indexOf(current.state.toString()) >= 0)
         }
+        console.log(hosts_stats[hostname])
       })
 
       /////////////////////////////////////////////
@@ -1110,14 +1174,24 @@ h2 {
         time_period: to - from,
         size_info: {},
         requests_states: {
-          "0": 0,
-          "1": 0,
-          "2": 0,
-          "3": 0,
-          "-1": 0,
-          "-2": 0,
-          "-3": 0,
-          "-4": 0
+          "0": 0, "1": 0, "2": 0, "3": 0, "-1": 0, "-2": 0, "-3": 0, "-4": 0 
+        },
+        requests_times: {
+          accum: {
+          "0": 0, "1": 0, "2": 0, "3": 0, "-1": 0, "-2": 0, "-3": 0, "-4": 0 
+          },
+          max: {
+          "0": undefined, "1": undefined, "2": undefined, "3": undefined, "-1": undefined, "-2": undefined, "-3": undefined, "-4": undefined
+          },
+          min: {
+          "0": undefined, "1": undefined, "2": undefined, "3": undefined, "-1": undefined, "-2": undefined, "-3": undefined, "-4": undefined
+          },
+          in_clues: {
+            max: undefined, min: undefined, mean: undefined
+          },
+          served: {
+            max: undefined, min: undefined, mean: undefined
+          }
         }
       }
 
@@ -1137,7 +1211,6 @@ h2 {
         min_size: undefined,
       }
 
-      var time_to_be_served = 0;
       /*
     PENDING = 0
     ATTENDED = 1        # It is being attended (its resources are being activated)
@@ -1165,15 +1238,60 @@ h2 {
 
         if (r.state !== undefined && r.state !== null && r.state != 'null') {
           requests_stats.requests_states[r.state]++;
-          if (r.state == 2) {
-            // if the request has been served
-            time_to_be_served += r.t_state - r.t_created;
-          }
-          if (r.state < 0) {
-            // if the request could not be served
-          }
+
+          // Consider only the current interval
+          if (r.t_state < from) r.t_state = from;
+          if (r.t_state > to) r.t_state = to;
+          if (r.t_created < from) r.t_created = from;
+          if (r.t_created > to) r.t_created = to;
+
+          var req_time = r.t_state - r.t_created;
+          requests_stats.requests_times.accum[r.state]+= req_time;
+          if (requests_stats.requests_times.max[r.state] == undefined || req_time > requests_stats.requests_times.max[r.state]) 
+            requests_stats.requests_times.max[r.state] = req_time;
+          if (requests_stats.requests_times.min[r.state] == undefined || req_time < requests_stats.requests_times.min[r.state]) 
+            requests_stats.requests_times.min[r.state] = req_time;
         }
       })
+
+      // Now process the time stats
+      {
+        // Will get the max, min and mean in CLUES and to be served
+
+        const STATES=["0", "1", "2", "3", "-1", "-2", "-3", "-4" ];
+        const STATES_SERVED=["2"];
+
+        function get_stats(requests_stats, STATES) {
+          var total = 0;
+          var req_times = {
+            mean: 0,
+            max: undefined,
+            min: undefined,
+          };
+          STATES.forEach(function (s) {
+            if (requests_stats.requests_states[s] != 0) {
+              req_times.mean += requests_stats.requests_times.accum[s];
+              total += requests_stats.requests_states[s];
+              if (req_times.max == undefined || requests_stats.requests_times.max[s] > req_times.max)
+                req_times.max = requests_stats.requests_times.max[s];
+              if (req_times.min == undefined || requests_stats.requests_times.min[s] < req_times.min)
+                req_times.min = requests_stats.requests_times.min[s];
+            }
+          })
+          if (total > 0) {
+            req_times.mean = (req_times.mean / total).toFixed(3);
+            req_times.max = req_times.max.toFixed(3);
+            req_times.min = req_times.min.toFixed(3);
+          } else {
+            req_times.mean = "Not avail";
+            req_times.max = "Not avail";
+            req_times.min = "Not avail";
+          }
+          return req_times;
+        }
+        requests_stats.requests_times.in_clues = get_stats(requests_stats, STATES);
+        requests_stats.requests_times.served = get_stats(requests_stats, STATES_SERVED);
+      }
 
       requests_stats.size_info = max_r;
 
@@ -1181,6 +1299,11 @@ h2 {
       app.states_stats = states_stats;
       app.hosts_stats = hosts_stats;
       app.requests_stats = requests_stats;
+
+      // After the data has changed, the tooltips must be updated (because after the new DOM renders is when the tooltips will be created)
+      Vue.nextTick(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+      })    
 
       var color_array = randomColor({ count: hostnames.length, format: 'rgba', alpha: 0.8, luminosity: 'bright' });
       var i = 0;
@@ -1458,6 +1581,9 @@ h2 {
         e.preventDefault();
         location.reload();
       })
+    })
+    $(function() {
+      $('[data-toggle="tooltip"]').tooltip();
     })
     </script>
 </body>

@@ -158,7 +158,6 @@ const AreaStats = function(dataset, equality_fnc = function (a,b) { return a == 
   }
 
   this.add_data = function(data) {
-
     if (data.y > this.max)
       throw data.y + " is greather than the max expected: " + this.max;
 
@@ -178,14 +177,13 @@ const AreaStats = function(dataset, equality_fnc = function (a,b) { return a == 
           this.intervals[category] += (data.x - this.current_value.x);
         }
       }
-
       this.current_value = data;
     }
     this.end_x = data.x;
   }
 
   this.end_serie = function() {
-    if (this.current_state !== undefined && this._accept_interval(this.current_value, this.end_x)) {
+    if (this.current_value !== undefined && this._accept_interval(this.current_value, this.end_x)) {
       this.accepted_x += (this.end_x - this.current_value.x)
       this.area += (this.end_x - this.current_value.x) * this.current_value.y;
 
