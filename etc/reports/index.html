@@ -689,6 +689,22 @@ h2 {
                         title="unknown"></piechart>
                     </div>
                   </div>
+                  <h5 class="card-title">mean time in state</h5>
+                  <h6 class="card-subtitle mb-2 text-muted">per state arrival <i data-toggle="tooltip" title="the total time in each state divided per the times that the node has been in that state (e.g. mean time to power on or off)" class="fa fa-question-circle" aria-hidden="true"></i></h6>
+                  <div class="row">
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr>
+                          <th>state</th>
+                          <th>mean time (secs.)</th>
+                        </tr>
+                        <tr v-for="(state, id) in states.names">
+                          <th>{{state}}</th>
+                          <td>{{states_stats[host]._stats_state[id]!=0?states_stats[host]._stats_time[id]/states_stats[host]._stats_state[id]/1000:"-"}}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
                 <div class="card-footer">
                   <small class="text-muted">(*) memory and slots stats depend on the monitoring frequency of CLUES</small>
@@ -1157,12 +1173,10 @@ h2 {
             states_stats[hostname]._stats_pct_time_total[s] = 0;
           }
         }
-
         hosts_stats[hostname] = {
           memory_used: new AreaStats(cluesdata.hostevents[hostname].map((v) => ({ x: v.t, y: v.memory_used, state: v.state })), (a, b) => (a.y == b.y && a.state == b.state), memory_current, (current, x) => states.avail.indexOf(current.state.toString()) >= 0),
           slots_used: new AreaStats(cluesdata.hostevents[hostname].map((v) => ({ x: v.t, y: v.slots_used, state: v.state })), (a, b) => (a.y == b.y && a.state == b.state), slots_current, (current, x) => states.avail.indexOf(current.state.toString()) >= 0)
         }
-        console.log(hosts_stats[hostname])
       })
 
       /////////////////////////////////////////////
