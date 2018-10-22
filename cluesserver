@@ -135,6 +135,8 @@ try:
         
         def reports(self, url, secret):
             filename = "/".join(url).lstrip('/').replace('../', '')
+            if filename == '':
+                filename='index.html'
             _LOGGER.debug("web request: %s" % filename)
             if filename == "cluesdata.js":
                 hostdata, min_t, max_t = clueslib.reports.get_reports_data(_CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
