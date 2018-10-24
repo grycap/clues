@@ -245,6 +245,21 @@ The ```ipmi.hosts``` should be located in the folder ```/etc/clues2/``` and cont
 
 The you should adjust the commandline for powering on and off the working nodes, using IPMI. In the default configuration we use the common ```ipmitool``` app and we use a passwordless connection to the IPMI interface. To adjust the commandline you can use %%a to substitute the IP address and %%h to substitute the hostname
 
+## Reports
+CLUES has a report generator that has been created to help to monitor your infrastructure, regarding to CLUES.
+
+The reports that generate CLUES provide the next information:
+- Graphs that show the state of the nodes during a period of time.
+- Graphs of usage of slots and memory (per node, and accumulated).
+- Details about the usage of each node.
+- Stats about the requests that CLUES have received and attended.
+
+CLUES provide reports in the form of web pages. So you will need a browser to open these reports. Once opened, the reports web page will look like the next one:
+
+![The CLUES reports web page](docs/img/general1.png)
+
+Refer to the [Reports documentation](docs/reports.md) to get more information about how to create the reports.
+
 ## Troubleshooting
 
 You can get information in the CLUES log file (i.e. ```/var/log/clues2/clues2.log```). But you can also set the  ```LOG_FILE``` to a empty value in the ```/etc/clues2/clues2.cfg``` file and execute CLUES as 

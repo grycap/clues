@@ -14,7 +14,7 @@ CLUES provide reports in the form of web pages. So you will need a browser to op
 ![The CLUES reports web page](img/general1.png)
 
 In the left part, it has a basic menu that contains 
-1. A link to the graphsical reports.
+1. A link to the graphical reports.
 1. Direct links to the stats of each of the hosts in the infrastucture.
 1. Direct link to the stats about the requests that CLUES has handled.
 1. A time filter to delimit the time interval to which the reports are generated.
