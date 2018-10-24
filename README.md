@@ -245,6 +245,27 @@ The ```ipmi.hosts``` should be located in the folder ```/etc/clues2/``` and cont
 
 The you should adjust the commandline for powering on and off the working nodes, using IPMI. In the default configuration we use the common ```ipmitool``` app and we use a passwordless connection to the IPMI interface. To adjust the commandline you can use %%a to substitute the IP address and %%h to substitute the hostname
 
+## Hooks system
+
+The hooks mechanism of CLUES enables to call specific applications when different events happen in the system. E.g. when a node is powered on or off. One immediate application of this system is to send an e-mail to the admin when a node has failed to be powered on.
+
+Hooks are custom external scripts (or applications) that are executed when some events happen. CLUES includes the possibility to define the next hooks:
+
+- Prior to execute the power_on action: ./PRE_POWERON
+- After the power_on action has been executed: ./POST_POWERON <0: failed | 1: succeded>
+- Prior to execute the power_off action: ./PRE_POWEROFF
+- After the power_off action has been executed: ./POST_POWEROFF <0: failed | 1: succeded>
+- The state of the node has unexpectedly changed from OFF to ON: ./UNEXPECTED_POWERON
+- The state of the node has unexpectedly changed from ON to OFF: ./UNEXPECTED_POWEROFF
+- When a node has been tried to be powered off, but after a time is still detected as ON: ./ONERR
+- When a node has been tried to be powered on, but after a time is still detected as OFF: ./OFFERR
+- When a node is finally detected to be ON after it has been requested to be powered on: ./POWEREDON
+- When a node is finally detected to be OFF after it has been requested to be powered off: ./POWEREDOFF
+- When a node has been missing by the monitoring system: ./UNKNOWN
+- When a node gets the idle state from the used state: ./IDLE
+- When a node gets the used state from the idle state: ./USED
+- When a request for resources is queued in the system: ./REQUEST <; separated specific requests expressions>
+
 ## Reports
 CLUES has a report generator that has been created to help to monitor your infrastructure, regarding to CLUES.
 
