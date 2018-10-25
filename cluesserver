@@ -20,7 +20,6 @@ import sys
 import time
 import json
 import clueslib.reports
-from clueslib.configlib import _CONFIGURATION_CLUES, _CONFIGURATION_GENERAL
 
 _ERROR_IMPORTING=None
 
@@ -139,8 +138,8 @@ try:
                 filename='index.html'
             _LOGGER.debug("web request: %s" % filename)
             if filename == "cluesdata.js":
-                hostdata, min_t, max_t = clueslib.reports.get_reports_data(_CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
-                requests, min_t_r, max_t_r = clueslib.reports.get_requests_data(_CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
+                hostdata, min_t, max_t = clueslib.reports.get_reports_data(configserver._CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
+                requests, min_t_r, max_t_r = clueslib.reports.get_requests_data(configserver._CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
                 if hostdata is None:
                     return "failed to get data from the database"
                 else:
@@ -149,11 +148,11 @@ try:
                     result = {"hostevents":hostdata,"requests":requests, "mintime_avail": min_t, "maxtime_avail": max_t}
                     return "var cluesdata=%s;" % json.dumps(result)
             else:
-                if _CONFIGURATION_GENERAL.PATH_REPORTS_WEB == "":
+                if configserver._CONFIGURATION_GENERAL.PATH_REPORTS_WEB == "":
                     return "reports are deactivated"
 
                 import os
-                filename = os.path.realpath("%s/%s" % (_CONFIGURATION_GENERAL.PATH_REPORTS_WEB, filename))
+                filename = os.path.realpath("%s/%s" % (configserver._CONFIGURATION_GENERAL.PATH_REPORTS_WEB, filename))
                 data=""
                 try:
                     filehandler = open(filename, 'r')
