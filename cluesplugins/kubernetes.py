@@ -105,7 +105,7 @@ class lrms(LRMS):
 
     def _get_memory_in_bytes(self, str_memory):
         if str_memory.strip()[-2:] in ['Mi', 'Gi', 'Ki', 'Ti']:
-            unit = str_memory.strip()[-2:][1]
+            unit = str_memory.strip()[-2:][0]
             memory = int(str_memory.strip()[:-2])
         elif str_memory.strip()[-1:] in ['M', 'G', 'K', 'T']:
             unit = str_memory.strip()[-1:]
