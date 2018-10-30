@@ -104,22 +104,23 @@ class lrms(LRMS):
         LRMS.__init__(self, "KUBERNETES_%s" % self._server_url)
 
     def _get_memory_in_bytes(self, str_memory):
-        if str_memory.strip()[-2:] in ['Mi', 'Gi', 'Ki', 'Ti']:
+        str_memory = str_memory.lower()
+        if str_memory.strip()[-2:] in ['mi', 'gi', 'ki', 'ti']:
             unit = str_memory.strip()[-2:][0]
             memory = int(str_memory.strip()[:-2])
-        elif str_memory.strip()[-1:] in ['M', 'G', 'K', 'T']:
+        elif str_memory.strip()[-1:] in ['m', 'g', 'k', 't']:
             unit = str_memory.strip()[-1:]
             memory = int(str_memory.strip()[:-1])
         else:
             return int(str_memory)
 
-        if unit == 'K':
+        if unit == 'k':
             memory *= 1024
-        elif unit == 'M':
+        elif unit == 'm':
             memory *= 1024 * 1024
-        elif unit == 'G':
+        elif unit == 'g':
             memory *= 1024 * 1024 * 1024
-        elif unit == 'T':
+        elif unit == 't':
             memory *= 1024 * 1024 * 1024 * 1024
         return memory
 
