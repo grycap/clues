@@ -612,7 +612,7 @@ h2 {
                       <tr>
                         <td></td>
                         <td colspan=2>
-                          <minibarchart :labels="[1,2,3,4].map((x)=>('<='+hosts_stats[host].memory_used._divider*x + 'Mb'))"
+                          <minibarchart :labels="[1,2,3,4].map((x)=>('<='+hosts_stats[host].memory_used._divider*x))"
                             :values="hosts_stats[host].memory_used.intervals.slice(0).map((x)=>(x/1000.0))"></minibarchart>
                             
                         </td>

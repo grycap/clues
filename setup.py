@@ -92,6 +92,14 @@ setup(name='CLUES',
             'etc/conf.d/plugin-ipmi.cfg-example',
             'etc/conf.d/plugin-mesos.cfg-example',
             'etc/conf.d/schedulers.cfg-example']),
+        ('/etc/clues2/reports/', [
+            'etc/reports/cluescharts.js',
+            'etc/reports/cluesdata.js',
+            'etc/reports/cluesstats.js',
+            'etc/reports/minibarchart.js',
+            'etc/reports/piechart.js',
+            'etc/reports/randomColor.js',
+            'etc/reports/index.html']),
         ('/etc/logrotate.d/', [
             'etc/clues-logrotate'
             ]),
