@@ -47,9 +47,9 @@ class HookSystem:
             command = [ command ] + parameters
             timeout = _CONFIGURATION_HOOKS.TIMEOUT_COMMAND
             if timeout is not None and timeout > 0:
-                result, output = cpyutils.runcommand.runcommand(command, timeout = timeout, cwd = workingfolder)
+                result, output = cpyutils.runcommand.runcommand(command, timeout = timeout, cwd = workingfolder, shell = False)
             else:
-                result, output = cpyutils.runcommand.runcommand(command, cwd = workingfolder)
+                result, output = cpyutils.runcommand.runcommand(command, cwd = workingfolder, shell = False)
 
             if result:
                 _LOGGER.debug("ouput of command %s:\n%s" % (command, output))
