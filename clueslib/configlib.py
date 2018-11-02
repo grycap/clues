@@ -102,7 +102,8 @@ except:
             "LOG_FILE":"",
             "LOG_LEVEL":"debug",
             "LRMS_CLASS": "",
-            "POWERMANAGER_CLASS":""
+            "POWERMANAGER_CLASS":"",
+            "PATH_REPORTS_WEB": ""
         },
         callback = ConfigGeneral.parseconfig
     )

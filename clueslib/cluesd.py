@@ -79,7 +79,8 @@ class DBSystem(DBSystem_dummy):
     def _create_db(self):
         result1, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS hostdata(name varchar(128) PRIMARY KEY, enabled bool)", True)
         result2, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS host_monitoring(name varchar(128), timestamp_state INTEGER, slots_count INTEGER, slots_free INTEGER, memory_total INTEGER, memory_free INTEGER, state INTEGER, timestamp INTEGER, x INTEGER PRIMARY KEY)", True)
-        return (result1 and result2)
+        result3, _, _ = self._db.sql_query("CREATE TABLE IF NOT EXISTS requests(reqid varchar, timestamp_created INTEGER, timestamp_state INTEGER, state INTEGER, slots INTEGER, memory INTEGER, expressions varchar, taskcount INTEGER, maxtaskspernode INTEGER, jobid varchar, nodes varchar, x INTEGER PRIMARY KEY)", True)
+        return (result1 and result2 and result3)
 
     def enable_host(self, host, enable = True):
         if not self._get_hosts(): return False
@@ -109,7 +110,28 @@ class DBSystem(DBSystem_dummy):
         
         if host_data.name not in self._hosts:
             self.enable_host(host_data.name, True)
-        
+
+    def store_request_info(self, request):
+        import json
+        result, _, _ = self._db.sql_query("INSERT INTO requests(reqid, timestamp_created, timestamp_state, state, slots, memory, expressions, taskcount, maxtaskspernode, jobid, nodes) VALUES (\"%s\", %s, %s, %d, %d, %d, '%s', %d, %d, \"%s\", '%s')" % \
+        (request.id, \
+        request.timestamp_created, \
+        request.timestamp_state, \
+        request.state, \
+        request.resources.resources.slots, \
+        request.resources.resources.memory, \
+        json.dumps(request.resources.resources.requests), \
+        request.resources.taskcount, \
+        request.resources.maxtaskspernode, \
+        request.job_id if request.job_id is not None else "null", \
+        json.dumps(request.job_nodes_ids)), True)
+        return result
+
+    def update_request_info(self, request):
+        result, _, _ = self._db.sql_query("UPDATE requests SET timestamp_state = %d, state = %d WHERE reqid = \"%s\"" % \
+        ( request.timestamp_state, request.state, request.id ), True)
+        return result
+
     def retrieve_latest_monitoring_data(self):
         result, row_count, rows = self._db.sql_query("select max(timestamp), m.*, d.enabled from host_monitoring as m left join hostdata as d on m.name=d.name group by m.name")
         _nodes = collections.OrderedDict()
@@ -210,6 +232,7 @@ class CluesDaemon:
 
     def request(self, request):
         hooks.HOOKS.request(request)
+        self._db_system.store_request_info(request)
         self._requests_queue.append(request)
         _LOGGER.debug("new request: %s" % request)
         # cpyutils.eventloop.get_eventloop().add_event(schedulers.config_scheduling.PERIOD_SCHEDULE, "CONTROL EVENT - the request will be scheduled", stealth = True)
@@ -274,8 +297,8 @@ class CluesDaemon:
             nodeinfo = node.get_nodeinfo()
 
             if n_id in self._lrms_nodelist:
-                _, state_changed = self._lrms_nodelist[n_id].update_info(nodeinfo)
-                if state_changed:
+                _, state_changed, resources_changed = self._lrms_nodelist[n_id].update_info(nodeinfo)
+                if state_changed or resources_changed:
                     nodes_changed.append(n_id)
             else:
                 _LOGGER.warning("node %s has just appeared" % n_id)
@@ -365,6 +388,7 @@ class CluesDaemon:
         for req in self._requests_queue:
             # These are jobs that are kept because the job list is incremental and it is not substituted
             if (req.state in [ Request.NOT_SERVED, Request.SERVED, Request.DISSAPEARED ]) and ((now - req.timestamp_state) > _CONFIGURATION_MONITORING.COOLDOWN_SERVED_REQUESTS):
+                self._db_system.update_request_info(req)
                 r_ids_to_delete.append(req.id)
                 
         for r_id in r_ids_to_delete:
@@ -422,6 +446,7 @@ class CluesDaemon:
             _LOGGER.debug("Resetting the state of the node %s to %s" % (n_id, node.state2str[node.IDLE]))
 
             node.set_state(Node.IDLE, True)
+            self._db_system.store_node_info(node)
             return True, "Node %s reset to %s" % (n_id, node.state2str[node.state])
         else:
             return False, "Node is not managed by CLUES"
@@ -447,8 +472,9 @@ class CluesDaemon:
                     node = self._lrms_nodelist[n_id]
 
                 node.set_state(Node.POW_OFF)
-
+                self._db_system.store_node_info(node)
                 hooks.HOOKS.post_poweroff(n_id, 1, nname)
+
                 return True, n_id
             else:
                 _LOGGER.warning("could not power off node %s. It will be considered ON, but with errors" % n_id)
@@ -456,6 +482,7 @@ class CluesDaemon:
                 hooks.HOOKS.post_poweroff(n_id, 0, nname)
 
                 node.set_state(Node.ON_ERR)
+                self._db_system.store_node_info(node)
                 return False, ""
         else:
             return False, ""
@@ -481,6 +508,7 @@ class CluesDaemon:
                     node = self._lrms_nodelist[n_id]                
                 
                 node.set_state(Node.POW_ON)
+                self._db_system.store_node_info(node)
                 hooks.HOOKS.post_poweron(n_id, 1, nname)
                 return True, n_id
             else:
@@ -489,6 +517,7 @@ class CluesDaemon:
                 hooks.HOOKS.post_poweron(n_id, 0, nname)
 
                 node.set_state(Node.OFF_ERR)
+                self._db_system.store_node_info(node)
                 return False, ""
         else:
             return False, ""
@@ -542,10 +571,12 @@ class CluesDaemon:
         for n_id, node in self._lrms_nodelist.items():
             if (node.state in [ Node.OFF_ERR ]) and (node.power_on_operation_failed < schedulers.config_scheduling.RETRIES_POWER_ON):
                 node.set_state(Node.OFF, True)
+                self._db_system.store_node_info(node)
                 recoverable_nodes.append(n_id)
 
             if (node.state in [ Node.ON_ERR ]) and (node.power_off_operation_failed < schedulers.config_scheduling.RETRIES_POWER_OFF):
                 node.set_state(Node.IDLE, True)
+                self._db_system.store_node_info(node)
                 recoverable_nodes.append(n_id)
 
         if len(recoverable_nodes) > 0:

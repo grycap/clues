@@ -226,6 +226,8 @@ class Node(NodeInfo, helpers.SerializableXML):
         if self.memory_total != other.memory_total:
             info_updated = True
 
+        resources_changed = info_updated
+
         kw_updated = False
         for kw in self.keywords:
             if kw not in other.keywords or self.keywords[kw] != other.keywords[kw]:
@@ -238,6 +240,7 @@ class Node(NodeInfo, helpers.SerializableXML):
         if self.set_state(other.state):
             state_changed = True
             info_updated = True
+            resources_changed = True
             current_time = self.timestamp_state
 
         self.slots_count = other.slots_count
@@ -254,7 +257,7 @@ class Node(NodeInfo, helpers.SerializableXML):
         if info_updated:
             self.timestamp_info = current_time
             
-        return info_updated, state_changed
+        return info_updated, state_changed, resources_changed
     
     def set_state(self, state, force = False):
         # Updates the state of the node and updates the timestamp, in case that the state varies

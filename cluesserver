@@ -18,6 +18,8 @@
 import logging
 import sys
 import time
+import json
+import clueslib.reports
 
 _ERROR_IMPORTING=None
 
@@ -130,6 +132,39 @@ try:
                 return changes_str + result.replace(";","<BR>")
             return "Could not get info"
         
+        def reports(self, url, secret):
+            filename = "/".join(url).lstrip('/').replace('../', '')
+            if filename == '':
+                filename='index.html'
+            _LOGGER.debug("web request: %s" % filename)
+            if filename == "cluesdata.js":
+                hostdata, min_t, max_t = clueslib.reports.get_reports_data(configserver._CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
+                requests, min_t_r, max_t_r = clueslib.reports.get_requests_data(configserver._CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
+                if hostdata is None:
+                    return "failed to get data from the database"
+                else:
+                    if min_t is None: min_t = 0
+                    if max_t is None: max_t = 0
+                    result = {"hostevents":hostdata,"requests":requests, "mintime_avail": min_t, "maxtime_avail": max_t}
+                    return "var cluesdata=%s;" % json.dumps(result)
+            else:
+                if configserver._CONFIGURATION_GENERAL.PATH_REPORTS_WEB == "":
+                    return "reports are deactivated"
+
+                import os
+                filename = os.path.realpath("%s/%s" % (configserver._CONFIGURATION_GENERAL.PATH_REPORTS_WEB, filename))
+                data=""
+                try:
+                    filehandler = open(filename, 'r')
+                except:
+                    return "could not get the requested file"
+
+                data=filehandler.read()
+                import re
+                data=re.sub('[^:]href="(?!http|#)([^"]*)"', 'href="\\1?secret=%s"' % secret, data)
+                data=re.sub('src="(?!http)([^"]*)"', 'src="\\1?secret=%s"' % secret, data)
+                return data
+
         def GET(self, url):
             self.query = "?"+"?".join(url.split("?")[1:])
             url = url.split("?")[0]
@@ -142,6 +177,9 @@ try:
             if len(path) > 1 and path[0] == 'status':
                 return self._status("/".join(path[1:]), secret, self.query)
             
+            if path[0]=='reports':
+                return self.reports(path[1:], secret)
+
             if path[0]=='host':
                 # print web.ctx.path
                 # print self._mainpage() % self._get_host("/".join(path[1:]))

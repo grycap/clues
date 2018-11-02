@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="description" content="CLUES reports">
+  <meta name="author" content="Carlos de Alfonso">
+  <title>CLUES reports</title>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.0-alpha14/css/tempusdominus-bootstrap-4.min.css" />
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="https://bootswatch.com/4/yeti/bootstrap.min.css">
+
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.0-alpha14/js/tempusdominus-bootstrap-4.min.js"></script>
+
+  <script src="randomColor.js"></script>
+  <script src="cluescharts.js"></script>
+  <script src="piechart.js"></script>
+  <script src="minibarchart.js"></script>
+  <script src="cluesstats.js"></script>
+  <script src="cluesdata.js"></script>
+
+  <!--
+    NOTE: the style is inlined to enable compatibility with the CLUES server realtime stats
+      * the cluesserver class has constraints on how the files are returned, and browsers need
+        to be informed about the content-type of the files (in the case of stylesheets)
+  -->
+  <style>
+ body {
+  overflow-x: hidden;
+}
+
+#wrapper {
+  padding-left: 0;
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+  -o-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+#wrapper.toggled {
+  padding-left: 250px;
+}
+
+#sidebar-wrapper {
+  z-index: 1000;
+  position: fixed;
+  left: 250px;
+  width: 0;
+  height: 100%;
+  margin-left: -250px;
+  overflow-y: auto;
+  background: #000;
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+  -o-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+  width: 250px;
+}
+
+#page-content-wrapper {
+  width: 100%;
+  position: absolute;
+  padding: 15px;
+}
+
+#wrapper.toggled #page-content-wrapper {
+  position: absolute;
+  margin-right: -250px;
+}
+
+/* Sidebar Styles */
+.sidebar-nav {
+  position: absolute;
+  top: 0;
+  width: 250px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sidebar-nav li {
+  text-indent: 20px;
+  line-height: 40px;
+}
+
+.sidebar-nav li a {
+  display: block;
+  text-decoration: none;
+  color: #999999;
+}
+
+.sidebar-nav li a:hover {
+  text-decoration: none;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-nav li a:active, .sidebar-nav li a:focus {
+  text-decoration: none;
+}
+
+.sidebar-nav>.sidebar-brand {
+  height: 65px;
+  font-size: 18px;
+  line-height: 60px;
+}
+
+.sidebar-nav>.sidebar-brand a {
+  color: #999999;
+}
+
+.sidebar-nav>.sidebar-brand a:hover {
+  color: #fff;
+  background: none;
+}
+
+.sidebar-nav>.sidebar-title {
+  height: 65px;
+  font-size: 18px;
+  line-height: 60px;
+  color: #cccccc;
+}
+
+/*
+  Fix to show the datetime picker
+*/
+
+.sidebar-nav label {
+  color: #cccccc;
+}
+
+.sidebar-nav li>div, .sidebar-nav li>div td {
+  text-indent: 0px;
+  line-height: 0px;
+}
+
+@media(min-width:768px) {
+  #wrapper {
+    padding-left: 0;
+  }
+  #wrapper.toggled {
+    padding-left: 250px;
+  }
+  #sidebar-wrapper {
+    width: 0;
+  }
+  #wrapper.toggled #sidebar-wrapper {
+    width: 250px;
+  }
+  #page-content-wrapper {
+    padding: 20px;
+    position: relative;
+  }
+  #wrapper.toggled #page-content-wrapper {
+    position: relative;
+    margin-right: 0;
+  }
+}
+
+.chart-container {
+  position: relative;
+  margin: auto;
+  height: 300px;
+  width: 80%;
+}    
+
+.canvas-container {
+  height: 250px;
+}
+
+.chart-text {
+  font: 16px/1.4em Arial, sans-serif;
+  fill: #000;
+  -moz-transform: translateY(0.25em);
+  -ms-transform: translateY(0.25em);
+  -webkit-transform: translateY(0.25em);
+  transform: translateY(0.25em);
+}
+
+.chart-number {
+  font-size: 0.6em;
+  line-height: 1;
+  text-anchor: middle;
+  -moz-transform: translateY(-0.25em);
+  -ms-transform: translateY(-0.25em);
+  -webkit-transform: translateY(-0.25em);
+  transform: translateY(-0.25em);
+}
+
+.chart-label {
+  font-size: 0.2em;
+  text-transform: uppercase;
+  text-anchor: middle;
+  -moz-transform: translateY(0.7em);
+  -ms-transform: translateY(0.7em);
+  -webkit-transform: translateY(0.7em);
+  transform: translateY(0.7em);
+}
+
+*[id]:before { /* https://stackoverflow.com/a/24298427 */
+  display: block; 
+  content: " "; 
+  margin-top: -75px; 
+  height: 75px; 
+  visibility: hidden; 
+}
+
+h2 {
+  margin-top: 20px;
+}
+
+.table {
+  margin: auto;
+  float: none;
+}
+
+.progress {
+  margin-bottom: 3px;
+}
+
+.progress-bar {
+  color: #000;
+}
+
+.progress-label {
+  margin-right: 1.2rem;
+}
+
+@media (min-width: 576px) {
+  .card-columns {
+      column-count: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .card-columns {
+      column-count: 1;
+  }
+}
+
+@media (min-width: 992px) {
+  .card-columns {
+      column-count: 2;
+  }
+}
+
+@media (min-width: 1200px) {
+  .card-columns {
+      column-count: 2;
+  }
+}    
+/* https://bootsnipp.com/snippets/featured/animated-loading */
+
+#loading {
+  /* background: #f4f4f2 url("img/page-bg.png") repeat scroll 0 0; */
+  height: 100px;
+  left: 0;
+  margin: auto;
+  top: 0;
+  width: 100%;
+}
+.bokeh {
+  border: 0.01em solid rgba(150, 150, 150, 0.1);
+  border-radius: 50%;
+  font-size: 100px;
+  height: 1em;
+  list-style: outside none none;
+  margin: 0 auto;
+  position: relative;
+  top: 35%;
+  width: 1em;
+  z-index: 2147483647;
+}
+.bokeh li {
+  border-radius: 50%;
+  height: 0.2em;
+  position: absolute;
+  width: 0.2em;
+}
+.bokeh li:nth-child(1) {
+  animation: 1.13s linear 0s normal none infinite running rota, 3.67s ease-in-out 0s alternate none infinite running opa;
+  background: #00c176 none repeat scroll 0 0;
+  left: 50%;
+  margin: 0 0 0 -0.1em;
+  top: 0;
+  transform-origin: 50% 250% 0;
+}
+.bokeh li:nth-child(2) {
+  animation: 1.86s linear 0s normal none infinite running rota, 4.29s ease-in-out 0s alternate none infinite running opa;
+  background: #ff003c none repeat scroll 0 0;
+  margin: -0.1em 0 0;
+  right: 0;
+  top: 50%;
+  transform-origin: -150% 50% 0;
+}
+.bokeh li:nth-child(3) {
+  animation: 1.45s linear 0s normal none infinite running rota, 5.12s ease-in-out 0s alternate none infinite running opa;
+  background: #fabe28 none repeat scroll 0 0;
+  bottom: 0;
+  left: 50%;
+  margin: 0 0 0 -0.1em;
+  transform-origin: 50% -150% 0;
+}
+.bokeh li:nth-child(4) {
+  animation: 1.72s linear 0s normal none infinite running rota, 5.25s ease-in-out 0s alternate none infinite running opa;
+  background: #88c100 none repeat scroll 0 0;
+  margin: -0.1em 0 0;
+  top: 50%;
+  transform-origin: 250% 50% 0;
+}
+@keyframes opa {
+12% {
+  opacity: 0.8;
+}
+19.5% {
+  opacity: 0.88;
+}
+37.2% {
+  opacity: 0.64;
+}
+40.5% {
+  opacity: 0.52;
+}
+52.7% {
+  opacity: 0.69;
+}
+60.2% {
+  opacity: 0.6;
+}
+66.6% {
+  opacity: 0.52;
+}
+70% {
+  opacity: 0.63;
+}
+79.9% {
+  opacity: 0.6;
+}
+84.2% {
+  opacity: 0.75;
+}
+91% {
+  opacity: 0.87;
+}
+}
+
+@keyframes rota {
+100% {
+  transform: rotate(360deg);
+}
+}
+#show-sidebar {
+    position: fixed;
+    left: 0;
+    top: 10px;
+    border-radius: 0 4px 4px 0px;
+    width: 35px;
+    transition-delay: .3s;
+    z-index: 1;
+}
+
+.page-wrapper.toggled #show-sidebar {
+    left: -40px;
+}
+
+.slidertag {
+  font-size: 0.7rem;
+}
+</style>
+  </head>
+<body>
+  <!-- Modal -->
+  <div class="modal fade" id="waitDialog" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-body text-center">
+          <h5>Please Wait while Processing Data</h5>
+          <div class="container" style="height: 250px">
+            <div id="loading">
+              <ul class="bokeh">
+                <li></li>
+                <li></li>
+                <li></li>
+              </ul>
+            </div>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"
+              aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Modal -->
+<div class="modal fade " id="notsupported" tabindex="-1" role="dialog" aria-labelledby="notsupportedlabel" aria-hidden="true">
+    <div class="modal-dialog " role="document">
+      <div class="modal-content text-danger">
+        <div class="modal-header">
+          <h5 class="modal-title" id="notsupportedlabel">Sorry</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body ">
+          This feature is not supported in the offline version.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Accept</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade " id="fewvalues" tabindex="-1" role="dialog" aria-labelledby="fewvalueslabel" aria-hidden="true">
+      <div class="modal-dialog " role="document">
+        <div class="modal-content text-danger">
+          <div class="modal-header">
+            <h5 class="modal-title" id="fewvalueslabel">Sorry</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body ">
+            Few values to show. Please wait for more stats or select a wider time interval.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Accept</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+
+  <div id="wrapper" class="toggled">
+    <!-- Sidebar -->
+    <a id="show-sidebar" class="btn btn-sm btn-dark" href="#">
+        <i class="fas fa-bars"></i>
+    </a>
+    <div id="sidebar-wrapper">
+      <ul class="sidebar-nav">
+        <li class="sidebar-brand">
+          <a href="#">
+            CLUES stats
+            <span id="close-sidebar" class="btn btn-sm pull-right">
+                <i class="fas fa-times pull-right"></i>
+            </span>
+          </a>
+        </li>
+        <li><a href="#">Overview</a></li>
+        <li class="sidebar-title">
+            Hosts
+        </li>
+        <li v-for="host in hostnames"><a :href="'#sec'+host">{{host}}</a></li>
+        <li class="sidebar-title">
+          Requests
+        </li>
+        <li><a href="#requests">Stats</a></li>
+        <li class="sidebar-title">
+          Filter Dates
+        </li>
+        <li>
+            <div class="container">
+              <div class="form-group">
+                <label for="datetimepicker-from">From</label>
+                <div class="input-group date" id="datetimepicker-from" data-target-input="nearest">
+                    <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker-from"/>
+                    <div class="input-group-append" data-target="#datetimepicker-from" data-toggle="datetimepicker">
+                      <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    </div>
+                </div>
+              </div>         
+            </div>
+        </li>
+        <li>
+            <div class="container">
+              <div class="form-group">
+                <label for="datetimepicker-to">To</label>
+                <div class="input-group date" id="datetimepicker-to" data-target-input="nearest">
+                    <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker-to"/>
+                    <div class="input-group-append" data-target="#datetimepicker-to" data-toggle="datetimepicker">
+                      <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    </div>
+                </div>
+              </div>         
+            </div>
+        </li>
+        <li>
+          <div class="container">
+          <form id="filterdates" method="GET">
+          <input type="hidden" id="date-from" name="from">
+          <input type="hidden" id="date-to" name="to">
+          <input type="hidden" id="secret" name="secret">
+          <button id="update-dates" type="submit" class="btn btn-dark">
+            <span>Update</span>
+          </button>
+          <button id="reset-dates" type="submit" class="btn btn-dark">
+              <span>Reset</span>
+            </button>
+            </form>
+          </div>
+      </li>
+
+      </ul>
+    </div>
+
+    <script>
+       $(function () {
+          $('#datetimepicker-to').datetimepicker({
+            icons: {
+              time: "far fa-clock"
+            },
+            format: 'D/M/YYYY HH:mm:ss'
+          });
+          $('#datetimepicker-from').datetimepicker({
+            icons: {
+              time: "far fa-clock"
+            },
+            format: 'D/M/YYYY HH:mm:ss'
+          });
+          $("#datetimepicker-from").on("change.datetimepicker", function (e) {
+              $('#datetimepicker-to').datetimepicker('minDate', e.date);
+          });
+          $("#datetimepicker-to").on("change.datetimepicker", function (e) {
+              $('#datetimepicker-from').datetimepicker('maxDate', e.date);
+          });
+
+          /** The time unit in CLUES is expressed in Seconds, while moment expects milliseconds */
+          var url = new URL(window.location.href);
+          var from = url.searchParams.get('from');
+          var to = url.searchParams.get('to');
+          if (!from || from < cluesdata.mintime_avail) from = cluesdata.mintime_avail;
+          if (!to || to > cluesdata.maxtime_avail) to = cluesdata.maxtime_avail;
+
+          $('#datetimepicker-from').datetimepicker('minDate', moment(cluesdata.mintime_avail * 1000));
+          $('#datetimepicker-from').datetimepicker('date', moment(from * 1000));
+          
+          $('#datetimepicker-to').datetimepicker('maxDate', moment(cluesdata.maxtime_avail * 1000));
+          $('#datetimepicker-to').datetimepicker('date', moment(to * 1000));
+        });
+    </script>
+    <!-- /#sidebar-wrapper -->
+
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+      <div class="container-fluid">
+        <h1>
+          <div class="row">
+          <div class="col-11">CLUES stats</div>
+          <div class="col-1">
+            <a href="#" id="refreshpage" class="pull-left" role="button">
+                <span class="fas fa-sync-alt"></span>
+            </a>
+          </div>
+        </div>
+        </h1>
+        <h2>States</h2>
+        <chartplaceholder name="States"></chartplaceholder>
+        <h2>Memory</h2>
+        <chartplaceholder name="Memory"></chartplaceholder>
+        <h2>Slots</h2>
+        <chartplaceholder name="Slots"></chartplaceholder>
+        <div id="hosts">
+          <h2>Hosts</h2>
+          <div>
+            <div class="card-columns">
+              <div class="card h-100" :id="'sec'+host" v-for="host in hostnames">
+                <div class="card-body text-center">
+                  <h5 class="card-title">{{host}}</h5>
+                  <h6 class="card-subtitle mb-2 text-muted">STATS (*)</h6>
+                  <table class="table table-sm">
+                    <tbody>
+                      <tr>
+                        <td></td>
+                        <td>Times powered on</td>
+                        <td>{{states_stats[host]._stats_state[2]}}</td>
+                      </tr>
+                      <tr>
+                        <th colspan="3">Usage of memory</th>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td>Mean memory used</td>
+                        <td>{{hosts_stats[host].memory_used.mean.toFixed(2)}}</td>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td>Mean memory used (while on)</td>
+                        <td>{{hosts_stats[host].memory_used.mean_accepted.toFixed(2)}}</td>
+                      </tr>
+                      <tr>
+                        <th colspan="3">Time in memory intervals <i data-toggle="tooltip" title="Time in which the node has been observed to have its memory used according to quartile intervals (e.g. in a 4 Gb. node, the time using 1Gb, 2Gb, 3Gb or 4 Gb)" class="fa fa-question-circle" aria-hidden="true"></i></th>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td colspan=2>
+                          <minibarchart :labels="[1,2,3,4].map((x)=>('<='+hosts_stats[host].memory_used._divider*x))"
+                            :values="hosts_stats[host].memory_used.intervals.slice(0).map((x)=>(x/1000.0))"></minibarchart>
+                            
+                        </td>
+                      </tr>
+                      <tr>
+                        <th colspan="3">Usage of slots</th>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td>Mean slots used</td>
+                        <td>{{hosts_stats[host].slots_used.mean.toFixed(2)}}</td>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td>Mean slots used (while on)</td>
+                        <td>{{hosts_stats[host].slots_used.mean_accepted.toFixed(2)}}</td>
+                      </tr>
+                      <tr>
+                        <th colspan="3">Time in slots intervals <i data-toggle="tooltip" title="Time in which the node has been observed to have its cores used according to quartile intervals (e.g. in a 4 core node, the time using 1 core, 2 cores, 3 cores or 4 cores)" class="fa fa-question-circle" aria-hidden="true"></i></th>
+                      </tr>
+                      <tr>
+                        <td></td>
+                        <td colspan=2>
+                          <minibarchart :labels="[1,2,3,4].map((x)=>('<= '+hosts_stats[host].slots_used._divider*x + ' slots'))"
+                            :values="hosts_stats[host].slots_used.intervals.slice(0).map((x)=>(x/1000.0))"></minibarchart>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <h5 class="card-title">time in each state</h5>
+                  <h6 class="card-subtitle mb-2 text-muted">while powered on <i data-toggle="tooltip" title="This time is only while powered on, so the possible states are: idle, used or on-err" class="fa fa-question-circle" aria-hidden="true"></i></h6>
+                  <div class="row">
+                    <div class="col-4 offset-2">
+                      <piechart :duration="states_stats[host]._stats_time['0']" :percentage="states_stats[host]._stats_pct_time['0']"
+                        title="idle"></piechart>
+                    </div>
+                    <div class="col-4">
+                      <piechart :duration="states_stats[host]._stats_time['1']" :percentage="states_stats[host]._stats_pct_time['1']"
+                        title="used"></piechart>
+                    </div>
+                  </div>
+                  <h5 class="card-title">time in each state</h5>
+                  <h6 class="card-subtitle mb-2 text-muted">for the whole time</h6>
+                  <div class="row">
+                    <div class="col-4">
+                      <piechart :duration="states_stats[host]._stats_time['0']" :percentage="states_stats[host]._stats_pct_time_total['0']"
+                        title="idle"></piechart>
+                    </div>
+                    <div class="col-4">
+                      <piechart :duration="states_stats[host]._stats_time['1'] + states_stats[host]._stats_time['5']"
+                        :percentage="states_stats[host]._stats_pct_time_total['1'] + states_stats[host]._stats_pct_time_total['5']"
+                        title="used"></piechart>
+                    </div>
+                    <div class="col-4">
+                      <piechart :duration="states_stats[host]._stats_time['3'] + states_stats[host]._stats_time['4']"
+                        :percentage="states_stats[host]._stats_pct_time_total['3'] + states_stats[host]._stats_pct_time_total['4']"
+                        title="power cycle"></piechart>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-4">
+                      <piechart :duration="states_stats[host]._stats_time['2'] + states_stats[host]._stats_time['6']"
+                        :percentage="states_stats[host]._stats_pct_time_total['2'] + states_stats[host]._stats_pct_time_total['6']"
+                        title="off"></piechart>
+                    </div>
+                    <div class="col-4">
+                      <piechart :duration="states_stats[host]._stats_time['-2'] + states_stats[host]._stats_time['5'] + states_stats[host]._stats_time['6']"
+                        :percentage="states_stats[host]._stats_pct_time_total['-2'] + states_stats[host]._stats_pct_time_total['5'] + states_stats[host]._stats_pct_time_total['6']"
+                        title="error(*)"></piechart>
+                    </div>
+                    <div class="col-4">
+                      <piechart :duration="states_stats[host]._stats_time['-1']" :percentage="states_stats[host]._stats_pct_time_total['-1']"
+                        title="unknown"></piechart>
+                    </div>
+                  </div>
+                  <h5 class="card-title">mean time in state</h5>
+                  <h6 class="card-subtitle mb-2 text-muted">per state arrival <i data-toggle="tooltip" title="the total time in each state divided per the times that the node has been in that state (e.g. mean time to power on or off)" class="fa fa-question-circle" aria-hidden="true"></i></h6>
+                  <div class="row">
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr>
+                          <th>state</th>
+                          <th>mean time (secs.)</th>
+                        </tr>
+                        <tr v-for="(state, id) in states.names">
+                          <th>{{state}}</th>
+                          <td>{{states_stats[host]._stats_state[id]!=0?states_stats[host]._stats_time[id]/states_stats[host]._stats_state[id]/1000:"-"}}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <small class="text-muted">(*) memory and slots stats depend on the monitoring frequency of CLUES</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="requests">
+          <h2>Requests</h2>
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <h5 class="card-title">Stats</h5>
+              <table class="table table-sm">
+                <tbody>
+                  <tr>
+                    <td>Total requests</td>
+                    <td>{{requests_stats.total}}</td>
+                  </tr>
+                  <tr>
+                    <td>Arrival rate</td>
+                    <td>{{(requests_stats.total/requests_stats.time_period).toFixed(3)}} reqs. per second</td>
+                  </tr>
+                  <tr>
+                    <td>Mean time to be attended</td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">Mean size</th>
+                  </tr>
+                  <tr>
+                    <td>Slots</td>
+                    <td>{{(requests_stats.size_info.max_slots/requests_stats.time_period).toFixed(3)}}</td>
+                  </tr>
+                  <tr>
+                    <td>Memory</td>
+                    <td>{{(requests_stats.size_info.max_memory/requests_stats.time_period).toFixed(3)}}</td>
+                  </tr>
+                  <tr>
+                    <td>Task count</td>
+                    <td>{{(requests_stats.size_info.max_taskcount/requests_stats.time_period).toFixed(3)}}</td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">Max. size</th>
+                  </tr>
+                  <tr>
+                    <td>Slots</td>
+                    <td>{{requests_stats.size_info.max_slots}}</td>
+                  </tr>
+                  <tr>
+                    <td>Memory</td>
+                    <td>{{requests_stats.size_info.max_memory}}</td>
+                  </tr>
+                  <tr>
+                    <td>Task count</td>
+                    <td>{{requests_stats.size_info.max_taskcount}}</td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">Min. size</th>
+                  </tr>
+                  <tr>
+                    <td>Slots</td>
+                    <td>{{requests_stats.size_info.min_slots}}</td>
+                  </tr>
+                  <tr>
+                    <td>Memory</td>
+                    <td>{{requests_stats.size_info.min_memory}}</td>
+                  </tr>
+                  <tr>
+                    <td>Task count</td>
+                    <td>{{requests_stats.size_info.min_taskcount}}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <h5 class="card-title">Stat for the requests</h5>
+              <table class="table table-sm">
+                <tbody>
+                  <tr>
+                    <th colspan="6">States in which the requests leave CLUES</th>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td>Pending <i data-toggle="tooltip" title="Requests that are still pending (not attended yet)" class="fa fa-question-circle" aria-hidden="true"></i></td>
+                    <td>Attended <i data-toggle="tooltip" title="Requests that have been attended (the resources requested are being powered on)" class="fa fa-question-circle" aria-hidden="true"></i></td>
+                    <td>Served <i data-toggle="tooltip" title="Requests that have been fully attended (i.e. CLUES has powered on resources for them and the jobs have been released to the LRMS)" class="fa fa-question-circle" aria-hidden="true"></i></td>
+                    <td>Discarded <i data-toggle="tooltip" title="Requests that have been discarded and they have been released to the LRMS (e.g. CLUES cannot find enough resources to power on)" class="fa fa-question-circle" aria-hidden="true"></i></td>
+                    <td>Other <i data-toggle="tooltip" title="Other states: Not served (the request exceeded the max. time to wait for resources), Blocked (the requests are pending from previous requests), Dissapeared (the requests have dissapeared in CLUES) and Unknown (Other cases)" class="fa fa-info-circle" aria-hidden="true"></i></td>
+<!--
+    PENDING = 0
+    ATTENDED = 1        # It is being attended (its resources are being activated)
+    SERVED = 2          # The request has been fully attended: its resources have been powered on and the request has been freed
+    BLOCKED = 3         # The request could be served, but the scheduler has blocked it (maybe because there are other requests pending from powering on resources)
+    DISSAPEARED = -1    # The request has dissapeared: it was observed (i.e. a job) and now it cannot be observed, but it is not kown if it has been served
+    NOT_SERVED = -2
+    DISCARDED = -3       # The request has been discarded by the server, probably because it has been attended too many times without success
+    UNKNOWN = -4
+-->
+
+
+                  </tr>
+                  <tr>
+                    <td>Total</td>
+                    <td>{{requests_stats.requests_states["0"]}}</td>
+                    <td>{{requests_stats.requests_states["1"]}}</td>
+                    <td>{{requests_stats.requests_states["2"]}}</td>
+                    <td>{{requests_stats.requests_states["-3"]}}</td>
+                    <td>{{["3", "-1", "-2", "-4"].reduce((x,y) => (x+requests_stats.requests_states[y]), 0)}}</td>
+                  </tr>
+                  <tr>
+                    <td>Percentage</td>
+                    <td>{{(100 * requests_stats.requests_states["0"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(100 * requests_stats.requests_states["1"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(100 * requests_stats.requests_states["2"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(100 * requests_stats.requests_states["-3"]/requests_stats.total).toFixed(3)}}</td>
+                    <td>{{(100 * ["3", "-1", "-2", "-4"].reduce((x,y) => (x+requests_stats.requests_states[y]), 0)/requests_stats.total).toFixed(3)}}</td>
+                  </tr>
+                  <tr>
+                    <td>Total time</td>
+                    <td>{{requests_stats.requests_times.accum["0"].toFixed(3)}}</td>
+                    <td>{{requests_stats.requests_times.accum["1"].toFixed(3)}}</td>
+                    <td>{{requests_stats.requests_times.accum["2"].toFixed(3)}}</td>
+                    <td>{{requests_stats.requests_times.accum["-3"].toFixed(3)}}</td>
+                    <td>{{["3", "-1", "-2", "-4"].reduce((x,y) => (x+requests_stats.requests_times.accum[y]), 0).toFixed(3)}}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <table class="table table-sm">
+                <tbody>
+                  <!--
+                    tiempo "used" / # requests
+                    tiempo de request en clues (hasta un estado distinto a undefined) (maximo, minimo, medio)
+                    tiempo de request en clues hasta "served" (maximo, minimo, medio)
+                  -->
+                  <tr>
+                    <th colspan="2">Time to serve the requests <i data-toggle="tooltip" title="The requests considered are those that have finalized in SERVED state" class="fa fa-question-circle" aria-hidden="true"></i></th>
+                  </tr>
+                  <tr>
+                    <td>Mean time to be served</td>
+                    <td>{{requests_stats.requests_times.served.mean}}</td>
+                  </tr>
+                  <tr>
+                    <td>Maximum time to be served</td>
+                    <td>{{requests_stats.requests_times.served.max}}</td>
+                  </tr>
+                  <tr>
+                    <td>Minimum time to be served</td>
+                    <td>{{requests_stats.requests_times.served.min}}</td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">Time of the requests in CLUES</th>
+                  </tr>
+                  <tr>
+                    <td>Mean time in CLUES <i data-toggle="tooltip" title="The request get to any state" class="fa fa-question-circle" aria-hidden="true"></i></td>
+                    <td>{{requests_stats.requests_times.in_clues.mean}}</td>
+                  </tr>
+                  <tr>
+                    <td>Maximum time in CLUES</td>
+                    <td>{{requests_stats.requests_times.in_clues.max}}</td>
+                  </tr>
+                  <tr>
+                    <td>Minimum time in CLUES</td>
+                    <td>{{requests_stats.requests_times.in_clues.min}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>  
+    
+    <script>
+    Vue.component('chartplaceholder', {
+      props: ['name'],
+      template: `   
+<div class="chart-container">
+  <div class="canvas-container">
+  <canvas :id="'chart'+name"></canvas>
+  </div>
+  <div class="row">
+    <div :id="'min-chart'+name+'Slider'" class="slidertag col col-lg-1 offset-1 text-right">1</div>
+    <div class="col col-lg-8">
+      <div :id="'chart'+name+'Slider'" class="chartslider" style="width: 100%">
+      </div>
+    </div>
+    <div :id="'max-chart'+name+'Slider'" class="slidertag col col-lg-1 text-left">2</div>
+    <div class="col col-1">
+      <button type="button" class="btn-filter btn btn-sm btn-secondary">
+        <i class="fas fa-filter">
+      </button>
+    </div>
+  </div>
+</div>  `
+    })
+
+    var app = new Vue({
+      el: '#wrapper',
+      data: {
+        hostnames: [],
+        states_stats: [],
+        hosts_stats: [],
+        requests_stats: {
+          total: 0,
+          time_interval: 0,
+          size_info: {
+            // This is a placeholder
+            min_slots: undefined,
+            max_slots: undefined,
+            accum_slots: 0,
+            min_memory: undefined,
+            max_memory: undefined,
+            accum_memory: 0,
+            min_taskcount: undefined,
+            max_taskcount: undefined,
+            accum_taskcount: 0,
+            max_size: undefined,
+            min_size: undefined,
+          },
+          requests_states: {
+            "0": 0, "1": 0, "2": 0, "3": 0, "-1": 0, "-2": 0, "-3": 0, "-4": 0 
+          },
+          requests_times: {
+            accum: {
+            "0": 0, "1": 0, "2": 0, "3": 0, "-1": 0, "-2": 0, "-3": 0, "-4": 0 
+            },
+            max: {
+            "0": undefined, "1": undefined, "2": undefined, "3": undefined, "-1": undefined, "-2": undefined, "-3": undefined, "-4": undefined
+            },
+            min: {
+            "0": undefined, "1": undefined, "2": undefined, "3": undefined, "-1": undefined, "-2": undefined, "-3": undefined, "-4": undefined
+            },
+            in_clues: {
+              max: undefined, min: undefined, mean: undefined
+            },
+            served: {
+              max: undefined, min: undefined, mean: undefined
+            }
+          }
+        },
+      }
+    })
+
+    function run_the_process(progress) {
+      progress.progress(0);
+      if (!preprocess()) {
+        $('#fewvalues').modal('show');
+        return;
+      };
+      progress.progress(80);
+
+      function sliderChange(chart, sliderName, event, ui) {
+        $('#min-' + sliderName).text(moment(ui.values[0]).format('D/M/YYYY HH:mm:ss'));//.text((ui.values[0] / 1000).toFixed(0));
+        $('#max-' + sliderName).text(moment(ui.values[1]).format('D/M/YYYY HH:mm:ss'));//.text((ui.values[1] / 1000).toFixed(0));
+        chart.options.scales.xAxes[0].time.min = moment(ui.values[0]);
+        chart.options.scales.xAxes[0].time.max = moment(ui.values[1]);
+        chart.update();
+      }
+
+      function minmax(o) {
+        var min = undefined;
+        var max = undefined;
+        o.forEach(function (v) {
+          if (min === undefined) min = v.x;
+          if (max === undefined) max = v.x;
+          if (v.x < min) min = v.x;
+          if (v.x > max) max = v.x;
+        });
+        return { min: min, max: max };
+      }
+
+      var minmax_states = minmax(chartStates.data.datasets[1].data);
+      $("#chartStatesSlider").slider({
+        range: true,
+        min: minmax_states.min,
+        max: minmax_states.max,
+        values: [minmax_states.min, minmax_states.max],
+        step: 1,
+        create: (event, ui) => sliderChange(chartMemory, "chartStatesSlider", event, { values: [minmax_states.min, minmax_states.max] }),
+        slide: (event, ui) => sliderChange(chartStates, "chartStatesSlider", event, ui)
+      });
+      /*
+      noUiSlider.create($("#chartStatesSlider")[0], {
+          start: [minmax_states.min, minmax_states.max],
+          connect: true,
+          range: {
+              'min': minmax_states.min,
+              'max': minmax_states.max
+          }
+      });         
+      $("#chartStatesSlider")[0].noUiSlider.on('update', function(values, handle, unencoded, tap, positions) {
+        chartStates.options.scales.xAxes[0].time.min = moment(parseFloat(values[0]));
+        chartStates.options.scales.xAxes[0].time.max = moment(parseFloat(values[1]));
+        chartStates.update();
+      });
+      */
+      var minmax_states = minmax(chartMemory.data.datasets[0].data);
+      $("#chartMemorySlider").slider({
+        range: true,
+        min: minmax_states.min,
+        max: minmax_states.max,
+        tooltips: [true, true],
+        values: [minmax_states.min, minmax_states.max],
+        step: 1,
+        create: (event, ui) => sliderChange(chartMemory, "chartMemorySlider", event, { values: [minmax_states.min, minmax_states.max] }),
+        slide: (event, ui) => sliderChange(chartMemory, "chartMemorySlider", event, ui)
+      });
+      var minmax_states = minmax(chartSlots.data.datasets[0].data);
+      $("#chartSlotsSlider").slider({
+        range: true,
+        min: minmax_states.min,
+        max: minmax_states.max,
+        values: [minmax_states.min, minmax_states.max],
+        step: 1,
+        create: (event, ui) => sliderChange(chartMemory, "chartSlotsSlider", event, { values: [minmax_states.min, minmax_states.max] }),
+        slide: (event, ui) => sliderChange(chartSlots, "chartSlotsSlider", event, ui)
+      });
+      progress.progress(100);
+    }
+
+    function WaitDialog(id, fnc_work) {
+      this.waitDialog = $('#' + id);
+      this.fnc_work = fnc_work;
+      this.progress = function (pct) {
+        this.waitDialog.find('.progress-bar').css('width', pct + '%');
+      }
+      this.update = function () {
+        this.waitDialog.on('shown.bs.modal', function (e) {
+          fnc_work(this);
+          this.waitDialog.modal('hide');
+        }.bind(this));
+        this.waitDialog.modal('show');
+      };
+      return this;
+    }
+
+    function update_interface() {
+      var waitDialog = $('#waitDialog');
+      waitDialog.on('shown.bs.modal', function (e) {
+        run_the_process();
+        waitDialog.modal('hide');
+      });
+      waitDialog.modal('show');
+    }
+
+    $(document).ready(function () {
+      (new WaitDialog('waitDialog', run_the_process)).update();
+    })
+
+    const states = {
+      mapping: {
+        "-2": "-2",
+        "-1": "-1",
+        "0": "0",
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4",
+        "5": "0",
+        "6": "-2"
+      },
+      names: {
+        "-2": "error",
+        "-1": "unknown",
+        "0": "idle",
+        "1": "used",
+        "2": "off",
+        "3": "powering on",
+        "4": "powering off",
+        "5": "on (err)",
+        "6": "off (err)"
+      },
+      draw: ["-2", "-1", "0", "1", "3", "4"],
+      avail: ["0", "1", "5"],
+      stats: ["-2", "-1", "0", "2"]
+    };
+
+    function preprocess() {
+      var url = new URL(window.location.href);
+      var from = parseFloat(url.searchParams.get('from'));
+      var to = parseFloat(url.searchParams.get('to'));
+      if (!from || from < cluesdata.mintime_avail) from = cluesdata.mintime_avail;
+      if (!to || to > cluesdata.maxtime_avail) to = cluesdata.maxtime_avail;
+      var from_ms = from * 1000;
+      var to_ms = to * 1000;
+      
+      // Separate host data for each host and calculate the max values for memory and slots number
+      var states_stats = {};
+      var total_v = {
+        slots: 0,
+        memory: 0
+      }
+      var hostnames = Object.keys(cluesdata.hostevents).sort();
+      var hosts_stats = [];
+      var fewValues = false;
+      hostnames.forEach(function (hostname) {
+        // We need the data sorted for the rest of our calculations
+        cluesdata.hostevents[hostname].sort(function (a, b) {
+          if (a.t < b.t) return -1;
+          if (a.t == b.t) return 0;
+          return 1
+        })
+
+        // Get the minimum real value
+        var minval_e = undefined;
+        cluesdata.hostevents[hostname].forEach(function(v) {
+          if (minval_e == undefined) minval_e = v;
+          if ((v.t > minval_e.t) && (v.t <= from))
+            minval_e = v;
+        })
+
+        // Remove timestamp outliers
+        var valid_timestamps = filterOutliers(cluesdata.hostevents[hostname].filter( v => v.t >= from && v.t <= to).map(v => v.t));
+        if (valid_timestamps.length == 0) {
+          cluesdata.hostevents[hostname] = [];
+          states_stats[hostname] = new StatesStats(hostname);
+          states_stats[hostname].get_from_hostdata(cluesdata.hostevents[hostname]);
+          hosts_stats[hostname] = {
+            memory_used: new AreaStats([]),
+            slots_used: new AreaStats([])
+          }
+          fewValues = true;
+          return;
+        }
+        cluesdata.hostevents[hostname] = cluesdata.hostevents[hostname].filter((v) => valid_timestamps.indexOf(v.t) >= 0);
+
+        // Add "from" and "to" timesteps to the series
+        if (cluesdata.hostevents[hostname].length>0) {
+          var minval = cluesdata.hostevents[hostname][0];
+          var maxval = cluesdata.hostevents[hostname][cluesdata.hostevents[hostname].length - 1];
+          if (minval.t > from) {
+            minval_e = Object.assign({}, minval_e);
+            minval_e.t = from;
+            cluesdata.hostevents[hostname].unshift(minval_e);
+          }
+          if (maxval.t < to) {
+            maxval = Object.assign({}, maxval);
+            maxval.t = to;
+            cluesdata.hostevents[hostname].push(maxval);
+          }
+        }
+
+        // We need to grab the maximum amount of slots and memory
+        var slots_current = 0;
+        var memory_current = 0;
+        cluesdata.hostevents[hostname].forEach(function (v) {
+          if (v.slots > slots_current) slots_current = v.slots;
+          if (v.memory > memory_current) memory_current = v.memory;
+          v.state = states.mapping[v.state];
+          v.t = v.t * 1000;
+        })
+
+        // We need the total amount of slots
+        total_v.slots += slots_current;
+        total_v.memory += memory_current;
+
+        // Now we'll calculate the individual stats for each host
+        states_stats[hostname] = new StatesStats(hostname, (current_state, current_time) => states.avail.indexOf(current_state.state.toString()) >= 0);
+        states_stats[hostname].get_from_hostdata(cluesdata.hostevents[hostname]);
+        for (var s in states.names) {
+          // Complete the stats, to avoid undefineds in later usage of the stats
+          if (states_stats[hostname]._stats_state[s] == undefined) {
+            states_stats[hostname]._stats_state[s] = 0;
+            states_stats[hostname]._stats_time[s] = 0;
+            states_stats[hostname]._stats_pct_time[s] = 0;
+            states_stats[hostname]._stats_pct_time_total[s] = 0;
+          }
+        }
+        hosts_stats[hostname] = {
+          memory_used: new AreaStats(cluesdata.hostevents[hostname].map((v) => ({ x: v.t, y: v.memory_used, state: v.state })), (a, b) => (a.y == b.y && a.state == b.state), memory_current, (current, x) => states.avail.indexOf(current.state.toString()) >= 0),
+          slots_used: new AreaStats(cluesdata.hostevents[hostname].map((v) => ({ x: v.t, y: v.slots_used, state: v.state })), (a, b) => (a.y == b.y && a.state == b.state), slots_current, (current, x) => states.avail.indexOf(current.state.toString()) >= 0)
+        }
+      })
+
+      /////////////////////////////////////////////
+      // Stats for the requests
+      /////////////////////////////////////////////
+
+      var requests_stats = {
+        total: cluesdata.requests.length,
+        time_period: to - from,
+        size_info: {},
+        requests_states: {
+          "0": 0, "1": 0, "2": 0, "3": 0, "-1": 0, "-2": 0, "-3": 0, "-4": 0 
+        },
+        requests_times: {
+          accum: {
+          "0": 0, "1": 0, "2": 0, "3": 0, "-1": 0, "-2": 0, "-3": 0, "-4": 0 
+          },
+          max: {
+          "0": undefined, "1": undefined, "2": undefined, "3": undefined, "-1": undefined, "-2": undefined, "-3": undefined, "-4": undefined
+          },
+          min: {
+          "0": undefined, "1": undefined, "2": undefined, "3": undefined, "-1": undefined, "-2": undefined, "-3": undefined, "-4": undefined
+          },
+          in_clues: {
+            max: undefined, min: undefined, mean: undefined
+          },
+          served: {
+            max: undefined, min: undefined, mean: undefined
+          }
+        }
+      }
+
+      var max_r = {
+        min_slots: undefined,
+        max_slots: undefined,
+        accum_slots: 0,
+        min_memory: undefined,
+        max_memory: undefined,
+        accum_memory: 0,
+        min_taskcount: undefined,
+        max_taskcount: undefined,
+        accum_taskcount: 0,
+
+        // The size is for the charts
+        max_size: undefined,
+        min_size: undefined,
+      }
+
+      /*
+    PENDING = 0
+    ATTENDED = 1        # It is being attended (its resources are being activated)
+    SERVED = 2          # The request has been fully attended: its resources have been powered on and the request has been freed
+    BLOCKED = 3         # The request could be served, but the scheduler has blocked it (maybe because there are other requests pending from powering on resources)
+    DISSAPEARED = -1    # The request has dissapeared: it was observed (i.e. a job) and now it cannot be observed, but it is not kown if it has been served
+    NOT_SERVED = -2
+    DISCARDED = -3       # The request has been discarded by the server, probably because it has been attended too many times without success
+    UNKNOWN = -4
+      */
+
+      // We gather the data to get the max and min values
+      cluesdata.requests.forEach(function(r) {
+        if (max_r.min_slots == undefined || r.slots < max_r.min_slots) max_r.min_slots = r.slots;
+        if (max_r.max_slots == undefined || r.slots > max_r.max_slots) max_r.max_slots = r.slots;
+        if (max_r.min_memory == undefined || r.memory < max_r.min_memory) max_r.min_memory = r.memory;
+        if (max_r.max_memory == undefined || r.memory > max_r.max_memory) max_r.max_memory = r.memory;
+        if (max_r.min_taskcount == undefined || r.taskcount < max_r.min_taskcount) max_r.min_taskcount = r.taskcount;
+        if (max_r.max_taskcount == undefined || r.taskcount > max_r.max_taskcount) max_r.max_taskcount = r.taskcount;
+
+        // TODO: revise: should we accumulate the total amount of memory or not?
+        max_r.accum_memory += r.memory * r.taskcount;
+        max_r.accum_slots += r.slots * r.taskcount;
+        max_r.accum_taskcount += r.taskcount;
+
+        if (r.state !== undefined && r.state !== null && r.state != 'null') {
+          requests_stats.requests_states[r.state]++;
+
+          // Consider only the current interval
+          if (r.t_state < from) r.t_state = from;
+          if (r.t_state > to) r.t_state = to;
+          if (r.t_created < from) r.t_created = from;
+          if (r.t_created > to) r.t_created = to;
+
+          var req_time = r.t_state - r.t_created;
+          requests_stats.requests_times.accum[r.state]+= req_time;
+          if (requests_stats.requests_times.max[r.state] == undefined || req_time > requests_stats.requests_times.max[r.state]) 
+            requests_stats.requests_times.max[r.state] = req_time;
+          if (requests_stats.requests_times.min[r.state] == undefined || req_time < requests_stats.requests_times.min[r.state]) 
+            requests_stats.requests_times.min[r.state] = req_time;
+        }
+      })
+
+      // Now process the time stats
+      {
+        // Will get the max, min and mean in CLUES and to be served
+
+        const STATES=["0", "1", "2", "3", "-1", "-2", "-3", "-4" ];
+        const STATES_SERVED=["2"];
+
+        function get_stats(requests_stats, STATES) {
+          var total = 0;
+          var req_times = {
+            mean: 0,
+            max: undefined,
+            min: undefined,
+          };
+          STATES.forEach(function (s) {
+            if (requests_stats.requests_states[s] != 0) {
+              req_times.mean += requests_stats.requests_times.accum[s];
+              total += requests_stats.requests_states[s];
+              if (req_times.max == undefined || requests_stats.requests_times.max[s] > req_times.max)
+                req_times.max = requests_stats.requests_times.max[s];
+              if (req_times.min == undefined || requests_stats.requests_times.min[s] < req_times.min)
+                req_times.min = requests_stats.requests_times.min[s];
+            }
+          })
+          if (total > 0) {
+            req_times.mean = (req_times.mean / total).toFixed(3);
+            req_times.max = req_times.max.toFixed(3);
+            req_times.min = req_times.min.toFixed(3);
+          } else {
+            req_times.mean = "Not avail";
+            req_times.max = "Not avail";
+            req_times.min = "Not avail";
+          }
+          return req_times;
+        }
+        requests_stats.requests_times.in_clues = get_stats(requests_stats, STATES);
+        requests_stats.requests_times.served = get_stats(requests_stats, STATES_SERVED);
+      }
+
+      requests_stats.size_info = max_r;
+
+      app.hostnames = hostnames;
+      app.states_stats = states_stats;
+      app.hosts_stats = hosts_stats;
+      app.requests_stats = requests_stats;
+
+      // After the data has changed, the tooltips must be updated (because after the new DOM renders is when the tooltips will be created)
+      Vue.nextTick(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+      })    
+
+      var color_array = randomColor({ count: hostnames.length, format: 'rgba', alpha: 0.8, luminosity: 'bright' });
+      var i = 0;
+      var colorset = [];
+      hostnames.forEach(function (hostname) { colorset[hostname] = color_array[i++]; })
+
+      // Now prepare the different datasets for the charts
+      var datasets = {
+        slots: [],
+        slots_used: [],
+        memory: [],
+        memory_used: [],
+        state: []
+      }
+
+      ///////////////////////////////////////////////////
+      // Prepare the charts for the slots and memory
+      ///////////////////////////////////////////////////
+      hostnames.forEach(function (hostname) {
+        var thishost_slots = {
+          label: ["Slots in " + hostname],
+          data: cluesdata.hostevents[hostname].map((t) => ({ x: t.t, y: (states.avail.indexOf(t.state.toString()) >= 0 ? t.slots : 0) })),
+          steppedLine: true,
+          spanGaps: true,
+          pointRadius: 0,
+          yAxisID: "slots",
+          borderWidth: 0,
+          backgroundColor: "rgba(150,150,150,1)",
+          borderColor: "rgba(150,150,150,1)",
+        }
+        var thishost_slots_used = {
+          label: ["Slots used in " + hostname],
+          data: cluesdata.hostevents[hostname].map((t) => ({ x: t.t, y: t.slots_used })),
+          steppedLine: true,
+          spanGaps: false,
+          pointRadius: 0,
+          yAxisID: "slots_used",
+          backgroundColor: colorset[hostname]
+        }
+        var thishost_memory = {
+          label: ["Memory in " + hostname],
+          data: cluesdata.hostevents[hostname].map((t) => ({ x: t.t, y: (states.avail.indexOf(t.state.toString()) >= 0 ? t.memory : 0) })),
+          steppedLine: true,
+          spanGaps: false,
+          pointRadius: 0,
+          yAxisID: "memory",
+          backgroundColor: "rgba(150,150,150,1)",
+          borderColor: "rgba(150,150,150,1)",
+        }
+        var thishost_memory_used = {
+          label: ["Memory used in " + hostname],
+          data: cluesdata.hostevents[hostname].map((t) => ({ x: t.t, y: t.memory_used })),
+          steppedLine: true,
+          spanGaps: false,
+          pointRadius: 0,
+          yAxisID: "memory_used",
+          backgroundColor: colorset[hostname]
+        }
+
+        datasets.slots_used.push(thishost_slots_used);
+        datasets.slots.push(thishost_slots);
+        datasets.memory_used.push(thishost_memory_used);
+        datasets.memory.push(thishost_memory);
+      })
+
+      // Generate the info for the states
+      
+      // The color for the states match the pie chart colors
+      const colorset_states = {
+        "-2": "#ff6f69",
+        "-1": "#d2d3d4",
+        "0": "#ffcc5c",
+        "1": "#696fff",
+        "2": "#88d8b0",
+        "3": "#ccff5c",
+        "4": "#cc5cff",
+        "5": "#bb991c",
+        "6": "#44a880"
+      };
+
+      ///////////////////////////////////////////////////
+      // Now prepare the chart for the change of states
+      ///////////////////////////////////////////////////
+      var state_values = []
+      hostnames.forEach(function (hostname) {
+        cluesdata.hostevents[hostname].forEach(function (data) {
+          if (state_values[data.t] == undefined) {
+            state_values[data.t] = [];
+            for (var i in states.names)
+              state_values[data.t][i] = 0;
+          }
+          state_values[data.t][states.mapping[data.state]]++;
+        })
+      })
+
+      datasets.state = [];
+      states.draw.forEach(function (s) {
+        statename = states.names[s];
+        var data = [];
+        for (t in state_values) {
+          data.push({ x: parseInt(t), y: state_values[t][s] })
+        }
+        var thisstate_count = {
+          label: ["Slots in " + statename],
+          data: data,
+          steppedLine: true,
+          spanGaps: true,
+          pointRadius: 0,
+          borderWidth: 1,
+          backgroundColor: colorset_states[s],
+          borderColor: colorset_states[s],
+        }
+        datasets.state.push(thisstate_count);
+      })
+
+      ///////////////////////////////////////////////////
+      // REQUESTS charts
+      ///////////////////////////////////////////////////
+      var diff_slots = max_r.max_slots - max_r.min_slots;
+      var diff_memory = max_r.max_memory - max_r.min_memory;
+      if (diff_slots == 0) diff_slots = 1;
+      if (diff_memory == 0) diff_memory = 1;
+
+      cluesdata.requests = cluesdata.requests.map(function(r) {
+        r.n_slots = (r.slots - max_r.min_slots) * 1.0 / diff_slots;
+        r.n_memory = (r.memory - max_r.min_memory) * 1.0 / diff_memory;
+
+        // The size is divided in sqrt(2) and sum 1 to get an interval 1-2; in this way, the
+        //  size is always greater than zero
+        r.size = r.taskcount * (1 + 0.707106781 * Math.sqrt(r.n_slots * r.n_slots + r.n_memory * r.n_memory));
+        if (max_r.max_size == undefined || r.size > max_r.max_size) max_r.max_size = r.size;
+        if (max_r.min_size == undefined || r.size < max_r.min_size) max_r.min_size = r.size;
+        return r
+      })
+
+      var diff_size = max_r.max_size - max_r.min_size;
+      if (diff_size == 0) diff_size = 1;
+
+      // Now we put each request in the y axis to show the number of requests at each timestamp
+      //  * probably this will not have much sense, but in the simulator it has; at this time the
+      //    requests are accumulated in per-second slots
+      cluesdata.requests.sort(function (a, b) {
+          if (a.t_created < b.t_created) return -1;
+          if (a.t_created == b.t_created) return 0;
+          return 1
+      })
+
+      var cur_t = undefined;
+      var cur_i = 0;
+      cluesdata.requests = cluesdata.requests.map(function(r) {
+        if (cur_t == undefined || cur_t != Math.round(r.t_created)) {
+          cur_t = Math.round(r.t_created);
+          cur_i = 0;
+        }
+        cur_i++;
+        r.t_i=cur_i;
+
+        // The timestamps from CLUES are expressed in seconds; we need them in milliseconds
+        r.t_created = r.t_created * 1000;
+        r.t_state = r.t_state * 1000;
+
+        r.size = 1.0 + ((r.size - max_r.min_size) / diff_size);
+        return r;
+      })
+
+
+      var requests_dataset = {
+        label: ["Requests" ],
+        data: cluesdata.requests.map((r) => ({x: r.t_created, y: r.t_i, r: r.size * 5.0, slots: r.slots, memory: r.memory, tasks: r.taskcount})),
+        steppedLine: false,
+        spanGaps: false,
+        pointRadius: 2,
+        yAxisID: "requests",
+        borderWidth: 2,
+        backgroundColor: "rgba(100,255,100,0.3)",
+        borderColor: "rgba(255,100,50,0.7)",
+        type: "bubble",
+        fill: false,
+        showLine: false
+      }
+
+      ///////////////////////////////////////////////////
+      // Create the charts
+      ///////////////////////////////////////////////////
+
+      chartStates = StackedLineChart(
+        "chartStates",
+        [].concat(requests_dataset).concat(datasets.state),
+        ["states", "requests"],
+        (e, legendItem) => onClick_cohide(e, legendItem, chartStates)
+      )
+
+      chartStates.options.tooltips = {
+        callbacks: {
+          label: function (tooltipItem, data) {
+            if (tooltipItem.datasetIndex != 0) {
+              return "";
+            }
+            var label = ""
+
+            var d = data.datasets[0].data[tooltipItem.index];
+            label += `slots: ${d.slots} ; mem: ${d.memory}; n: ${d.tasks}`
+            return label;
+          }
+        }
+      }
+
+      chartStates.options.scales.yAxes[1].position = "right";
+      chartStates.options.scales.yAxes[1].scaleLabel = {
+        display: true,
+        labelString: "# of requests in each second"
+      }
+      chartStates.update();
+
+      chartSlots = StackedLineChart(
+        "chartSlots",
+        [].concat(datasets.slots_used).concat(datasets.slots),
+        ["slots", "slots_used"],
+        (e, legendItem) => onClick_cohide(e, legendItem, chartSlots, "Slots used in "),
+        (item, chart) => (item.text[0].substring(0, 8) == "Slots in") ? null : item
+      )
+      chartSlots.options.scales.yAxes[1].display = false;
+      chartSlots.options.scales.yAxes[0].ticks.max = total_v.slots;
+      chartSlots.options.scales.yAxes[1].ticks.max = total_v.slots;
+      chartSlots.update();
+
+      chartMemory = StackedLineChart(
+        "chartMemory",
+        [].concat(datasets.memory_used).concat(datasets.memory),
+        ["memory", "memory_used"],
+        (e, legendItem) => onClick_cohide(e, legendItem, chartMemory, "Memory used in "),
+        (item, chart) => (item.text[0].substring(0, 9) == "Memory in") ? null : item
+      )
+      chartMemory.options.scales.yAxes[1].display = false;
+      chartMemory.options.scales.yAxes[0].ticks.max = total_v.memory;
+      chartMemory.options.scales.yAxes[1].ticks.max = total_v.memory;
+      chartMemory.update();
+      return !fewValues;
+    }
+    $("#close-sidebar").click(function(e) {
+        e.preventDefault();
+        $("#wrapper").toggleClass("toggled");
+    });
+    $("#show-sidebar").click(function(e) {
+        e.preventDefault();
+        $("#wrapper").toggleClass("toggled");
+    });
+    $(function() {
+      var secret = new URL(window.location.href).searchParams.get('secret');
+      if (secret) {
+        $('#secret').val(secret);
+      }
+    })
+    $(function() {
+      $('#update-dates').click(function(e) {
+        /** CLUES timestamps are expressed in seconds */
+        var t = $('#datetimepicker-from').datetimepicker('date');
+        $('#date-from').val(t?t.format("X"):"");
+        t = $('#datetimepicker-to').datetimepicker('date');
+        $('#date-to').val(t?t.format("X"):"");
+      })
+      $('#reset-dates').click(function(e) {
+        $('#date-from').val("");
+        $('#date-to').val("");
+      });
+      $('.btn-filter').click(function(e) {
+        var values = $(e.target).closest('.row').find('.ui-slider').slider("values");
+        if (values.length == 2) {
+          $('#date-from').val(Math.floor(values[0]/1000));
+          $('#date-to').val(Math.floor(values[1]/1000));
+        }
+        $('form#filterdates').submit();
+      })
+      $('#refreshpage').click(function(e){
+        e.preventDefault();
+        location.reload();
+      })
+    })
+    $(function() {
+      $('[data-toggle="tooltip"]').tooltip();
+    })
+    </script>
+</body>
+</html>
