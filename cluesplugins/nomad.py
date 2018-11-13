@@ -206,10 +206,10 @@ class lrms(LRMS):
             slots_count = info_node['resources']['slots_count']
         if 'memory_total' in info_node['resources']: 
             memory_total = info_node['resources']['memory_total']        
-        if 'slots_free' in info_node['resources']: 
-            slots_free = slots_count - info_node['resources']['slots_used'] 
+        if 'slots_used' in info_node['resources']: 
+            slots_free = float(slots_count) - float(info_node['resources']['slots_used']) 
         if 'memory_used' in info_node['resources']: 
-            memory_free = memory_total - info_node['resources']['memory_used']   
+            memory_free = float(memory_total) - float(info_node['resources']['memory_used'])
 
         # Check state
         state = NodeInfo.UNKNOWN
