@@ -24,6 +24,7 @@ Created on 26/1/2015
 import requests
 from uuid import uuid1
 import re
+import yaml
 
 from radl import radl_parse
 
@@ -80,6 +81,7 @@ class powermanager(PowerManager):
         config_im = cpyutils.config.Configuration(
             "IM VIRTUAL CLUSTER",
             {
+                "IM_VIRTUAL_CLUSTER_TOSCA": False,
                 "IM_VIRTUAL_CLUSTER_REST_API": "http://localhost:8800",
                 "IM_VIRTUAL_CLUSTER_REST_SSL_CA_CERTS": "",
                 "IM_VIRTUAL_CLUSTER_REST_SSL": False,
@@ -90,6 +92,7 @@ class powermanager(PowerManager):
             }
         )
 
+        self._IM_VIRTUAL_CLUSTER_TOSCA = config_im.IM_VIRTUAL_CLUSTER_TOSCA
         self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE = config_im.IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE
         self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS = config_im.IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS
         self._IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS = config_im.IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS
@@ -225,15 +228,55 @@ class powermanager(PowerManager):
                     _LOGGER.error("Error: we need more instances but ec3_if_fail of system %s is empty" % system_orig.name)
         return None
 
+    def _find_wn_nodetemplate_name(self, template):
+        try:
+            for name, node in template['topology_template']['node_templates'].items():
+                if node['type'].startswith("tosca.nodes.indigo.LRMS.WorkerNode"):
+                    for req in node['requirements']:
+                        if 'host' in req:
+                            return req['host']
+        except Exception:
+            _LOGGER.exception("Error trying to get the WN template.")
+
+        return None
+
+    def _get_template(self, nnode):
+        inf_id = self._get_inf_id()
+        auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
+
+        count = 0
+        vm_ids = self._get_vm_ids(inf_id, auth_data)
+        if len(vm_ids) > 1:
+            count = len(vm_ids) - 1
+
+        headers = {"Authorization": auth_data, "Accept": "application/json"}
+        resp = requests.request("GET", "%s/tosca" % inf_id, verify=False, headers=headers)
+
+        if resp.status_code != 200:
+            _LOGGER.error("ERROR getting infrastructure template: %s" % str(resp.text))
+            return None
+        else:
+            templateo = yaml.load(resp.json()["tosca"])
+            node_name = self._find_wn_nodetemplate_name(templateo)
+            node_template = templateo['topology_template']['node_templates'][node_name]
+
+            node_template['capabilities']['scalable']['properties']['count'] = count + 1
+            # Put the dns name
+            if 'endpoint' not in node_template['capabilities']:
+                node_template['capabilities']['endpoint'] = {}
+            if 'properties' not in node_template['capabilities']['endpoint']:
+                node_template['capabilities']['endpoint']['properties'] = {}
+            node_template['capabilities']['endpoint']['properties']['dns_name'] = nnode
+
+        return yaml.dump(templateo)
+
     def _get_radl(self, nname):
         inf_id = self._get_inf_id()
         if not inf_id:
             _LOGGER.error("Error getting RADL. No infrastructure ID!!")
             return None
         auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
-
-        headers = {"Authorization": auth_data, "Accept": "application/json"}
-        resp = requests.request("GET", inf_id, verify=False, headers=headers)
+        vm_ids = self._get_vm_ids(inf_id, auth_data)
 
         # Get all the info from RADL
         # Especial features in system:
@@ -243,8 +286,7 @@ class powermanager(PowerManager):
         #- 'ec3_if_fail': name of the next system configuration to try after this fails a launch or the number of instances saturates; the default value is ''.
 
         vm_info = {}
-        if resp.status_code == 200:
-            vm_ids = [vm_id['uri'] for vm_id in resp.json()["uri-list"]]
+        if vm_ids:
             # The first one is always the front-end node
             for vm_id in vm_ids[1:]:
                 headers = {"Authorization": auth_data, "Accept": "text/*"}
@@ -258,8 +300,6 @@ class powermanager(PowerManager):
                     vm_info[ec3_class]['count'] += 1
                 else:
                     _LOGGER.error("Error getting VM info: %s. %s." % (resp.reason, resp.text))
-        else:
-            _LOGGER.error("Error getting infrastructure info: %s. %s." % (resp.reason, resp.text))
 
         headers = {"Authorization": auth_data, "Accept": "text/*"}
         resp = requests.request("GET", "%s/radl" % inf_id, verify=False, headers=headers)
@@ -306,6 +346,16 @@ class powermanager(PowerManager):
         else:
             _LOGGER.error("Error generating infrastructure RADL")
             return None
+
+    def _get_vm_ids(self, inf_id, auth_data):
+        headers = {"Authorization": auth_data, "Accept": "application/json"}
+        resp = requests.request("GET", inf_id, verify=False, headers=headers)
+
+        if resp.status_code != 200:
+            _LOGGER.error("Error getting infrastructure info: %s. %s." % (resp.reason, resp.text))
+            return []
+        else:  
+            return [vm_id['uri'] for vm_id in resp.json()["uri-list"]]        
     
     def _get_vms(self):
         inf_id = self._get_inf_id()
@@ -314,13 +364,9 @@ class powermanager(PowerManager):
             return self._mvs_seen
         now = cpyutils.eventloop.now()
         auth_data = self._read_auth_data(self._IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE)
-        headers = {"Authorization": auth_data, "Accept": "application/json"}
-        resp = requests.request("GET", inf_id, verify=False, headers=headers)
+        vm_ids = self._get_vm_ids(inf_id, auth_data)
 
-        if resp.status_code != 200:
-            _LOGGER.error("Error getting infrastructure info: %s. %s." % (resp.reason, resp.text))
-        else:  
-            vm_ids = [vm_id['uri'] for vm_id in resp.json()["uri-list"]]             
+        if vm_ids:             
             # The first one is always the front-end node
             for vm_id in vm_ids[1:]:
                 clues_node_name = None
@@ -447,11 +493,20 @@ class powermanager(PowerManager):
                 if not success:
                     _LOGGER.error("Error starting VM: %s. %s." % (resp.reason, resp.text))
             else:
-                radl_data = self._get_radl(nname)
-                if radl_data:
-                    _LOGGER.debug("RADL to launch/restart node %s: %s" % (nname, radl_data))
-                    headers = {"Authorization": auth_data, "Content-Type": "text/plain", "Accept": "application/json"}
-                    resp = requests.request("POST", inf_id, verify=False, headers=headers, data=radl_data)
+                if self._IM_VIRTUAL_CLUSTER_TOSCA:
+                    data = self._get_template(nname)
+                else:
+                    data = self._get_radl(nname)
+
+                if data:
+                    headers = {"Authorization": auth_data, "Accept": "application/json"}
+                    if self._IM_VIRTUAL_CLUSTER_TOSCA:
+                        _LOGGER.debug("TOSCA to launch/restart node %s: %s" % (nname, data))
+                        headers["Content-Type"] = "text/yaml"
+                    else:
+                        _LOGGER.debug("RADL to launch/restart node %s: %s" % (nname, data))
+                        headers["Content-Type"] = "text/plain"
+                    resp = requests.request("POST", inf_id, verify=False, headers=headers, data=data)
                     success = resp.status_code == 200
                     if success:
                         vms_id = [vm_id['uri'] for vm_id in resp.json()["uri-list"]]
