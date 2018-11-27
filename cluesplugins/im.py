@@ -268,7 +268,7 @@ class powermanager(PowerManager):
                 node_template['capabilities']['endpoint']['properties'] = {}
             node_template['capabilities']['endpoint']['properties']['dns_name'] = nnode
 
-        return yaml.dump(templateo)
+        return yaml.safe_dump(templateo)
 
     def _get_radl(self, nname):
         inf_id = self._get_inf_id()
