@@ -98,7 +98,7 @@ class lrms(LRMS):
 
         return response
 
-    def __init__(self, NOMAD_SERVER=None, NOMAD_HEADERS=None, NOMAD_API_VERSION=None, NOMAD_API_URL_GET_ALLOCATIONS=None, NOMAD_API_URL_GET_SERVERS=None, NOMAD_API_URL_GET_CLIENTS=None, NOMAD_API_URL_GET_CLIENT_INFO=None, MAX_RETRIES=None, NOMAD_ACL_TOKEN=None, NOMAD_AUTH_DATA=None, NOMAD_API_URL_GET_CLIENT_STATUS=None, NOMAD_STATE_OFF=None, NOMAD_STATE_ON=None, NOMAD_PRIVATE_HTTP_PORT=None, NOMAD_API_URL_GET_JOBS=None, NOMAD_API_URL_GET_JOBS_INFO=None, NOMAD_API_URL_GET_ALLOCATION_INFO=None, NOMAD_NODES_LIST_CLUES=None, NOMAD_QUEUES=None, NOMAD_QUEUES_OJPN=None, NOMAD_API_URL_GET_CLIENT_ALLOCATIONS=None, NOMAD_DEFAULT_CPUS_PER_NODE=None, NOMAD_DEFAULT_MEMORY_PER_NODE=None):
+    def __init__(self, NOMAD_SERVER=None, NOMAD_HEADERS=N one, NOMAD_API_VERSION=None, NOMAD_API_URL_GET_ALLOCATIONS=None, NOMAD_API_URL_GET_SERVERS=None, NOMAD_API_URL_GET_CLIENTS=None, NOMAD_API_URL_GET_CLIENT_INFO=None, MAX_RETRIES=None, NOMAD_ACL_TOKEN=None, NOMAD_AUTH_DATA=None, NOMAD_API_URL_GET_CLIENT_STATUS=None, NOMAD_STATE_OFF=None, NOMAD_STATE_ON=None, NOMAD_PRIVATE_HTTP_PORT=None, NOMAD_API_URL_GET_JOBS=None, NOMAD_API_URL_GET_JOBS_INFO=None, NOMAD_API_URL_GET_ALLOCATION_INFO=None, NOMAD_NODES_LIST_CLUES=None, NOMAD_QUEUES=None, NOMAD_QUEUES_OJPN=None, NOMAD_API_URL_GET_CLIENT_ALLOCATIONS=None, NOMAD_DEFAULT_CPUS_PER_NODE=None, NOMAD_DEFAULT_MEMORY_PER_NODE=None, NOMAD_DEFAULT_CPU_GHZ=None):
 
         config_nomad = cpyutils.config.Configuration(
             "NOMAD",
@@ -125,7 +125,8 @@ class lrms(LRMS):
                 "NOMAD_QUEUES": "default",
                 "NOMAD_QUEUES_OJPN": "", # Queues One Job Per Node
                 "NOMAD_DEFAULT_CPUS_PER_NODE": 2.0,
-                "NOMAD_DEFAULT_MEMORY_PER_NODE": "8Gi"
+                "NOMAD_DEFAULT_MEMORY_PER_NODE": "8Gi",
+                "NOMAD_DEFAULT_CPU_GHZ": 2.6 # Nomad use MHz to manage the jobs assigned CPU  
             }
         )
 
@@ -152,6 +153,8 @@ class lrms(LRMS):
         self._default_cpu_node = Helpers.val_default(NOMAD_DEFAULT_CPUS_PER_NODE, config_nomad.NOMAD_DEFAULT_CPUS_PER_NODE)
         self._default_memory_node = Helpers.val_default(NOMAD_DEFAULT_MEMORY_PER_NODE, config_nomad.NOMAD_DEFAULT_MEMORY_PER_NODE).replace('"','')
         self._queue_constraint_target = '${node.class}'
+        self._cpu_mhz_per_core = float( Helpers.val_default(NOMAD_DEFAULT_CPU_GHZ, config_nomad.NOMAD_DEFAULT_CPU_GHZ) ) / 1000.0
+
 
         # Check length of queues
         if len(self._queues) <= 0:
@@ -434,7 +437,7 @@ class lrms(LRMS):
                         if len(task_group['Tasks']) > 1:
                             _LOGGER.warning( "Taskgroup '%s' of job '%s' has got multiple tasks and this plugin doesn't support this. " % (taskgroup_id, job_id) )
                         for task in task_group['Tasks']:
-                            jobs[job_id]['TaskGroups'][taskgroup_id]['cpu'] += float(task['Resources']['CPU']) / 1000.0
+                            jobs[job_id]['TaskGroups'][taskgroup_id]['cpu'] += float(task['Resources']['CPU']) / self._cpu_mhz_per_core
                             jobs[job_id]['TaskGroups'][taskgroup_id]['memory'] += float(task['Resources']['MemoryMB'] * 1024 * 1024 )
 
                     
