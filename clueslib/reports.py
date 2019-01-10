@@ -97,6 +97,12 @@ def get_requests_data(connection_string, FROM, TO):
 	if FROM < min_timestamp:
 		FROM = min_timestamp
 
+	# Just in case that there are no requests
+	if FROM is None:
+		FROM = 0
+	if TO is None:
+		TO = 0
+
 	# Finally get the data from the database
 	result, row_count, rows = db.sql_query("select * from requests where timestamp_created >= %d and timestamp_created <= %d order by timestamp_created" % (FROM, TO) )
 
@@ -146,6 +152,12 @@ def get_reports_data(connection_string, FROM, TO):
 		FROM = TO + FROM
 	if FROM < 0:
 		FROM = 0
+
+	# Just in case that there is no monitoring information
+	if FROM is None:
+		FROM = 0
+	if TO is None:
+		TO = 0
 
 	# Finally get the data from the database
 	result, row_count, rows = db.sql_query("select * from host_monitoring where timestamp_state >= %d and timestamp_state <= %d order by timestamp_state" % (FROM, TO) )
