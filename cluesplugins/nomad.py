@@ -279,7 +279,7 @@ class lrms(LRMS):
             resources['memory_used'] = 0.0
             for alloc in response['json']:
                 if alloc['ClientStatus'] in ['pending', 'running']: # The job is running or will be soon
-                    resources['slots_used'] += ( float(alloc['Resources']['CPU']) / 100.0)
+                    resources['slots_used'] += ( float(alloc['Resources']['CPU']) / self._cpu_mhz_per_core)
                     resources['memory_used'] += float( _get_memory_in_bytes(str(alloc['Resources']['MemoryMB'])+"M"))
         else:
             _LOGGER.error("Error getting information about allocations of client with ID=%s from Server node with URL=%s: %s: %s" % (client_id, server_node, response['status_code'], response['text']))
