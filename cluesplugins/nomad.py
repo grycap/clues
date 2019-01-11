@@ -153,7 +153,11 @@ class lrms(LRMS):
         self._default_cpu_node = Helpers.val_default(NOMAD_DEFAULT_CPUS_PER_NODE, config_nomad.NOMAD_DEFAULT_CPUS_PER_NODE)
         self._default_memory_node = Helpers.val_default(NOMAD_DEFAULT_MEMORY_PER_NODE, config_nomad.NOMAD_DEFAULT_MEMORY_PER_NODE).replace('"','')
         self._queue_constraint_target = '${node.class}'
-        self._cpu_mhz_per_core = float( Helpers.val_default(NOMAD_DEFAULT_CPU_GHZ, config_nomad.NOMAD_DEFAULT_CPU_GHZ) ) / 1000.0
+
+        self._cpu_mhz_per_core = float(config_nomad.NOMAD_DEFAULT_CPU_GHZ)
+        if NOMAD_DEFAULT_CPU_GHZ != None and float(NOMAD_DEFAULT_CPU_GHZ) != 0.0:
+                self._cpu_mhz_per_core = NOMAD_DEFAULT_CPU_GHZ
+        self._cpu_mhz_per_core = self._cpu_mhz_per_core  * 1000.0 # To MHz
 
 
         # Check length of queues
