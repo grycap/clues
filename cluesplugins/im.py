@@ -403,6 +403,8 @@ class powermanager(PowerManager):
 							if enabled:
 								if ec3_additional_vm:
 									_LOGGER.debug("Node %s is an additional not recovering it." % clues_node_name)
+								elif node_found and node_found.state == Node.USED:
+									_LOGGER.warning("Node %s is in use, not recovering it." % clues_node_name)
 								else:
 									self.recover(clues_node_name, node_found)
 							else:
