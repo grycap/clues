@@ -131,13 +131,14 @@ class lrms(LRMS):
 
         if pods_data:
             for pod in pods_data["items"]:
-                if pod["metadata"]["namespace"] != "kube-system":
-                    if "nodeName" in pod["spec"] and nodename == pod["spec"]["nodeName"]:
-                        if pod["status"]["phase"] not in ["Succeeded", "Failed"]:
+                if "nodeName" in pod["spec"] and nodename == pod["spec"]["nodeName"]:
+                    if pod["status"]["phase"] not in ["Succeeded", "Failed"]:
+                        # do not count the number of pods in case of system ones
+                        if pod["metadata"]["namespace"] != "kube-system":
                             used_pods += 1
-                            cpus, memory = self._get_pod_cpus_and_memory(pod)
-                            used_mem += memory
-                            used_cpus += cpus
+                        cpus, memory = self._get_pod_cpus_and_memory(pod)
+                        used_mem += memory
+                        used_cpus += cpus
 
         return used_mem, used_cpus, used_pods
 
