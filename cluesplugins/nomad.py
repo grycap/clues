@@ -64,7 +64,6 @@ def _get_memory_in_bytes(str_memory):
 class lrms(LRMS):
 
     def _create_request(self, method, url, acl_token=None, headers=None, body=None, auth_data=None):    
-        _LOGGER.debug("_create_request URL: %s" % (url))
         if body is None: 
             body = {}
         if headers is None:
@@ -218,8 +217,7 @@ class lrms(LRMS):
             self._headers = {}
             _LOGGER.error("Error loading variable NOMAD_HEADERS from config file, NOMAD_HEADERS will be %s" % str(config_nomad.NOMAD_HEADERS) )
         
-        _LOGGER.debug("init self._verify: %s" % (str(self._verify)))
-        _LOGGER.debug("init self._certs: %s" % (str(self._certs)))
+  
         LRMS.__init__(self, "TOKEN_%s" % self._server_url)
 
 
