@@ -21,7 +21,7 @@ import requests
 import cpyutils.config
 import clueslib.helpers as Helpers
 import json, time
-
+import os
 
 from cpyutils.evaluate import TypedClass, TypedList
 from cpyutils.log import Log
@@ -64,6 +64,7 @@ def _get_memory_in_bytes(str_memory):
 class lrms(LRMS):
 
     def _create_request(self, method, url, acl_token=None, headers=None, body=None, auth_data=None):    
+        _LOGGER.debug("_create_request URL: %s" % (url))
         if body is None: 
             body = {}
         if headers is None:
@@ -81,7 +82,7 @@ class lrms(LRMS):
         while (self._max_retries > retries) and (not ok) :
             retries += 1
             try: 
-                r =  requests.request(method, url, verify=False, headers=headers, data=body, auth=auth)
+                r =  requests.request(method, url, verify=self._verify, cert=self._certs, headers=headers, data=body, auth=auth)
                 response[ 'status_code' ] = r.status_code
                 response[ 'text' ] = r.text
                 response[ 'json' ] = r.json()
@@ -98,7 +99,7 @@ class lrms(LRMS):
 
         return response
 
-    def __init__(self, NOMAD_SERVER=None, NOMAD_HEADERS=None, NOMAD_API_VERSION=None, NOMAD_API_URL_GET_ALLOCATIONS=None, NOMAD_API_URL_GET_SERVERS=None, NOMAD_API_URL_GET_CLIENTS=None, NOMAD_API_URL_GET_CLIENT_INFO=None, MAX_RETRIES=None, NOMAD_ACL_TOKEN=None, NOMAD_AUTH_DATA=None, NOMAD_API_URL_GET_CLIENT_STATUS=None, NOMAD_STATE_OFF=None, NOMAD_STATE_ON=None, NOMAD_PRIVATE_HTTP_PORT=None, NOMAD_API_URL_GET_JOBS=None, NOMAD_API_URL_GET_JOBS_INFO=None, NOMAD_API_URL_GET_ALLOCATION_INFO=None, NOMAD_NODES_LIST_CLUES=None, NOMAD_QUEUES=None, NOMAD_QUEUES_OJPN=None, NOMAD_API_URL_GET_CLIENT_ALLOCATIONS=None, NOMAD_DEFAULT_CPUS_PER_NODE=None, NOMAD_DEFAULT_MEMORY_PER_NODE=None, NOMAD_DEFAULT_CPU_GHZ=None):
+    def __init__(self, NOMAD_SERVER=None, NOMAD_HEADERS=None, NOMAD_API_VERSION=None, NOMAD_API_URL_GET_ALLOCATIONS=None, NOMAD_API_URL_GET_SERVERS=None, NOMAD_API_URL_GET_CLIENTS=None, NOMAD_API_URL_GET_CLIENT_INFO=None, MAX_RETRIES=None, NOMAD_ACL_TOKEN=None, NOMAD_AUTH_DATA=None, NOMAD_API_URL_GET_CLIENT_STATUS=None, NOMAD_STATE_OFF=None, NOMAD_STATE_ON=None, NOMAD_PRIVATE_HTTP_PORT=None, NOMAD_API_URL_GET_JOBS=None, NOMAD_API_URL_GET_JOBS_INFO=None, NOMAD_API_URL_GET_ALLOCATION_INFO=None, NOMAD_NODES_LIST_CLUES=None, NOMAD_QUEUES=None, NOMAD_QUEUES_OJPN=None, NOMAD_API_URL_GET_CLIENT_ALLOCATIONS=None, NOMAD_DEFAULT_CPUS_PER_NODE=None, NOMAD_DEFAULT_MEMORY_PER_NODE=None, NOMAD_DEFAULT_CPU_GHZ=None, NOMAD_CA_CERT=None, NOMAD_SERVER_CERT=None, NOMAD_SERVER_KEY=None):
 
         config_nomad = cpyutils.config.Configuration(
             "NOMAD",
@@ -126,7 +127,10 @@ class lrms(LRMS):
                 "NOMAD_QUEUES_OJPN": "", # Queues One Job Per Node
                 "NOMAD_DEFAULT_CPUS_PER_NODE": 2.0,
                 "NOMAD_DEFAULT_MEMORY_PER_NODE": "8Gi",
-                "NOMAD_DEFAULT_CPU_GHZ": 2.6 # Nomad use MHz to manage the jobs assigned CPU  
+                "NOMAD_DEFAULT_CPU_GHZ": 2.6,  # Nomad use MHz to manage the jobs assigned CPU
+                "NOMAD_SERVER_CERT": None,
+                "NOMAD_SERVER_KEY": None,
+                "NOMAD_CA_CERT": None
             }
         )
 
@@ -158,7 +162,51 @@ class lrms(LRMS):
         if NOMAD_DEFAULT_CPU_GHZ != None and float(NOMAD_DEFAULT_CPU_GHZ) != 0.0:
                 self._cpu_mhz_per_core = NOMAD_DEFAULT_CPU_GHZ
         self._cpu_mhz_per_core = self._cpu_mhz_per_core  * 1000.0 # To MHz
+        self._verify = Helpers.val_default(NOMAD_CA_CERT, config_nomad.NOMAD_CA_CERT)
+        if self._verify == None:
+            self._verify=False
+        self._certs = []
+        server_cert_file = Helpers.val_default(NOMAD_SERVER_CERT, config_nomad.NOMAD_SERVER_CERT)
+        server_key_file = Helpers.val_default(NOMAD_SERVER_KEY, config_nomad.NOMAD_SERVER_KEY)
 
+        https_active = ('https'==self._server_url[:5])
+        https_loading_error = False
+
+        if server_cert_file:
+            exists = os.path.isfile(server_cert_file)
+            if exists:
+                self._certs.append(server_cert_file)
+            else:
+                https_loading_error = True
+                _LOGGER.error("The path of server certificate file does not exists: %s " % str(server_cert_file) )
+
+        if server_key_file:
+            exists = os.path.isfile(server_key_file)
+            if exists:
+                self._certs.append(server_key_file)
+            else:
+                https_loading_error = True
+                _LOGGER.error("The path of server private key of certificate file does not exists: %s " % str(server_key_file) )
+
+        if self._verify != False: 
+            exists = os.path.isfile(self._verify)
+            if not exists:
+                https_loading_error = True
+                _LOGGER.error("The path of CA certicate file does not exists: %s " % str(self._verify) )
+        
+        if https_active and len(self._certs) == 0:
+            https_loading_error = True
+            _LOGGER.error("Due to  you are using TLS, it's required to provide the certificate and the private key (in 1 or 2 files)"  )
+        
+        self._certs = tuple(self._certs)
+
+        if https_loading_error and https_active:
+            _LOGGER.error("Some error encounted: %s " % str(self._verify) )
+        
+        self._protocol='http'
+        if https_active:
+            self._protocol ='https'
+        
 
         # Check length of queues
         if len(self._queues) <= 0:
@@ -166,10 +214,12 @@ class lrms(LRMS):
             self._queues = [ config_nomad.NOMAD_QUEUES ]
         try:
             self._headers = json.loads(Helpers.val_default(NOMAD_HEADERS, config_nomad.NOMAD_HEADERS))
-        except ValueError, e:
+        except ValueError:
             self._headers = {}
             _LOGGER.error("Error loading variable NOMAD_HEADERS from config file, NOMAD_HEADERS will be %s" % str(config_nomad.NOMAD_HEADERS) )
         
+        _LOGGER.debug("init self._verify: %s" % (str(self._verify)))
+        _LOGGER.debug("init self._certs: %s" % (str(self._certs)))
         LRMS.__init__(self, "TOKEN_%s" % self._server_url)
 
 
@@ -239,7 +289,7 @@ class lrms(LRMS):
         response = self._create_request('GET', url, auth_data=self._auth_data)
         if (response[ 'status_code' ] == 200):
             for node in response['json']['Members']:
-                server_nodes_info.append('http://'+node['Addr']+':'+self._http_port)
+                server_nodes_info.append(self._protocol+'://'+node['Addr']+':'+self._http_port)
         else:
             _LOGGER.error("Error getting Nomad Server nodes addresses: %s: %s" % (response['status_code'], response['text']))
         return server_nodes_info
@@ -263,7 +313,7 @@ class lrms(LRMS):
             
         resources = {}
         # Querying Client node for getting the slots_count and memory_total
-        url = 'http://' + client_addr + self._api_version + self._api_url_get_clients_status
+        url = self._protocol + '://' + client_addr + self._api_version + self._api_url_get_clients_status
         response = self._create_request('GET', url) 
         if (response['status_code'] == 200):
             resources['slots_count'] = len(response['json']['CPU'])
