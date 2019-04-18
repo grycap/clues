@@ -89,6 +89,9 @@ class lrms(LRMS):
             except requests.exceptions.ConnectionError:
                 _LOGGER.error("Cannot connect to %s, waiting 5 seconds..." % (url))
                 time.sleep(5)
+            except ValueError as e:
+                _LOGGER.error("JSON cannot be decoded: %s" %(r.text))
+                response[ 'json' ]={}
 
         if not ok:
             _LOGGER.error("Cannot connect to %s . Retries: %s" % (url, retries))
