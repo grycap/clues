@@ -63,13 +63,13 @@ def _get_memory_in_bytes(str_memory):
 
 class lrms(LRMS):
 
-    def _create_request(self, method, url, acl_token=None, headers=None, body=None, auth_data=None):    
+    def _create_request(self, method, url, headers=None, body=None, auth_data=None):    
         if body is None: 
             body = {}
         if headers is None:
             headers = {}
-        if acl_token is not None:
-            headers.update({ 'X-Nomad-Token': acl_token})
+        if self._acl_token is not None:
+            headers.update({ 'X-Nomad-Token': self._acl_token})
         auth = None
         if auth_data is not None:
             if 'user' in auth_data and 'passwd' in auth_data:
@@ -129,7 +129,8 @@ class lrms(LRMS):
                 "NOMAD_DEFAULT_CPU_GHZ": 2.6,  # Nomad use MHz to manage the jobs assigned CPU
                 "NOMAD_SERVER_CERT": None,
                 "NOMAD_SERVER_KEY": None,
-                "NOMAD_CA_CERT": None
+                "NOMAD_CA_CERT": None,
+                "NOMAD_TOKEN": None
             }
         )
 
