@@ -591,13 +591,7 @@ class CLUES_Scheduler_PowOn_Free(CLUES_Scheduler):
                     slots_free += node_slots_free
                     if node.state == Node.IDLE:
                         nodes_free += 1
-                    
-            elif node.state in [ Node.POW_ON ]:
-                # In this state, the node will be usable
-                node_slots_free = max(0, node.slots_count)                      # When the resources are negative they are commited to be understood as unknown
-                slots_free += node_slots_free
-                nodes_free += 1
-            
+
             elif node.state in [ Node.OFF ]:
                 node_slots_free = max(0, node.slots_count)                      # When the resources are negative they are commited to be understood as unknown
                 nodes_that_can_be_poweron_off.append((node_slots_free, node.name))
