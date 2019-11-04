@@ -393,6 +393,7 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                 nodes_on = nodelist.get_nodelist_filtered().keys()
                 
                 # Case 1: are there enough resources with those that are ON?
+                node_pool = nodes_on
                 resources_met, nodes_meeting_resources = _nodes_meet_resources(current_req.resources, nodelist, nodes_on)
                 if resources_met:
                 # if node_count_on >= current_req.resources.nodecount:
@@ -411,7 +412,6 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                         _LOGGER.debug("#1. we have %d nodes to serve request %s" % (node_count_on, current_req.id))
                         current_req.set_state(request.Request.SERVED)
 
-                    node_pool = nodes_on
                     request_held = False
 
                 # Case 2: (if not served) are there enough resources with those that are being powered on?
