@@ -137,7 +137,7 @@ try:
             if filename == '':
                 filename='index.html'
             _LOGGER.debug("web request: %s" % filename)
-            if filename == "cluesdata.js":
+            if filename in [ "cluesdata.js", "cluesdata.json" ]:
                 hostdata, min_t, max_t = clueslib.reports.get_reports_data(configserver._CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
                 requests, min_t_r, max_t_r = clueslib.reports.get_requests_data(configserver._CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
                 if hostdata is None:
@@ -145,8 +145,11 @@ try:
                 else:
                     if min_t is None: min_t = 0
                     if max_t is None: max_t = 0
-                    result = {"hostevents":hostdata,"requests":requests, "mintime_avail": min_t, "maxtime_avail": max_t}
-                    return "var cluesdata=%s;" % json.dumps(result)
+                    result = {"hostevents":hostdata,"requests":requests, "mintime_avail": min_t, "maxtime_avail": max_t, "t": cpyutils.eventloop.now()}
+                    if filename == "cluesdata.js":
+                        return "var cluesdata=%s;" % json.dumps(result)
+                    else:
+                        return "%s" % json.dumps(result)
             else:
                 if configserver._CONFIGURATION_GENERAL.PATH_REPORTS_WEB == "":
                     return "reports are deactivated"

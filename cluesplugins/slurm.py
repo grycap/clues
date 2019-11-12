@@ -286,10 +286,14 @@ class lrms(clueslib.platform.LRMS):
                         memory = _translate_mem_value(job["MinMemoryNode"] + ".MB")
                     else:
                         memory = 0
+                    if 'NumTasks' in job:
+                        numtasks = int(job["NumTasks"])
+                    else:
+                        numtasks = numnodes
                     cpus_per_task = int(job["CPUs/Task"])
                     partition = '"' + str(job["Partition"]) + '" in queues'
     
-                    resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [partition], numnodes)
+                    resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [partition], numtasks)
                     j = clueslib.request.JobInfo(resources, job_id, nodes)
                     j.set_state(state)
                     jobinfolist.append(j)

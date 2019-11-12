@@ -71,9 +71,9 @@ def infer_chronos_job_state(job_state):
     return Request.PENDING if job_state == 'queued' else Request.ATTENDED
 
 
-def infer_marathon_job_state(jobs, jobs_running):
+def infer_marathon_job_state(numnodes, jobs, jobs_running):
     ''' Determines the equivalent state between Marathon jobs and Clues2 possible job states'''
-    return Request.ATTENDED if jobs and jobs_running > 0 else Request.PENDING
+    return Request.ATTENDED if jobs and jobs_running >= numnodes else Request.PENDING
 
 
 def calculate_memory_bytes(memory):
@@ -169,7 +169,8 @@ class lrms(LRMS):
 
     def _update_job_info_list(self, jobinfolist, cpus_per_task, memory, numnodes, job_id, nodes, state):
         # Use the fake queue
-        queue = '"default" in queues'
+        #queue = '"default" in queues'
+        queue = ""
         resources = ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
         job_info = JobInfo(resources, job_id, nodes)
         job_info.set_state(state)
@@ -219,7 +220,7 @@ class lrms(LRMS):
                         for task in tasks:
                             nodes.append(task['host'])
                     numnodes = job_attributes['instances']
-                    marathon_job_state = infer_marathon_job_state(tasks, job_attributes['tasksRunning'])
+                    marathon_job_state = infer_marathon_job_state(numnodes, tasks, job_attributes['tasksRunning'])
                     jobinfolist = self._update_job_info_list(jobinfolist,
                                                              cpus_per_task, memory, numnodes,
                                                              job_id, nodes, marathon_job_state)
@@ -343,11 +344,11 @@ class lrms(LRMS):
                     if "memory" in vnode:
                         memory_total = get_memory_in_bytes(vnode["memory"])
                         memory_free = get_memory_in_bytes(vnode["memory"])
-                    queues = ["default"]
-                    if "queues" in vnode:
-                        queues = vnode["queues"].split(",")
-                        if queues:
-                            keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                    #queues = ["default"]
+                    #if "queues" in vnode:
+                    #    queues = vnode["queues"].split(",")
+                    #    if queues:
+                    #        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
 
                     if "keywords" in vnode:
                         for keypair in vnode["keywords"].split(','):
@@ -392,9 +393,9 @@ class lrms(LRMS):
                             # Create a fake queue
                             keywords = {}
                             keywords['hostname'] = TypedClass.auto(name)
-                            queues = ["default"]
-                            if queues:
-                                keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                            #queues = ["default"]
+                            #if queues:
+                            #    keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
 
                             nodeinfolist[name] = NodeInfo(
                                 name, slots_count, slots_free, memory_total, memory_free, keywords)

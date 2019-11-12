@@ -131,13 +131,14 @@ class lrms(LRMS):
 
         if pods_data:
             for pod in pods_data["items"]:
-                if pod["metadata"]["namespace"] != "kube-system":
-                    if "nodeName" in pod["spec"] and nodename == pod["spec"]["nodeName"]:
-                        if pod["status"]["phase"] not in ["Succeeded", "Failed"]:
+                if "nodeName" in pod["spec"] and nodename == pod["spec"]["nodeName"]:
+                    if pod["status"]["phase"] not in ["Succeeded", "Failed"]:
+                        # do not count the number of pods in case of system ones
+                        if pod["metadata"]["namespace"] != "kube-system":
                             used_pods += 1
-                            cpus, memory = self._get_pod_cpus_and_memory(pod)
-                            used_mem += memory
-                            used_cpus += cpus
+                        cpus, memory = self._get_pod_cpus_and_memory(pod)
+                        used_mem += memory
+                        used_cpus += cpus
 
         return used_mem, used_cpus, used_pods
 
@@ -257,29 +258,35 @@ class lrms(LRMS):
         pods_data = self._create_request('GET', self._pods_api_url_path, self.auth_data)
         if pods_data:
             for pod in pods_data["items"]:
-                job_id = pod["metadata"]["uid"]
-                state = pod["status"]["phase"]  # Pending, Running, Succeeded, Failed or Unknown
+                if pod["metadata"]["namespace"] != "kube-system":
+                    job_id = pod["metadata"]["uid"]
+                    state = pod["status"]["phase"]  # Pending, Running, Succeeded, Failed or Unknown
+                    hostIP = None
+                    if "hostIP" in pod["status"]:
+                        hostIP = pod["status"]["hostIP"]  # Pending, Running, Succeeded, Failed or Unknown
 
-                job_state = Request.UNKNOWN
-                if state == "Pending":
-                    job_state = Request.PENDING
-                elif state in ["Running", "Succeeded", "Failed"]:
-                    job_state = Request.SERVED
+                    job_state = Request.UNKNOWN
+                    if state == "Pending":
+                        job_state = Request.PENDING
+                        if hostIP:
+                            job_state = Request.SERVED
+                    elif state in ["Running", "Succeeded", "Failed"]:
+                        job_state = Request.SERVED
 
-                cpus, memory = self._get_pod_cpus_and_memory(pod)
+                    cpus, memory = self._get_pod_cpus_and_memory(pod)
 
-                req_str = '(pods_free > 0)'
-                if 'nodeName' in pod["spec"] and pod["spec"]["nodeName"]:
-                    req_str += ' && (nodeName = "%s")' % pod["spec"]["nodeName"]
+                    req_str = '(pods_free > 0)'
+                    if 'nodeName' in pod["spec"] and pod["spec"]["nodeName"]:
+                        req_str += ' && (nodeName = "%s")' % pod["spec"]["nodeName"]
 
-                # Add node selector labels
-                if 'nodeSelector' in pod['spec'] and pod['spec']['nodeSelector']:
-                    for key, value in pod['spec']['nodeSelector'].items():
-                        req_str += ' && (%s == "%s")' % (key, value)
-                resources = ResourcesNeeded(cpus, memory, [req_str], 1)
-                job_info = JobInfo(resources, job_id, 1)
-                job_info.set_state(job_state)
-                jobinfolist.append(job_info)
+                    # Add node selector labels
+                    if 'nodeSelector' in pod['spec'] and pod['spec']['nodeSelector']:
+                        for key, value in pod['spec']['nodeSelector'].items():
+                            req_str += ' && (%s == "%s")' % (key, value)
+                    resources = ResourcesNeeded(cpus, memory, [req_str], 1)
+                    job_info = JobInfo(resources, job_id, 1)
+                    job_info.set_state(job_state)
+                    jobinfolist.append(job_info)
         else:
             _LOGGER.error("Error getting Kubernetes pod list")
 
