@@ -128,8 +128,9 @@ EXTRA_NODES_PERIOD=60
 * IDLE_TIME is related to the CLUES_Scheduler_PowOff_IDLE and is the time during which a working node has to be idle to be considered to be powered off.
 * RECONSIDER_JOB_TIME is related to the CLUES_Scheduler_Reconsider_Jobs scheduler, and states the frequency (in seconds) that a job has to be in the queue before its resources are reconsidered.
 * EXTRA_SLOTS_FREE is related to the CLUES_Scheduler_PowOn_Free scheduler and states how many slots should be free in the platform.
+* EXTRA_MEM_FREE is also related to CLUES_Scheduler_PowOn_Free and states the amount of memory (in bytes) that are wanted to be free (CLUES will power on some nodes to get the extra memory)
 * EXTRA_NODES_PERIOD=60 is also related to CLUES_Scheduler_PowOn_Free and states the frequency of the scheduler. It is not executed all the time to try to avoid transient allocations.
- 
+
 Once this file is configured, we can use the templates in the /etc/clues2/conf.d folder to configure the SLURM and IPMI plugins. So we are creating the proper files:
 
 ```
