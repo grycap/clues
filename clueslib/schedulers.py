@@ -581,7 +581,7 @@ class CLUES_Scheduler_PowOn_Free(CLUES_Scheduler):
         nodes_that_can_be_poweron_off = []
         
         for node in nodelist:
-            if node.state in [ Node.IDLE, Node.USED, Node.ON_ERR ]:
+            if node.state in [ Node.IDLE, Node.USED, Node.ON_ERR, Node.POW_ON ]:
                 # In these states, the free slots are usable
                 node_slots_free = max(0, node.slots_free_original)                  # When the resources are negative they are commited to be understood as unknown
                     
