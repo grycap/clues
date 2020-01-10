@@ -570,13 +570,11 @@ class CLUES_Scheduler_PowOn_Free(CLUES_Scheduler):
 
         # WARNING: this algorithm may be improved for better performance, but in this way it is easier to understand
 
-        mem_free = 0
+        max_nodes_mem_free = 0
         slots_free = 0
         nodes_free = 0
-        mem_powon = 0
         slots_powon = 0
         nodes_powon = 0
-        mem_powoff = 0
         slots_powoff = 0
         nodes_powoff= 0 
         # Count the total free slots of the platform
@@ -586,7 +584,7 @@ class CLUES_Scheduler_PowOn_Free(CLUES_Scheduler):
         
         for node in nodelist:
             if node.state in [ Node.IDLE, Node.USED, Node.ON_ERR, Node.POW_ON ]:
-                # In these states, the free slots are usable
+                # In these states, the free slots and memory are usable
                 node_slots_free = max(0, node.slots_free_original)                  # When the resources are negative they are commited to be understood as unknown
                 node_memory_free = max(0, node.memory_free_original)
                     
@@ -594,7 +592,9 @@ class CLUES_Scheduler_PowOn_Free(CLUES_Scheduler):
                     nodes_that_can_be_poweron_on.append((node_slots_free, node_memory_free, node.name))
                 else:
                     slots_free += node_slots_free
-                    mem_free += node_memory_free
+                    # Get the max memory free in a single node
+                    if node_memory_free > max_nodes_mem_free:
+                        max_nodes_mem_free = node_memory_free
                     if node.state == Node.IDLE:
                         nodes_free += 1
 
@@ -619,8 +619,8 @@ class CLUES_Scheduler_PowOn_Free(CLUES_Scheduler):
         if nodes_free < self.EXTRA_NODES_FREE:
             nodes_to_power_on = self.EXTRA_NODES_FREE - nodes_free
 
-        if mem_free < self.EXTRA_MEM_FREE:
-            mem_to_power_on = self.EXTRA_MEM_FREE - mem_free
+        if max_nodes_mem_free < self.EXTRA_MEM_FREE:
+            mem_to_power_on = 1
 
         nodes_that_can_be_poweron_off.sort(key=lambda tup:tup[1])
         nodes_that_can_be_poweron_on.sort(key=lambda tup:tup[1])
@@ -632,7 +632,9 @@ class CLUES_Scheduler_PowOn_Free(CLUES_Scheduler):
             node = nodelist.get_node(nname)
             
             slots_to_power_on -= slots_count
-            mem_to_power_on -= memory
+            # Power on nodes with enough memory
+            if memory >= mem_to_power_on:
+                mem_to_power_on = 0
             if node.state in [ Node.IDLE, Node.POW_ON, Node.OFF, Node.OFF_ERR ]:
                 nodes_to_power_on -= 1
 
