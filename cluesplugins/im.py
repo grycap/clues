@@ -378,8 +378,8 @@ class powermanager(PowerManager):
                     if resp.status_code == 200:
                         radl = radl_parse.parse_radl(resp.text)
                         clues_node_name = radl.systems[0].getValue('net_interface.0.dns_name')
-						if '#N#' in clues_node_name:
-							clues_node_name = clues_node_name.replace('#N#', vm_id)
+                        if '#N#' in clues_node_name:
+                            clues_node_name = clues_node_name.replace('#N#', vm_id)
                         ec3_additional_vm = radl.systems[0].getValue('ec3_additional_vm')
                         state = radl.systems[0].getValue('state')
                     else:
