@@ -17,10 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import subprocess
-import node
-import helpers
+from . import node
+from . import helpers
 import cpyutils.runcommand
-import configlib
+from . import configlib
 import collections
 
 import cpyutils.log

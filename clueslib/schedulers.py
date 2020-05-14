@@ -18,9 +18,9 @@
 import cpyutils.config
 import cpyutils.eventloop
 import logging
-from node import Node
-import request
-from request import Request
+from .node import Node
+#from . import request
+from .request import Request
 import math
 import collections
 
@@ -260,8 +260,8 @@ class CLUES_Scheduler_Reconsider_Jobs(CLUES_Scheduler):
     def schedule(self, requests_queue, monitoring_info, candidates_on, candidates_off):
         joblist = monitoring_info.joblist
         if joblist is None:
-                _LOGGER.debug("could not get information about the jobs")
-                return True
+            _LOGGER.debug("could not get information about the jobs")
+            return True
 
         #timestamp_joblist = monitoring_info.timestamp_joblist
         now = cpyutils.eventloop.now()
@@ -296,8 +296,8 @@ def get_booking_system():
     try:
         BOOKING_SYSTEM
     except:
-        import configlib
-        BOOKING_SYSTEM = BookingSystem(configlib._CONFIGURATION_MONITORING.COOLDOWN_SERVED_REQUESTS)
+        import clueslib.configlib
+        BOOKING_SYSTEM = BookingSystem(clueslib.configlib._CONFIGURATION_MONITORING.COOLDOWN_SERVED_REQUESTS)
     return BOOKING_SYSTEM
 
 class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
@@ -390,7 +390,7 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                 nodelist.FILTER_reset()
                 nodelist.FILTER_basic(current_req.resources.resources, states = [Node.IDLE, Node.USED, Node.ON_ERR])
                 node_count_on = nodelist.FILTER_count()
-                nodes_on = nodelist.get_nodelist_filtered().keys()
+                nodes_on = list(nodelist.get_nodelist_filtered().keys())
                 
                 # Case 1: are there enough resources with those that are ON?
                 node_pool = nodes_on
@@ -406,11 +406,11 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                             self.debug(current_req, "#1. we have %d nodes to serve request %s, but there are other alive requests (%d)" % (node_count_on, current_req.id, requests_alive))
                             # _LOGGER.debug("#1. we have %d nodes to serve request %s, but there are other alive requests (%d)" % (node_count_on, current_req.id, requests_alive))
                             
-                        current_req.set_state(request.Request.BLOCKED)
+                        current_req.set_state(Request.BLOCKED)
                     else:
                         # self.debug(current_req, "#1. we have %d nodes to serve request %s" % (node_count_on, current_req.id))
                         _LOGGER.debug("#1. we have %d nodes to serve request %s" % (node_count_on, current_req.id))
-                        current_req.set_state(request.Request.SERVED)
+                        current_req.set_state(Request.SERVED)
 
                     request_held = False
 
@@ -419,7 +419,7 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     nodelist.FILTER_reset()
                     nodelist.FILTER_basic(current_req.resources.resources, states = [Node.POW_ON])
                     node_count_powon = nodelist.FILTER_count()
-                    nodes_powon = nodelist.get_nodelist_filtered().keys()
+                    nodes_powon = list(nodelist.get_nodelist_filtered().keys())
     
                     node_pool = node_pool + nodes_powon # The nodes that are powering on are likely to be used to serve the request
                     resources_met, nodes_meeting_resources = _nodes_meet_resources(current_req.resources, nodelist, node_pool)
@@ -427,13 +427,13 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     # if node_count_on + node_count_powon >= current_req.resources.nodecount:
                         # _LOGGER.debug("#2. there are nodes that are powering on that will serve request %s" % (current_req.id))
                         self.debug(current_req, "#2. there are nodes that are powering on that will serve request %s" % (current_req.id))
-                        current_req.set_state(request.Request.ATTENDED)
+                        current_req.set_state(Request.ATTENDED)
 
                         request_held = False
 
                 # If we have reached the limit of nodes powering on, we will not power on more nodes
                 if request_held:
-                    if (config_scheduling.MAX_BOOTING_NODES > 0) and ((len(nodes_powering_on) + len(local_candidates_on.keys())) >= config_scheduling.MAX_BOOTING_NODES):
+                    if (config_scheduling.MAX_BOOTING_NODES > 0) and ((len(nodes_powering_on) + len(list(local_candidates_on.keys()))) >= config_scheduling.MAX_BOOTING_NODES):
                         _LOGGER.debug("Maximum number of booting nodes achieved (%s)... will wait so see what happens" % config_scheduling.MAX_BOOTING_NODES)
                         break
 
@@ -444,7 +444,7 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     nodelist.FILTER_reset()
                     nodelist.FILTER_basic(current_req.resources.resources, enabled = True, states = [Node.OFF])
                     node_count_off = nodelist.FILTER_count()
-                    nodes_off = nodelist.get_nodelist_filtered().keys()
+                    nodes_off = list(nodelist.get_nodelist_filtered().keys())
     
                     nodes_off_but_powon = [ n_id for n_id in nodes_off if n_id in local_candidates_on ]
                     node_count_off_but_powon = len(nodes_off_but_powon)
@@ -454,7 +454,7 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     if resources_met:
                     # if node_count_on + node_count_powon + node_count_off_but_powon >= current_req.resources.nodecount:
                         self.debug(current_req, "#3. we have requested to power on nodes that will serve %s (%s)" % (current_req.id, str(nodes_off_but_powon)))
-                        current_req.set_state(request.Request.ATTENDED)
+                        current_req.set_state(Request.ATTENDED)
 
                         request_held = False
 
@@ -468,7 +468,7 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     if resources_met:
                     # if node_count_on + node_count_powon + node_count_off_but_powon + node_count_off_off >= current_req.resources.nodecount:
                         self.debug(current_req, "#4. we need to power on some nodes that are off to serve %s (%s)" % (current_req.id, str(nodes_off_off)))
-                        current_req.set_state(request.Request.ATTENDED)
+                        current_req.set_state(Request.ATTENDED)
 
                         request_held = False
 
@@ -477,7 +477,7 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     nodelist.FILTER_reset()
                     nodelist.FILTER_basic(current_req.resources.resources, enabled = True, states = [Node.POW_OFF])
                     node_count_powoff = nodelist.FILTER_count()
-                    nodes_powoff = nodelist.get_nodelist_filtered().keys()
+                    nodes_powoff = list(nodelist.get_nodelist_filtered().keys())
     
                     
                     node_pool = node_pool + nodes_powoff    # The nodes that are being powered off are likely to be used to serve the request
@@ -485,7 +485,7 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     if resources_met:
                     # if node_count_on + node_count_powon + node_count_off_but_powon + node_count_off_off + node_count_powoff >= current_req.resources.nodecount:
                         self.debug(current_req, "#5. we need to wait for some nodes that are being powered off to serve %s (%s)" % (current_req.id, str(nodes_powoff)))
-                        current_req.set_state(request.Request.ATTENDED)
+                        current_req.set_state(Request.ATTENDED)
 
                         request_held = False
 
@@ -497,11 +497,11 @@ class CLUES_Scheduler_PowOn_Requests(CLUES_Scheduler):
                     if requests_alive == 0:
                         if len(node_pool) == 0:
                             _LOGGER.debug("#6. request %s cannot be satisfied, but there are no requests pending from powering on nodes, so let's free this request" % current_req.id)
-                            current_req.set_state(request.Request.NOT_SERVED)
+                            current_req.set_state(Request.NOT_SERVED)
                         else:
                             # If there are nodes to serve at least partially the request, we are marking it as attended, to wait for the nodes to be powered on
                             self.debug(current_req, "#6. request %s cannot be satisfied, but some nodes can be powered on" % current_req.id)
-                            current_req.set_state(request.Request.BLOCKED)
+                            current_req.set_state(Request.BLOCKED)
                         
                         # node_pool = []
                         request_held = False

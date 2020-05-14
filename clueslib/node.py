@@ -15,18 +15,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from configlib import _CONFIGURATION_MONITORING
+from .configlib import _CONFIGURATION_MONITORING
 import logging
 import time
 import threading
-from request import Resources
+from .request import Resources
 from cpyutils.xmlobject import XMLObject
 import cpyutils.evaluate
 import sys
-import helpers
+from . import helpers
 import cpyutils.eventloop
 import collections
-import hooks
+from . import hooks
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("NODE")
@@ -422,7 +422,7 @@ class NodeList():
     # These next functions are used to create an iterator to be used in a "for" construction, for example
     def begin_iterating(self):
         self._current_node = -1
-        self._nodenames = self._nodeinfo.keys()
+        self._nodenames = list(self._nodeinfo.keys())
 
     def next(self):
         if self._current_node >= len(self._nodenames)-1: raise StopIteration

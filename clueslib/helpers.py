@@ -22,6 +22,11 @@ import random
 import cpyutils.evaluate
 import sys
 import types
+try:
+    from xmlrpclib import ServerProxy
+except:
+    from xmlrpc.client import ServerProxy
+
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("HELPERS")
@@ -85,6 +90,7 @@ def merge_dicts_of_lists(dict1, dict2):
             result[n_id] = dict2[n_id]
     return result
 
+'''
 class CommentlessFile(file):
     def readline(self):
         line = super(CommentlessFile, self).readline()
@@ -93,10 +99,9 @@ class CommentlessFile(file):
             return line + '\n'
         else:
             return ''
+'''
 
 def get_server_proxy_from_cmdline(config_general):
-    import xmlrpclib
-    
     XMLRPC_SERVER = 'http://%s:%s/RPC2' %(config_general.CLUES_REMOTE_SERVER_HOST, config_general.CLUES_REMOTE_SERVER_PORT)
     
     from optparse import OptionParser, OptionParser
@@ -116,7 +121,7 @@ def get_server_proxy_from_cmdline(config_general):
     if options.INSECURE is None:
         options.INSECURE = config_general.CLUES_REMOTE_SERVER_INSECURE
 
-    proxy = xmlrpclib.ServerProxy(options.XMLRPC_SERVER)
+    proxy = ServerProxy(options.XMLRPC_SERVER)
 
     try:
         version = proxy.version()
@@ -132,9 +137,8 @@ def get_server_proxy_from_cmdline(config_general):
     return success, sec_info, proxy, args
 
 def get_server_proxy_from_config(config_client):
-    import xmlrpclib
     XMLRPC_SERVER = 'http://%s:%s/RPC2' %(config_client.CLUES_REMOTE_SERVER_HOST, config_client.CLUES_REMOTE_SERVER_PORT)
-    proxy = xmlrpclib.ServerProxy(XMLRPC_SERVER)
+    proxy = ServerProxy(XMLRPC_SERVER)
 
     try:
         version = proxy.version()
@@ -205,6 +209,11 @@ def str_to_class(field):
         identifier = getattr(module, class_name)
     except AttributeError:
         raise NameError("%s doesn't exist." % field)
-    if isinstance(identifier, (types.ClassType, types.TypeType)):
-        return identifier
+    try:
+        if isinstance(identifier, (types.ClassType, types.TypeType)):
+            return identifier
+    except:
+        if isinstance(identifier, type):
+            return identifier
+
     raise TypeError("%s is not a class." % field)
