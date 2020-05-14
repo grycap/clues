@@ -554,7 +554,7 @@ class CluesDaemon:
             for n_id in candidates_off:
                 self.power_off(n_id)                    
         if len(candidates_on) > 0:
-            _LOGGER.info("nodes %s are considered to be powered on" % str(candidates_on.keys()))
+            _LOGGER.info("nodes %s are considered to be powered on" % str(list(candidates_on.keys())))
             for n_id in candidates_on:
                 self.power_on(n_id)
 
