@@ -20,13 +20,13 @@ import cpyutils.db
 import cpyutils.eventloop
 import logging
 import time
-import schedulers
-import helpers
+from . import schedulers
+from . import helpers
 import collections
-import hooks
-from configlib import _CONFIGURATION_MONITORING, _CONFIGURATION_CLUES
-from node import Node, NodeList, NodeInfo
-from request import JobList, RequestList, Request
+from . import hooks
+from .configlib import _CONFIGURATION_MONITORING, _CONFIGURATION_CLUES
+from .node import Node, NodeList, NodeInfo
+from .request import JobList, RequestList, Request
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("CLUES")
@@ -542,8 +542,12 @@ class CluesDaemon:
         
         monitoring_info = MonitoringInfo(nodelist, self._timestamp_nodelist, self._lrms_joblist, self._timestamp_joblist)
         for scheduler in self._schedulers:
+            existing_requests = [x for x in self._requests_queue.get_list() ]
             if not scheduler.schedule(self._requests_queue, monitoring_info, candidates_on, candidates_off):
                 _LOGGER.error("failed to schedule with scheduler %s" % str(scheduler))
+            new_requests = [ x for x in self._requests_queue.get_list() if x not in existing_requests ]
+            for r in new_requests:
+                self._db_system.store_request_info(self._requests_queue.get_by_id(r))
 
         if len(candidates_off) > 0:
             _LOGGER.info("nodes %s are considered to be powered off" % str(candidates_off))            
