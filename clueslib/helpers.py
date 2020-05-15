@@ -66,7 +66,7 @@ def gen_passwd(size):
 
 def dict_j_2_r_id(dict1):
     result = {}
-    for n_id, jobs in dict1.items():
+    for n_id, jobs in list(dict1.items()):
         result[n_id] = [ j.id for j in jobs ]
     return result
 
@@ -77,7 +77,7 @@ def val_default(value, default = None):
 
 def merge_dicts_of_lists(dict1, dict2):
     result = {}
-    for n_id, jobs in dict1.items():
+    for n_id, jobs in list(dict1.items()):
         if n_id in dict2:
             r = dict1[n_id] + [ x for x in dict2[n_id] if x not in dict1[n_id] ]
         else:
@@ -85,7 +85,7 @@ def merge_dicts_of_lists(dict1, dict2):
         if len(r) > 0:
             result[n_id] = r
             
-    for n_id, jobs in dict2.items():
+    for n_id, jobs in list(dict2.items()):
         if n_id not in dict1:
             result[n_id] = dict2[n_id]
     return result

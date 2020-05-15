@@ -139,7 +139,8 @@ class DBSystem(DBSystem_dummy):
             for (timestamp, name, timestamp_state, slots_count, slots_free, memory_total, memory_free, state, _, _, enabled) in rows:
                 n = Node(name, slots_count, slots_free, memory_total, memory_free)
                 n.state = state
-                n.timestamp_state = long(timestamp_state)
+                # int is suggested by 2to3; will accept
+                n.timestamp_state = int(timestamp_state) 
                 n.enabled = helpers.str_to_bool(enabled)
                 _nodes[name] = n
         else:
@@ -155,8 +156,8 @@ def _update_enable_status_for_nodes(_lrms_nodelist, _hosts_state):
             # _LOGGER.warning("disabling node %s due to configuration" % nname)
             _lrms_nodelist[nname].enabled = False
             
-    disabled = [ x for x, state in _hosts_state.items() if state == False ]
-    enabled = [ x for x, state in _hosts_state.items() if state == True ]
+    disabled = [ x for x, state in list(_hosts_state.items()) if state == False ]
+    enabled = [ x for x, state in list(_hosts_state.items()) if state == True ]
     for nname in disabled:
         if nname in _lrms_nodelist:
             _lrms_nodelist[nname].enabled = False
@@ -183,7 +184,7 @@ class MonitoringInfo():
         
         # Now we are updating the information about the nodes in the monitor
         _lrms_nodelist = collections.OrderedDict()
-        for n_id, node in lrms_nodelist.items():
+        for n_id, node in list(lrms_nodelist.items()):
             _lrms_nodelist[n_id] = Node.create_from_nodeinfo(node.get_nodeinfo())
         
         # This is done here in order to get the list of nodes ready to be used (and avoid calling DB each time the list is retrieved)
@@ -269,7 +270,7 @@ class CluesDaemon:
             self._lrms_nodelist = collections.OrderedDict()
 
             node_str = ""
-            for n_id, node in lrms_nodelist.items():
+            for n_id, node in list(lrms_nodelist.items()):
                 self._lrms_nodelist[n_id] = Node.create_from_nodeinfo(node.get_nodeinfo())
                 node_str = "%s%s\n" % (node_str, str(self._lrms_nodelist[n_id]))
                 
@@ -293,7 +294,7 @@ class CluesDaemon:
         nodes_new = []
         nodes_changed = []
         
-        for n_id, node in lrms_nodelist.items():
+        for n_id, node in list(lrms_nodelist.items()):
             nodeinfo = node.get_nodeinfo()
 
             if n_id in self._lrms_nodelist:
@@ -305,7 +306,7 @@ class CluesDaemon:
                 self._lrms_nodelist[n_id] = Node.create_from_nodeinfo(nodeinfo)
                 nodes_new.append(n_id)
                 
-        for n_id, node in self._lrms_nodelist.items():
+        for n_id, node in list(self._lrms_nodelist.items()):
             if (node.state != Node.UNKNOWN) and (n_id not in lrms_nodelist):
                 _LOGGER.warning("node %s has dissapeared!" % n_id)
                 # TODO: should delete the node?
@@ -315,7 +316,7 @@ class CluesDaemon:
         self._update_disabled_nodes()
         self._timestamp_nodelist = now
 
-        for n_id, node in self._lrms_nodelist.items():
+        for n_id, node in list(self._lrms_nodelist.items()):
             if (node.state == Node.POW_ON) and ((now - node.timestamp_state) > _CONFIGURATION_MONITORING.MAX_WAIT_POWERON):
                 node.set_state(Node.OFF_ERR)
                 nodes_changed.append(n_id)
@@ -572,7 +573,7 @@ class CluesDaemon:
         
         recoverable_nodes = []
         
-        for n_id, node in self._lrms_nodelist.items():
+        for n_id, node in list(self._lrms_nodelist.items()):
             if (node.state in [ Node.OFF_ERR ]) and (node.power_on_operation_failed < schedulers.config_scheduling.RETRIES_POWER_ON):
                 node.set_state(Node.OFF, True)
                 self._db_system.store_node_info(node)

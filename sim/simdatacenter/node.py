@@ -114,14 +114,14 @@ class NodePool():
 
     def clone(self):
         n_dict = collections.OrderedDict()
-        for n_id, n in self.nodes.items():
+        for n_id, n in list(self.nodes.items()):
             n_dict[n_id] = n.clone()
         np = NodePool()
         np.nodes = n_dict
         return np
 
     def __iter__(self):
-        for _,item in self.nodes.items():
+        for _,item in list(self.nodes.items()):
             yield item
         
     def add(self, node):
@@ -144,4 +144,4 @@ class NodePool():
             retval = "%s%s\n" % (retval, str(n))
         return retval
     def nodenames(self):
-        return self.nodes.keys()
+        return list(self.nodes.keys())

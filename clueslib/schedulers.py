@@ -111,7 +111,7 @@ class CLUES_Scheduler_PowOff_IDLE(CLUES_Scheduler):
         # TODO: es posible incluir un sistema de recuperacion de los ON_ERR, para reintentarlo hasta 3 veces (por ejemplo)
         
         nodes = monitoring_info.nodelist.get_list()
-        for n_id, node in nodes.items():
+        for n_id, node in list(nodes.items()):
             if (node.enabled) and (node.timestamp_poweredon < eps_time_cooldown) and (node.state in [ Node.IDLE ]) and (node.timestamp_state < eps_time_idle) :
                 # _LOGGER.debug("considering %s to power off @%.0f (powered on@%.0f, and state@%.0f)" % (n_id, now, node.timestamp_poweredon, node.timestamp_state))
                 candidates_off.append(n_id)
@@ -136,7 +136,7 @@ class BookingSystem:
         
     def __str__(self):
         retval = ""
-        for r_id, book_info in self._bookings.items():
+        for r_id, book_info in list(self._bookings.items()):
             retval="%s%s\n" % (retval, str(book_info))
         return retval
         
@@ -197,7 +197,7 @@ class BookingSystem:
         r_ids_to_cleanup = []
         
         # Now we have only the books that we consider that are "alive"
-        for r_id, book_info in self._bookings.items():
+        for r_id, book_info in list(self._bookings.items()):
             current_request = requests.get_by_id(r_id)
 
             # This should not happen as the missing requests should have been already removed

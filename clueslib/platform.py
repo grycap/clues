@@ -145,7 +145,7 @@ class Node_cmdline(node.Node):
         for k in Node_cmdline.MANDATORY_KW:
             if k not in kw:
                 return False
-        for k,v in Node_cmdline.OPTIONAL_KW.items():
+        for k,v in list(Node_cmdline.OPTIONAL_KW.items()):
             if k not in kw:
                 kw[k]=v
         return True
@@ -166,7 +166,7 @@ class Node_cmdline(node.Node):
             n.state = Node_cmdline.UNKNOWN
             
         extra = {}
-        for kw_id, value in kw.items():
+        for kw_id, value in list(kw.items()):
             extra[kw_id] = value
         n.keywords = extra
         return n

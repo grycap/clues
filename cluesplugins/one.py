@@ -121,7 +121,7 @@ class powermanager(PowerManager_with_IPs):
                                 self._mvs_seen[nname].seen()
     
                 # Second: from the nodes that we have powered on, check which of them are still running
-                for nname, node in self._mvs_seen.items():
+                for nname, node in list(self._mvs_seen.items()):
                     if (now - node.timestamp_seen) > self._ONE_VIRTUAL_CLUSTER_FORGET_MISSING_VMS:
                         _LOGGER.debug("vm %s is not seen for a while... let's forget it" % nname)
                         del self._mvs_seen[nname]

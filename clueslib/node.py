@@ -416,7 +416,7 @@ class NodeList():
         self._nodenames = []
 
         if nodelist is not None:
-            for n_id, node in nodelist.items():
+            for n_id, node in list(nodelist.items()):
                 self._nodeinfo[n_id] = node.copy()
 
     # These next functions are used to create an iterator to be used in a "for" construction, for example
@@ -458,7 +458,7 @@ class NodeList():
     # Returns the string representation of the objects contained in lines
     def __str__(self):
         retval = ""
-        for n_id, node in self._nodeinfo.items():
+        for n_id, node in list(self._nodeinfo.items()):
             retval = "%s%s\n" % (retval, str(node))
         return retval
     
@@ -471,7 +471,7 @@ class NodeList():
 
     def FILTER_reset(self):
         self._filtered_nodeinfo = collections.OrderedDict()
-        for n_id, node in self._nodeinfo.items():
+        for n_id, node in list(self._nodeinfo.items()):
             self._filtered_nodeinfo[n_id] = node
         
     def FILTER_basic(self, resources = None, enabled = None, states = None):
@@ -480,7 +480,7 @@ class NodeList():
             filtered_nodeinfo = self._nodeinfo
             
         self._filtered_nodeinfo = collections.OrderedDict()
-        for n_id, node in filtered_nodeinfo.items():
+        for n_id, node in list(filtered_nodeinfo.items()):
             # Let's perform the filtering using first the criteria that cost less
             if (enabled is not None) and (node.enabled != enabled): continue
             if (states is not None) and (node.state not in states): continue

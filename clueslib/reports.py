@@ -169,15 +169,15 @@ def get_reports_data(connection_string, FROM, TO):
 		for (name, timestamp_state, slots_count, slots_free, memory_total, memory_free, state, timestamp, x) in rows:
 			timestamp_state = int(timestamp)
 			s = Stats(slots_count, slots_free, memory_total, memory_free, state, timestamp)
-			if timestamp_state not in timeline.keys():
+			if timestamp_state not in list(timeline.keys()):
 				timeline[timestamp_state] = {}
-			if name not in timeline[timestamp_state].keys():
+			if name not in list(timeline[timestamp_state].keys()):
 				timeline[timestamp_state][name] = s
 			if name not in hostnames:
 				hostnames.append(name)
 
 		# Get the timestamp sorted
-		timesteps = timeline.keys()
+		timesteps = list(timeline.keys())
 		timesteps.sort()
 
 		# Now we are filling the data blanks for each host (to get data for every host at each timestamp)
@@ -189,7 +189,7 @@ def get_reports_data(connection_string, FROM, TO):
 
 			for t in timesteps:
 				for nname in hostnames:
-					if nname not in timeline[t].keys():
+					if nname not in list(timeline[t].keys()):
 						timeline[t][nname] = current_values[nname].clone(t)
 					current_values[nname] = timeline[t][nname]
 

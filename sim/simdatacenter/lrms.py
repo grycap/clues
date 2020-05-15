@@ -13,7 +13,7 @@ class LRMS_FIFO(clues.clueslib.platform.LRMS):
         _LOGGER.debug("called to JOBINFOLIST")
         _LOGGER.debug("\n%s" % self.qstat())
         jobinfolist = []
-        for j_id, job in self.jobs.items():
+        for j_id, job in list(self.jobs.items()):
             if job.state not in [Job.END, Job.ERR, Job.ABORT]:
                 resources = ResourcesNeeded(job.cores, job.memory, [], job.nodecount)
                 # resources, job_id, nodes_ids
@@ -79,7 +79,7 @@ class LRMS_FIFO(clues.clueslib.platform.LRMS):
             * this simmulates the 'stage in' and other phases.
         '''
         n_started = 0
-        for j_id, nodelist in self.job2nodes.items():
+        for j_id, nodelist in list(self.job2nodes.items()):
             j = self.jobs[j_id]
             if j.state == Job.INIT:
                 if j.can_start():
