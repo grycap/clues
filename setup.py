@@ -42,7 +42,7 @@ class my_install(install):
         install.run(self)
 
         # We create the /var/log/clues2 directory to be the default log directory
-        distutils.archive_util.mkpath("/var/log/clues2", mode=0777)
+        distutils.archive_util.mkpath("/var/log/clues2", mode=0o777)
         self.touch("/var/log/clues2/clues2.log")
         self.touch("/var/log/clues2/clues2-cli.log")
 
@@ -51,11 +51,11 @@ class my_install(install):
         os.chmod("/var/log/clues2/clues2-cli.log", 0o666)
 
         # We create the /var/lib/clues2 directory to be the default for pid file and db
-        distutils.archive_util.mkpath("/var/lib/clues2", mode=0750)
+        distutils.archive_util.mkpath("/var/lib/clues2", mode=0o750)
 
         # We set the permissions of the configuration folder to be only readable by the one that installs CLUES (to avoid users to use commandline)
         os.chmod("/etc/clues2", 0o750)
-        distutils.archive_util.mkpath("/etc/clues2/scripts", mode=0777)
+        distutils.archive_util.mkpath("/etc/clues2/scripts", mode=0o777)
 
 
 setup(name='CLUES',
