@@ -24,7 +24,7 @@ from . import schedulers
 from . import helpers
 import collections
 from . import hooks
-from .configlib import _CONFIGURATION_MONITORING, _CONFIGURATION_CLUES
+from clueslib.configlib import _CONFIGURATION_MONITORING, _CONFIGURATION_CLUES
 from .node import Node, NodeList, NodeInfo
 from .request import JobList, RequestList, Request
 

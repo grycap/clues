@@ -1,14 +1,14 @@
 import cpyutils.eventloop
-import clues.clueslib.platform
+from clueslib.platform import LRMS
 import collections
-from clues.clueslib.node import NodeInfo
+from clueslib.node import NodeInfo
 from .node import Node
 from .job import Job
 from clueslib.request import ResourcesNeeded, JobInfo, Request
 
 _LOGGER = cpyutils.log.Log("DC-LRMS")
 
-class LRMS_FIFO(clues.clueslib.platform.LRMS):
+class LRMS_FIFO(LRMS):
     def get_jobinfolist(self):
         _LOGGER.debug("called to JOBINFOLIST")
         _LOGGER.debug("\n%s" % self.qstat())
@@ -43,7 +43,7 @@ class LRMS_FIFO(clues.clueslib.platform.LRMS):
         return nodeinfolist
     
     def __init__(self, nodepool):
-        clues.clueslib.platform.LRMS.__init__(self, "LRMS-FIFO")
+        LRMS.__init__(self, "LRMS-FIFO")
         self.nodepool = nodepool
         self.jobs = {}
         self.jobs_queue = []

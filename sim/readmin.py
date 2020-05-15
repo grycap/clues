@@ -3,13 +3,13 @@ import sys
 import clues.configserver as configserver
 import clueslib.configlib
 import cpyutils.eventloop
-import clues.clueslib.platform
+import clueslib.platform
 import cpyutils.log
 import clues.configcli as configcli
 import collections
 # import simdatacenter
 import random
-import cluesserver
+import clues.cluesserver as cluesserver
 
 import simdatacenter
 
@@ -185,6 +185,7 @@ if __name__ == "__main__":
   parser.add_option("-r", "--random-seed", dest="RANDOM_SEED", default=None, help="the seed to initialize the random number generator")
   parser.add_option("-t", "--truncate-database", dest="TRUNCATE", default=False, action="store_true", help="WARNING: truncates the database file (for simulation purposes only)")
   parser.add_option("-F", "--force-truncate", dest="FORCETRUNCATE", default=False, action="store_true", help="force confirmation for -t flag")
+  parser.add_option("-n", "--no-end", dest="END", default=True, action="store_false", help="do not end simulation (useful to have a running platform to monitor)")
 
   (options, args) = parser.parse_args()
 
@@ -217,7 +218,7 @@ if __name__ == "__main__":
       del sys.argv[pos+1]
       del sys.argv[pos]
 
-  for i in [ "-t", "--truncate-database", "-F", "--force-truncate", "-tF", "-Ft" ]:
+  for i in [ "-t", "--truncate-database", "-F", "--force-truncate", "-tF", "-Ft", "-n", "--no-end" ]:
     while sys.argv.count(i):
       pos = sys.argv.index(i)
       del sys.argv[pos]
@@ -264,11 +265,12 @@ if __name__ == "__main__":
     action.do(lrms, powermanager, nodepool)
 
   def queue_jobs(lrms):
-    cpyutils.eventloop.get_eventloop().set_endless_loop(False)
-    # TRATAR DE SOLUCIONAR ESTO DEL limit_time_without_new_events, para que mire si hay eventos no periodicos y entonces se ponga a contar
-    cpyutils.eventloop.get_eventloop().limit_time_without_new_events(10)
-    for event in events:
-      event.schedule(lrms, powermanager, nodepool)
+    if options.END:
+      _LOGGER.debug("setting end after 10 seconds without new events")
+      cpyutils.eventloop.get_eventloop().set_endless_loop(False)
+      cpyutils.eventloop.get_eventloop().limit_time_without_new_events(10)
+      for event in events:
+        event.schedule(lrms, powermanager, nodepool)
 
   print(nodepool)
   print("-"*100, "\n", cpyutils.eventloop.get_eventloop())

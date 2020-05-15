@@ -1,8 +1,8 @@
-import clues.clueslib.platform
+from clueslib.platform import PowerManager
 
-class PowerManager_dummy(clues.clueslib.platform.PowerManager):
+class PowerManager_dummy(PowerManager):
     def __init__(self, nodepool):
-        clues.clueslib.platform.PowerManager.__init__(self)
+        PowerManager.__init__(self)
         self.nodepool = nodepool
     def power_on(self, nname):
         # print nname
