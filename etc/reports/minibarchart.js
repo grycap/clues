@@ -21,14 +21,14 @@ Vue.component('minibarchart', {
   props: [ 'values', 'labels' ],
     computed: {
       pvalues: function() {
-        var p = [];
-        for (var i in this.values) {
-          p.push({
-            value: parseFloat(this.values[i]),
-            label: (this.labels !== undefined)?this.labels[i]:null
-          })
-        }
-        return p;
+        return this.values.map(
+          function(v, i) {
+            return {
+              value: parseFloat(v),
+              label: (this.labels !== undefined)?this.labels[i]:null
+            }
+          }.bind(this)
+        )
       }
     },
     render: function(createElement) {
