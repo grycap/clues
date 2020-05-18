@@ -37,7 +37,7 @@ Vue.component('piechart', {
       title2: function() {
         var duration = this.duration;
         if (duration > 0)
-          return moment.duration(duration).humanize();
+          return moment.duration(duration, "seconds").humanize();
         return "";
       }
   },
