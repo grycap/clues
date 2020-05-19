@@ -54,7 +54,7 @@ class my_install(install):
         distutils.archive_util.mkpath("/var/lib/clues2", mode=0o750)
 
         # We set the permissions of the configuration folder to be only readable by the one that installs CLUES (to avoid users to use commandline)
-        os.chmod("/etc/clues2", 0o750)
+        os.chmod("/etc/clues2", 0o755)
         distutils.archive_util.mkpath("/etc/clues2/scripts", mode=0o777)
 
 
