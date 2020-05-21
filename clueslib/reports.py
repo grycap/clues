@@ -76,11 +76,14 @@ def get_requests_data(connection_string, FROM, TO):
 
 	# We'll get the max and min timestamp, and so check whether we have access to the db or not
 	max_timestamp = 0
+	min_timestamp = 0
 	result, row_count, rows = db.sql_query("select max(timestamp_created),min(timestamp_created) from requests")
 
 	if result:
 		max_timestamp = rows[0][0]
 		min_timestamp = rows[0][1]
+		if max_timestamp is None: max_timestamp = 0
+		if min_timestamp is None: min_timestamp = 0
 	else:
 		raise Exception("failed to read from the database")
 
