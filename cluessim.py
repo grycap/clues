@@ -276,7 +276,7 @@ if __name__ == "__main__":
   print(nodepool)
   print("-"*100, "\n", cpyutils.eventloop.get_eventloop())
   
-  clueslib.configlib._CONFIGURATION_CLUES.DB_CONNECTION_STRING = "sqlite://%s" % options.OUT_FILE
+  configserver._CONFIGURATION_CLUES.DB_CONNECTION_STRING = "sqlite://%s" % options.OUT_FILE
   clueslib.configlib._CONFIGURATION_MONITORING.PERIOD_MONITORING_JOBS = 10
   clueslib.configlib._CONFIGURATION_MONITORING.COOLDOWN_SERVED_REQUESTS = 30
   configserver.config_scheduling.SCHEDULER_CLASSES = "clueslib.schedulers.CLUES_Scheduler_PowOn_Requests,clueslib.schedulers.CLUES_Scheduler_Reconsider_Jobs, clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE"
