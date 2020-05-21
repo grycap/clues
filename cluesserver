@@ -556,7 +556,8 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
         POW_MGR = custom_power_mgr
     
     import clueslib.platform
-    server = cpyutils.rpcweb.XMLRPCServer("localhost", configserver._CONFIGURATION_GENERAL.CLUES_PORT, web_class = clues_web_server)
+    # server = cpyutils.rpcweb.XMLRPCServer("localhost", configserver._CONFIGURATION_GENERAL.CLUES_PORT, web_class = clues_web_server)
+    server = cpyutils.rpcweb.XMLRPCServer(configserver._CONFIGURATION_GENERAL.CLUES_HOST, configserver._CONFIGURATION_GENERAL.CLUES_PORT, web_class = clues_web_server)
     
     '''
     server.register_function(qsub)
