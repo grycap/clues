@@ -98,7 +98,7 @@ except:
             "TIMEOUT_COMMANDS":10.0,
             "CLUES_SECRET_TOKEN": "",
             "CLUES_PORT": 8000,
-            # "CLUES_HOST": "localhost",
+            "CLUES_HOST": "localhost",
             "LOG_FILE":"",
             "LOG_LEVEL":"debug",
             "LRMS_CLASS": "",
