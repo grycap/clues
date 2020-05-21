@@ -165,18 +165,22 @@ try:
                 data=filehandler.read()
                 import re
                 data=re.sub('[^:]href="(?!http|#)([^"]*)"', 'href="\\1?secret=%s"' % secret, data)
-                data=re.sub('src="(?!http)([^"]*)"', 'src="\\1?secret=%s"' % secret, data)
+                data=re.sub('src="(?!http)([^"]*)"', 'src="/reports/\\1?secret=%s"' % secret, data)
                 return data
 
         def GET(self, url):
             self.query = "?"+"?".join(url.split("?")[1:])
             url = url.split("?")[0]
             path = url.lstrip("/").split("/")
-            
+
             secret = self._get_var("secret")
             if (secret == "") or (secret is None):
                 return self._access_page()
             
+            succeed, explain = AUTH_ENGINE.check_secret(secret)
+            if not succeed:
+                return self._access_page()
+
             if len(path) > 1 and path[0] == 'status':
                 return self._status("/".join(path[1:]), secret, self.query)
             
