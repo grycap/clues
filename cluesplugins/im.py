@@ -337,6 +337,9 @@ class powermanager(PowerManager):
 					if success:
 						radl = radl_parse.parse_radl(radl_data)
 						clues_node_name = radl.systems[0].getValue('net_interface.0.dns_name')
+						# In case that the name is not set, use the default value
+						if clues_node_name is None:
+							clues_node_name = "vnode-#N#"
 						if '#N#' in clues_node_name:
 							clues_node_name = clues_node_name.replace('#N#', vm_id)
 						ec3_additional_vm = radl.systems[0].getValue('ec3_additional_vm')
