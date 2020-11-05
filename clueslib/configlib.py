@@ -28,6 +28,29 @@ except:
         })
 
 try:
+    _CONFIGURATION_HOOKS
+except:
+    _CONFIGURATION_HOOKS = cpyutils.config.Configuration("hooks",
+        {
+            "TIMEOUT_COMMAND": 180,
+            "WORKING_FOLDER": "",
+            "PRE_POWERON": "",
+            "POST_POWERON": "",
+            "PRE_POWEROFF": "",
+            "POST_POWEROFF": "",
+            "POWEREDON": "",
+            "POWEREDOFF": "",
+            "UNEXPECTED_POWERON": "",
+            "UNEXPECTED_POWEROFF": "",
+            "ONERR": "",
+            "OFFERR": "",
+            "UNKNOWN": "",
+            "IDLE": "",
+            "USED": "",
+            "REQUEST": ""
+        })
+
+try:
     _CONFIGURATION_MONITORING
 except:
     _CONFIGURATION_MONITORING = cpyutils.config.Configuration("monitoring",
@@ -75,11 +98,12 @@ except:
             "TIMEOUT_COMMANDS":10.0,
             "CLUES_SECRET_TOKEN": "",
             "CLUES_PORT": 8000,
-            # "CLUES_HOST": "localhost",
+            "CLUES_HOST": "localhost",
             "LOG_FILE":"",
             "LOG_LEVEL":"debug",
             "LRMS_CLASS": "",
-            "POWERMANAGER_CLASS":""
+            "POWERMANAGER_CLASS":"",
+            "PATH_REPORTS_WEB": ""
         },
         callback = ConfigGeneral.parseconfig
     )

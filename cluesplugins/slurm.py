@@ -147,20 +147,24 @@ def get_partition(self, node_name):
     if exit:
         for key in exit:
             nodes = str(key["Nodes"])
-            #nodes is like wnone-[0-1]
-            pos1 = nodes.find("[")
-            pos2 = nodes.find("]")
-            pos3 = nodes.find("-")
-            if pos1 > -1 and pos2 > -1 and pos3 > -1:
-                num1 = int(nodes[pos1+1:pos3])
-                num2 = int(nodes[pos3+1:pos2])
-                name = nodes[:pos1]
-                while num1 <= num2:
-                    nodename = name + str(num1)
-                    if nodename == node_name:
-                        res_queue.append(key["PartitionName"])
-                        break;
-                    num1 = num1 + 1
+            if nodes == node_name:
+                #nodes is like wn1
+                res_queue.append(key["PartitionName"])
+            else:
+                #nodes is like wnone-[0-1]
+                pos1 = nodes.find("[")
+                pos2 = nodes.find("]")
+                pos3 = nodes.find("-", pos1)
+                if pos1 > -1 and pos2 > -1 and pos3 > -1:
+                    num1 = int(nodes[pos1+1:pos3])
+                    num2 = int(nodes[pos3+1:pos2])
+                    name = nodes[:pos1]
+                    while num1 <= num2:
+                        nodename = name + str(num1)
+                        if nodename == node_name:
+                            res_queue.append(key["PartitionName"])
+                            break;
+                        num1 = num1 + 1
 
     return res_queue
 
@@ -210,21 +214,24 @@ class lrms(clueslib.platform.LRMS):
 
         if exit:
             for key in exit:
-                name = str(key["NodeName"])
-                slots_count = int(key["CPUTot"])
-                slots_free = int(key["CPUTot"]) - int(key["CPUAlloc"])
-                #NOTE: memory is in GB
-                memory_total = _translate_mem_value(key["RealMemory"] + ".GB")
-                memory_free = _translate_mem_value(key["RealMemory"] + ".GB") - _translate_mem_value(key["AllocMem"] + ".GB")
-                state = infer_clues_node_state(self, str(key["State"]))
-                keywords = {}
-                queues = get_partition(self, name)
-                keywords['hostname'] = TypedClass.auto(name)
-                if queues:
-                    keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
-                    
-                nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
-                nodeinfolist[name].state = state
+                try:
+                    name = str(key["NodeName"])
+                    slots_count = int(key["CPUTot"])
+                    slots_free = int(key["CPUTot"]) - int(key["CPUAlloc"])
+                    #NOTE: memory is in GB
+                    memory_total = _translate_mem_value(key["RealMemory"] + ".GB")
+                    memory_free = _translate_mem_value(key["RealMemory"] + ".GB") - _translate_mem_value(key["AllocMem"] + ".GB")
+                    state = infer_clues_node_state(self, str(key["State"]))
+                    keywords = {}
+                    queues = get_partition(self, name)
+                    keywords['hostname'] = TypedClass.auto(name)
+                    if queues:
+                        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                        
+                    nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
+                    nodeinfolist[name].state = state
+                except:
+                    _LOGGER.error("Error adding node: %s." % key)
 
         return nodeinfolist
 
@@ -267,24 +274,35 @@ class lrms(clueslib.platform.LRMS):
 
         if exit:
             for job in exit:
-                job_id = str(job["JobId"])
-                state = infer_clues_job_state(str(job["JobState"]))
-                nodes = []
-                # ReqNodeList is also available
-                if str(job["NodeList"]) != "(null)":
-                    nodes.append(str(job["NodeList"]))
-                if len(job["NumNodes"]) > 1:
-                    numnodes = int(job["NumNodes"][:1])
-                else:
-                    numnodes = int(job["NumNodes"])
-                memory = _translate_mem_value(job["MinMemoryNode"] + ".MB")
-                cpus_per_task = int(job["CPUs/Task"])
-                partition = '"' + str(job["Partition"]) + '" in queues'
-
-                resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [partition], numnodes)
-                j = clueslib.request.JobInfo(resources, job_id, nodes)
-                j.set_state(state)
-                jobinfolist.append(j)
+                try:
+                    job_id = str(job["JobId"])
+                    state = infer_clues_job_state(str(job["JobState"]))
+                    nodes = []
+                    # ReqNodeList is also available
+                    if str(job["NodeList"]) != "(null)":
+                        nodes.append(str(job["NodeList"]))
+                    if len(job["NumNodes"]) > 1:
+                        numnodes = int(job["NumNodes"][:1])
+                    else:
+                        numnodes = int(job["NumNodes"])
+                    # It seems that in some cases MinMemoryNode does not appear
+                    if 'MinMemoryNode' in job:
+                        memory = _translate_mem_value(job["MinMemoryNode"] + ".MB")
+                    else:
+                        memory = 0
+                    if 'NumTasks' in job:
+                        numtasks = int(job["NumTasks"])
+                    else:
+                        numtasks = numnodes
+                    cpus_per_task = int(job["CPUs/Task"])
+                    partition = '"' + str(job["Partition"]) + '" in queues'
+    
+                    resources = clueslib.request.ResourcesNeeded(cpus_per_task, memory, [partition], numtasks)
+                    j = clueslib.request.JobInfo(resources, job_id, nodes)
+                    j.set_state(state)
+                    jobinfolist.append(j)
+                except:
+                    _LOGGER.error("Error processing job: %s." % job)
         
         return jobinfolist
         
