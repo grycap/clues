@@ -122,17 +122,19 @@ class lrms(LRMS):
         used_mem = 0
         used_cpus = 0.0
         used_pods = 0
+        system_pods = 0
 
         if pods_data:
             for pod in pods_data["items"]:
-                if pod["metadata"]["namespace"] != "kube-system":
-                    if "nodeName" in pod["spec"] and nodename == pod["spec"]["nodeName"]:
-                        used_pods += 1
-                        cpus, memory = self._get_pod_cpus_and_memory(pod)
-                        used_mem += memory
-                        used_cpus += cpus
+                if "nodeName" in pod["spec"] and nodename == pod["spec"]["nodeName"]:
+                    if pod["metadata"]["namespace"] != "kube-system":
+                        system_pods += 1
+                    used_pods += 1
+                    cpus, memory = self._get_pod_cpus_and_memory(pod)
+                    used_mem += memory
+                    used_cpus += cpus
 
-        return used_mem, used_cpus, used_pods
+        return used_mem, used_cpus, used_pods, system_pods
 
     def get_nodeinfolist(self):
         nodeinfolist = collections.OrderedDict()
@@ -158,7 +160,7 @@ class lrms(LRMS):
                             _LOGGER.debug("Node %s is tainted with %s, skiping." % (name, taint['effect']))
 
                 if not skip_node:
-                    used_mem, used_cpus, used_pods = self._get_node_used_resources(name, pods_data)
+                    used_mem, used_cpus, used_pods, system_pods = self._get_node_used_resources(name, pods_data)
 
                     memory_free = memory_total - used_mem
                     slots_free = slots_total - used_cpus
@@ -179,7 +181,7 @@ class lrms(LRMS):
                     nodeinfolist[name] = NodeInfo(name, slots_total, slots_free, memory_total, memory_free, keywords)
                     if is_ready:
                         nodeinfolist[name].state = NodeInfo.IDLE
-                        if used_pods > 0:
+                        if (used_pods - system_pods) > 0:
                             nodeinfolist[name].state = NodeInfo.USED
                     else:
                         nodeinfolist[name].state = NodeInfo.OFF
