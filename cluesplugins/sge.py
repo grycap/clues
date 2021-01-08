@@ -373,10 +373,10 @@ class lrms(clueslib.platform.LRMS):
 				free_slots = total_slots - used_slots
 	
 				if powered_on:
-					if free_slots > 0:
-						state = NodeInfo.IDLE
-					else:
+					if used_slots > 0:
 						state = NodeInfo.USED
+					else:
+						state = NodeInfo.IDLE
 				else:
 					state = NodeInfo.OFF
 	
