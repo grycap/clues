@@ -221,7 +221,7 @@ _LOGGER.level = logging.DEBUG
 
 def GET_CLUES_DAEMON():
     global CLUES_DAEMON
-    print CLUES_DAEMON
+    print(CLUES_DAEMON)
     return CLUES_DAEMON
 
 class Authentication_secret(object):

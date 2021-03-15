@@ -156,13 +156,13 @@ if __name__ == '__main__':
     try:
         clues_server.version()
     except:
-        print "Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC
+        print("Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC)
         sys.exit()
 
     arguments = []
 
     for line in sys.stdin:
-        print line,
+        print(line)
         
         lhs = line[:5]
         if lhs == "#PBS ":
@@ -176,7 +176,7 @@ if __name__ == '__main__':
                     
         # TODO: in the previous version, when found the first line without comment, the rest was ignored. In the examples in the web it seems that it is should not necessarely be done in that way
 
-    print
+
     flag = None
     value = None
     for argument in sys.argv[1:]:

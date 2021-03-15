@@ -35,7 +35,7 @@ if __name__ == '__main__':
     try:
         version = clues_server.version()
     except:
-        print "Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC
+        print("Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC)
         sys.exit()
 
     encoded = sys.argv[1]

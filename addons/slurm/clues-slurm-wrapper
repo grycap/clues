@@ -194,7 +194,7 @@ def new_job(cpus_per_task, mem, nodes, queue):
     try:
         version = clues_server.version()
     except:
-        print "Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC
+        print("Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC)
         sys.exit()
 
     if queue is not " ":
@@ -227,8 +227,7 @@ if __name__=='__main__':
         if '--help' in cl_args or '-h' in cl_args:
             command = cl_args[:]
             command.insert(0, SBATCH_COMMAND)
-            #print command
-            print run_command(command)
+            print(run_command(command))
             sys.exit(1)
 
         # validate the parameters received
@@ -241,9 +240,8 @@ if __name__=='__main__':
         # Call the original sbatch command
         command = cl_args[:]
         command.insert(0, SBATCH_COMMAND)
-        #print command
-        print run_command(command)
+        print(run_command(command))
 
     except StandardError,e:
         if len(sys.argv) > 1:
-            print "Error in sbatch wrapper: %s" % e
+            print("Error in sbatch wrapper: %s" % e)
