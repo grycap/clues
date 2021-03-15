@@ -45,7 +45,7 @@ def validate_command(cmd_ln_args):
     command.insert(1, '--test-only')
     try:
         run_command(command)
-    except Exception,e:
+    except Exception as e:
         print "ERROR validating sbatch parameters %s" % e
 
 def parse_num_nodes(nodes):

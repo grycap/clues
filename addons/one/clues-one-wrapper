@@ -47,7 +47,7 @@ if __name__ == '__main__':
         success = one.vm_hold(vm.ID)
         if not success:
             logging.warn("could not hold the VM... will make the request anyway")
-    except Exception, e:
+    except Exception as e:
         logging.error(str(e))
         logging.error("could not process the VM information, so there will be no request for nodes to CLUES daemon")
         vm = None
