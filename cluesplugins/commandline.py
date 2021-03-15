@@ -42,7 +42,7 @@ class powermanager(PowerManager_cmdline):
 
     def power_on(self, nname):
         if self._have_ips:
-            if nname not in self._nname_2_ip:
+            if (self._nname_2_ip is None) or (nname not in self._nname_2_ip):
                 _LOGGER.error("could not power on node because its IP address is unknown")
                 return False, None
             

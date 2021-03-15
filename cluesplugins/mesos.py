@@ -19,6 +19,7 @@
 import socket
 import subprocess
 import json
+import requests
 import cpyutils.config
 import clueslib.helpers as Helpers
 
@@ -70,13 +71,33 @@ def infer_chronos_job_state(job_state):
     return Request.PENDING if job_state == 'queued' else Request.ATTENDED
 
 
-def infer_marathon_job_state(jobs, jobs_running):
+def infer_marathon_job_state(numnodes, jobs, jobs_running):
     ''' Determines the equivalent state between Marathon jobs and Clues2 possible job states'''
-    return Request.ATTENDED if jobs and jobs_running > 0 else Request.PENDING
+    return Request.ATTENDED if jobs and jobs_running >= numnodes else Request.PENDING
 
 
 def calculate_memory_bytes(memory):
     return memory * 1048576
+
+def get_memory_in_bytes(str_memory):
+    if str_memory.strip()[-2:] in ['Mi', 'Gi', 'Ki', 'Ti']:
+        unit = str_memory.strip()[-2:][1]
+        memory = int(str_memory.strip()[:-2])
+    elif str_memory.strip()[-1:] in ['M', 'G', 'K', 'T']:
+        unit = str_memory.strip()[-1:]
+        memory = int(str_memory.strip()[:-1])
+    else:
+        return int(str_memory)
+
+    if unit == 'K':
+        memory *= 1024
+    elif unit == 'M':
+        memory *= 1024 * 1024
+    elif unit == 'G':
+        memory *= 1024 * 1024 * 1024
+    elif unit == 'T':
+        memory *= 1024 * 1024 * 1024 * 1024
+    return memory
 
 
 def open_file(file_path):
@@ -148,7 +169,8 @@ class lrms(LRMS):
 
     def _update_job_info_list(self, jobinfolist, cpus_per_task, memory, numnodes, job_id, nodes, state):
         # Use the fake queue
-        queue = '"default" in queues'
+        #queue = '"default" in queues'
+        queue = ""
         resources = ResourcesNeeded(cpus_per_task, memory, [queue], numnodes)
         job_info = JobInfo(resources, job_id, nodes)
         job_info.set_state(state)
@@ -198,11 +220,72 @@ class lrms(LRMS):
                         for task in tasks:
                             nodes.append(task['host'])
                     numnodes = job_attributes['instances']
-                    marathon_job_state = infer_marathon_job_state(tasks, job_attributes['tasksRunning'])
+                    marathon_job_state = infer_marathon_job_state(numnodes, tasks, job_attributes['tasksRunning'])
                     jobinfolist = self._update_job_info_list(jobinfolist,
                                                              cpus_per_task, memory, numnodes,
                                                              job_id, nodes, marathon_job_state)
         return jobinfolist
+
+    @staticmethod
+    def _unit_to_value(unit):
+        """Return the value of an unit."""
+
+        if not unit:
+            return 1
+        unit = unit[0].upper()
+        if unit == "K":
+            return 1024
+        if unit == "M":
+            return 1024 * 1024
+        if unit == "G":
+            return 1024 * 1024 * 1024
+        return 1
+
+    def _parse_web_ui_env(self, html_code):
+        """
+        Parse the HTML code of the env page to the get the spark cpus
+        """
+        # Find <td>spark.cores.max</td><td>2</td>
+        cpus = 0
+        try:
+            ini = html_code.find("<td>spark.cores.max</td><td>")
+            if ini >= 0:
+                ini += 28
+                end = html_code.find("</td>", ini)
+                cpus = int(html_code[ini:end])
+        except Exception as ex:
+            _LOGGER.error("Error getting Spark cpus: %s" % str(ex))
+
+        # Find <td>spark.executor.memory</td><td>512M</td>
+        memory = 0
+        try:
+            ini = html_code.find("<td>spark.executor.memory</td><td>")
+            if ini >= 0:
+                ini += 34
+                end = html_code.find("</td>", ini)
+                memory = int(html_code[ini:end-1])
+                memory_unit = html_code[ini:end][-1]
+                memory *= self._unit_to_value(memory_unit)
+        except Exception as ex:
+            _LOGGER.error("Error getting Spark memory: %s" % str(ex))
+
+        return cpus, memory
+
+    def _get_spark_resources(self, webui_url):
+        """
+        Get the number of CPUs of the Spark job from the Web UI
+        """
+        try:
+            # TODO: check api 2.2.1 /api/v1//applications/[app-id]/environment
+            resp = requests.get("%s/environment" % webui_url, verify=False)
+            if resp.status_code == 200:
+                return self._parse_web_ui_env(resp.text)
+            else:
+                _LOGGER.error("Error querying the Spark Web UI: %s" % resp.reason)
+                return 0, 0
+        except Exception as ex:
+            _LOGGER.error("Error getting Spark Resources: %s" % str(ex))
+            return 0, 0
 
     def __init__(self, MESOS_SERVER=None, MESOS_NODES_COMMAND=None, MESOS_STATE_COMMAND=None, MESOS_JOBS_COMMAND=None,
                  MESOS_MARATHON_COMMAND=None, MESOS_CHRONOS_COMMAND=None, MESOS_CHRONOS_STATE_COMMAND=None,
@@ -218,7 +301,7 @@ class lrms(LRMS):
                 "MESOS_STATE_COMMAND":
                 "/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/state.json",
                 "MESOS_JOBS_COMMAND":
-                "/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json",
+                "/usr/bin/curl -L -X GET http://mesosserverpublic:5050/master/tasks.json?limit=1000",
                 "MESOS_MARATHON_COMMAND":
                 "/usr/bin/curl -L -X GET http://mesosserverpublic:8080/v2/apps?embed=tasks",
                 "MESOS_CHRONOS_COMMAND":
@@ -243,27 +326,39 @@ class lrms(LRMS):
 
     def get_nodeinfolist(self):
         nodeinfolist = collections.OrderedDict()
-        infile = open_file('/etc/clues2/mesos_vnodes.info')
-        if infile:
-            for line in infile:
-                name = line.rstrip('\n')
-                state = NodeInfo.OFF
-                # Illustrative values for Clues, since the node is not running, we
-                # cannot know the real values
-                slots_count = self._node_slots
-                memory_total = self._node_memory
-                slots_free = self._node_slots
-                memory_free = self._node_memory
-                # Create a fake queue
-                keywords = {}
-                keywords['hostname'] = TypedClass.auto(name)
-                queues = ["default"]
-                if queues:
-                    keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+        try:
+            vnodes = json.load(open('/etc/clues2/mesos_vnodes.info', 'r'))
+            for vnode in vnodes:
+                name = vnode["name"]
+                if name not in nodeinfolist:
+                    keywords = {'hostname': TypedClass(name, TypedClass.STRING)}
+                    state = NodeInfo.OFF
+                    slots_count = self._node_slots
+                    slots_free = self._node_slots
+                    if "cpu" in vnode:
+                        slots_count = int(vnode["cpu"])
+                        slots_free = int(vnode["cpu"])
 
-                nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
-                nodeinfolist[name].state = state
-            infile.close()
+                    memory_total = self._node_memory
+                    memory_free = self._node_memory
+                    if "memory" in vnode:
+                        memory_total = get_memory_in_bytes(vnode["memory"])
+                        memory_free = get_memory_in_bytes(vnode["memory"])
+                    #queues = ["default"]
+                    #if "queues" in vnode:
+                    #    queues = vnode["queues"].split(",")
+                    #    if queues:
+                    #        keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+
+                    if "keywords" in vnode:
+                        for keypair in vnode["keywords"].split(','):
+                            parts = keypair.split('=')
+                            keywords[parts[0].strip()] = TypedClass(parts[1].strip(), TypedClass.STRING)
+
+                    nodeinfolist[name] = NodeInfo(name, slots_count, slots_free, memory_total, memory_free, keywords)
+                    nodeinfolist[name].state = state
+        except Exception as ex:
+            _LOGGER.error("Error processing file /etc/clues2/mesos_vnodes.info: %s" % str(ex))
 
         mesos_slaves = self._obtain_mesos_nodes()
         if mesos_slaves:
@@ -298,9 +393,9 @@ class lrms(LRMS):
                             # Create a fake queue
                             keywords = {}
                             keywords['hostname'] = TypedClass.auto(name)
-                            queues = ["default"]
-                            if queues:
-                                keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
+                            #queues = ["default"]
+                            #if queues:
+                            #    keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
 
                             nodeinfolist[name] = NodeInfo(
                                 name, slots_count, slots_free, memory_total, memory_free, keywords)
@@ -325,12 +420,21 @@ class lrms(LRMS):
                     if framework['name'] not in ["chronos", "chronos-2.4.0", "marathon"]:
                         job_id = framework['id']
                         nodes = []
-                        numnodes = 1
                         mesos_job_state = Request.PENDING
                         memory = calculate_memory_bytes(framework['resources']['mem'])
+                        cpus_per_task = float(framework['resources']['cpus'])
+
+                        if 'webui_url' in framework:
+                            # this is a spark job get the requested resources
+                            spark_cpus, spark_mem = self._get_spark_resources(framework['webui_url'])
+                            _LOGGER.debug("Spark resources detected: CPUs: %d, MEM: %d" % (spark_cpus, spark_mem))
+                            if spark_cpus > 0:
+                                cpus_per_task = spark_cpus
+                            if spark_mem > 0:
+                                memory = spark_mem
+
                         if memory <= 0:
                             memory = 536870912
-                        cpus_per_task = float(framework['resources']['cpus'])
                         if cpus_per_task <= 0:
                             cpus_per_task = 1
 
@@ -347,7 +451,7 @@ class lrms(LRMS):
                                             nodes.append(mesos_node['hostname'])
 
                         jobinfolist = self._update_job_info_list(jobinfolist,
-                                                                 cpus_per_task, memory, numnodes,
+                                                                 1, memory, cpus_per_task,
                                                                  job_id, nodes, mesos_job_state)
 
         # Obtain Marathon jobs and add to the jobinfolist of Mesos

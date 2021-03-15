@@ -26,6 +26,7 @@ import sys
 import helpers
 import cpyutils.eventloop
 import collections
+import hooks
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("NODE")
@@ -225,6 +226,8 @@ class Node(NodeInfo, helpers.SerializableXML):
         if self.memory_total != other.memory_total:
             info_updated = True
 
+        resources_changed = info_updated
+
         kw_updated = False
         for kw in self.keywords:
             if kw not in other.keywords or self.keywords[kw] != other.keywords[kw]:
@@ -237,6 +240,7 @@ class Node(NodeInfo, helpers.SerializableXML):
         if self.set_state(other.state):
             state_changed = True
             info_updated = True
+            resources_changed = True
             current_time = self.timestamp_state
 
         self.slots_count = other.slots_count
@@ -253,7 +257,7 @@ class Node(NodeInfo, helpers.SerializableXML):
         if info_updated:
             self.timestamp_info = current_time
             
-        return info_updated, state_changed
+        return info_updated, state_changed, resources_changed
     
     def set_state(self, state, force = False):
         # Updates the state of the node and updates the timestamp, in case that the state varies
@@ -343,16 +347,36 @@ class Node(NodeInfo, helpers.SerializableXML):
                 
                 changed = True
                 
-                if (state in [ Node.IDLE, Node.USED ]) and (self.state not in [ Node.IDLE, Node.USED ]):
-                    self.mark_poweredon()
+                if (state in [ Node.IDLE, Node.USED ]):
+                    if (self.state not in [ Node.IDLE, Node.USED ]):
+                        self.mark_poweredon()
+                        if unexpected:
+                            hooks.HOOKS.unexpected_poweron(self.name)
+                        hooks.HOOKS.poweredon(self.name)
+                    else:
+                        if state == Node.IDLE:
+                            hooks.HOOKS.idle(self.name)
+                        else:
+                            hooks.HOOKS.used(self.name)
+
                 if (state in [ Node.OFF ]) and (self.state not in [ Node.OFF ]):
                     self.mark_poweredoff()
+                    if unexpected:
+                        hooks.HOOKS.unexpected_poweroff(self.name)
+                    hooks.HOOKS.poweredoff(self.name)
+
                 if state == Node.OFF_ERR:
                     self.power_on_operation_failed += 1
+                    hooks.HOOKS.offerr(self.name, self.power_on_operation_failed)
                     _LOGGER.debug("failed to power on node %s (%d fails)" % (self.name, self.power_on_operation_failed))
                 if state == Node.ON_ERR:
                     self.power_off_operation_failed += 1
+                    hooks.HOOKS.onerr(self.name, self.power_off_operation_failed)
                     _LOGGER.debug("failed to power off node %s (%d fails)" % (self.name, self.power_off_operation_failed))
+
+                if state == Node.UNKNOWN:
+                    hooks.HOOKS.unknown(self.name)
+                    _LOGGER.debug("state of node %s changed to unknown" % (self.name))
 
                 self._store_prev()                    
                 self.state = state

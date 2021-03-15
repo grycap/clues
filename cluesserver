@@ -18,6 +18,8 @@
 import logging
 import sys
 import time
+import json
+import clueslib.reports
 
 _ERROR_IMPORTING=None
 
@@ -130,6 +132,42 @@ try:
                 return changes_str + result.replace(";","<BR>")
             return "Could not get info"
         
+        def reports(self, url, secret):
+            filename = "/".join(url).lstrip('/').replace('../', '')
+            if filename == '':
+                filename='index.html'
+            _LOGGER.debug("web request: %s" % filename)
+            if filename in [ "cluesdata.js", "cluesdata.json" ]:
+                hostdata, min_t, max_t = clueslib.reports.get_reports_data(configserver._CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
+                requests, min_t_r, max_t_r = clueslib.reports.get_requests_data(configserver._CONFIGURATION_CLUES.DB_CONNECTION_STRING, 0, cpyutils.eventloop.now())
+                if hostdata is None:
+                    return "failed to get data from the database"
+                else:
+                    if min_t is None: min_t = 0
+                    if max_t is None: max_t = 0
+                    result = {"hostevents":hostdata,"requests":requests, "mintime_avail": min_t, "maxtime_avail": max_t, "t": cpyutils.eventloop.now()}
+                    if filename == "cluesdata.js":
+                        return "var cluesdata=%s;" % json.dumps(result)
+                    else:
+                        return "%s" % json.dumps(result)
+            else:
+                if configserver._CONFIGURATION_GENERAL.PATH_REPORTS_WEB == "":
+                    return "reports are deactivated"
+
+                import os
+                filename = os.path.realpath("%s/%s" % (configserver._CONFIGURATION_GENERAL.PATH_REPORTS_WEB, filename))
+                data=""
+                try:
+                    filehandler = open(filename, 'r')
+                except:
+                    return "could not get the requested file"
+
+                data=filehandler.read()
+                import re
+                data=re.sub('[^:]href="(?!http|#)([^"]*)"', 'href="\\1?secret=%s"' % secret, data)
+                data=re.sub('src="(?!http)([^"]*)"', 'src="\\1?secret=%s"' % secret, data)
+                return data
+
         def GET(self, url):
             self.query = "?"+"?".join(url.split("?")[1:])
             url = url.split("?")[0]
@@ -142,6 +180,9 @@ try:
             if len(path) > 1 and path[0] == 'status':
                 return self._status("/".join(path[1:]), secret, self.query)
             
+            if path[0]=='reports':
+                return self.reports(path[1:], secret)
+
             if path[0]=='host':
                 # print web.ctx.path
                 # print self._mainpage() % self._get_host("/".join(path[1:]))
@@ -405,7 +446,17 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
     from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("-s", "--simmulated-time", dest="RT_MODE", action="store_false", default=True, help="runs app in real time")
+    parser.add_option("-r", "--random-seed", dest="RANDOM_SEED", default=None, help="the seed to initialize the random number generator")
     (options, args) = parser.parse_args()
+
+    if (options.RANDOM_SEED is not None):
+        try:
+            options.RANDOM_SEED=int(options.RANDOM_SEED)
+        except:
+            raise Exception("invalid random seed %s (it must be an integer)" % options.RANDOM_SEED)
+        import random
+        _LOGGER.info("initialize random seed using parameter: %ld" % options.RANDOM_SEED )
+        random.seed(options.RANDOM_SEED)
 
     try:
         LOG_FILE=configserver._CONFIGURATION_GENERAL.LOG_FILE
@@ -414,7 +465,8 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
         LOG_FILE=None
         LOG_LEVEL=logging.DEBUG
 
-    logging.basicConfig(filename=LOG_FILE,level=LOG_LEVEL,format="[%(levelname)s] %(asctime)-15s %(message)s")
+    # logging.basicConfig(filename=LOG_FILE,level=LOG_LEVEL,format="[%(levelname)s] %(asctime)-15s %(message)s")
+    cpyutils.log.Log.setup(LOG_FILE, LOG_LEVEL)
 
     if _ERROR_IMPORTING is not None:
         if isinstance(_ERROR_IMPORTING, ImportError):
@@ -504,7 +556,8 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
         POW_MGR = custom_power_mgr
     
     import clueslib.platform
-    server = cpyutils.rpcweb.XMLRPCServer("localhost", configserver._CONFIGURATION_GENERAL.CLUES_PORT, web_class = clues_web_server)
+    # server = cpyutils.rpcweb.XMLRPCServer("localhost", configserver._CONFIGURATION_GENERAL.CLUES_PORT, web_class = clues_web_server)
+    server = cpyutils.rpcweb.XMLRPCServer(configserver._CONFIGURATION_GENERAL.CLUES_HOST, configserver._CONFIGURATION_GENERAL.CLUES_PORT, web_class = clues_web_server)
     
     '''
     server.register_function(qsub)

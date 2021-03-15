@@ -55,6 +55,7 @@ class my_install(install):
 
         # We set the permissions of the configuration folder to be only readable by the one that installs CLUES (to avoid users to use commandline)
         os.chmod("/etc/clues2", 0o750)
+        distutils.archive_util.mkpath("/etc/clues2/scripts", mode=0777)
 
 
 setup(name='CLUES',
@@ -83,11 +84,23 @@ setup(name='CLUES',
             'etc/conf.d/plugin-sge.cfg-example',
             'etc/conf.d/wrapper-sge.cfg-example',
             'etc/conf.d/plugin-slurm.cfg-example',
+            'etc/conf.d/plugin-commandline.cfg-example',
+            'etc/conf.d/hooks.cfg-example',
             'etc/conf.d/plugin-wol.cfg-example',
             'etc/conf.d/plugin-kubernetes.cfg-example',
+            'etc/conf.d/plugin-nomad.cfg-example',
             'etc/conf.d/plugin-ipmi.cfg-example',
             'etc/conf.d/plugin-mesos.cfg-example',
             'etc/conf.d/schedulers.cfg-example']),
+        ('/etc/clues2/reports/', [
+            'etc/reports/cluescharts.js',
+            'etc/reports/cluesdata.js',
+            'etc/reports/cluesstats.js',
+            'etc/reports/minibarchart.js',
+            'etc/reports/cluesprocess.js',
+            'etc/reports/piechart.js',
+            'etc/reports/randomColor.js',
+            'etc/reports/index.html']),
         ('/etc/logrotate.d/', [
             'etc/clues-logrotate'
             ]),
@@ -102,7 +115,7 @@ setup(name='CLUES',
             'cluesd.service'
             ])
         ],
-      scripts = [ 'clues', 'cluesserver', 'addons/pbs/clues-pbs-wrapper', 'addons/one/clues-one-wrapper', 'addons/sge/clues-sge-wrapper', 'addons/slurm/clues-slurm-wrapper' ],
+      scripts = [ 'clues', 'cluesserver', 'cluesreports', 'addons/pbs/clues-pbs-wrapper', 'addons/one/clues-one-wrapper', 'addons/sge/clues-sge-wrapper', 'addons/slurm/clues-slurm-wrapper' ],
       requires = [ 'cpyutils (>= 0.24)' ],
       cmdclass={'install': my_install}
 )
