@@ -165,18 +165,22 @@ try:
                 data=filehandler.read()
                 import re
                 data=re.sub('[^:]href="(?!http|#)([^"]*)"', 'href="\\1?secret=%s"' % secret, data)
-                data=re.sub('src="(?!http)([^"]*)"', 'src="\\1?secret=%s"' % secret, data)
+                data=re.sub('src="(?!http)([^"]*)"', 'src="/reports/\\1?secret=%s"' % secret, data)
                 return data
 
         def GET(self, url):
             self.query = "?"+"?".join(url.split("?")[1:])
             url = url.split("?")[0]
             path = url.lstrip("/").split("/")
-            
+
             secret = self._get_var("secret")
             if (secret == "") or (secret is None):
                 return self._access_page()
             
+            succeed, explain = AUTH_ENGINE.check_secret(secret)
+            if not succeed:
+                return self._access_page()
+
             if len(path) > 1 and path[0] == 'status':
                 return self._status("/".join(path[1:]), secret, self.query)
             
@@ -210,7 +214,7 @@ try:
             retval="<html><body><table>%s</table>\n%s\n%s\n%s\n</body></html>" % ("\n".join(node_rows), requests.replace("\n","<BR>"), hdetail.replace(";", "<BR>"), str(CLUES_DAEMON).replace("\n","<BR>"))
             return retval
             
-except Exception, e:
+except Exception as e:
     _ERROR_IMPORTING = e
     pass
 
@@ -221,7 +225,7 @@ _LOGGER.level = logging.DEBUG
 
 def GET_CLUES_DAEMON():
     global CLUES_DAEMON
-    print CLUES_DAEMON
+    print(CLUES_DAEMON)
     return CLUES_DAEMON
 
 class Authentication_secret(object):
@@ -500,11 +504,11 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
     import plugins.one
     POW_MGR = plugins.one.powermanager()
     '''
-    if configserver._CONFIGURATION_GENERAL.LRMS_CLASS == "":
+    if custom_lrms is None and configserver._CONFIGURATION_GENERAL.LRMS_CLASS == "":
         logging.error("a LRMS class must be defined for CLUES, you should use LRMS_CLASS in the clues2.cfg file")
         exit(-1)
     
-    if configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS == "":
+    if custom_power_mgr is None and configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS == "":
         logging.warning("a POWERMANAGER class must be defined for CLUES, you should use POWERMANAGER_CLASS in the clues2.cfg file")
         configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS = None
     
@@ -513,7 +517,7 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
         try:
             LRMS_CLASS=importlib.import_module(configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
             _LOGGER.info("activating lrms: \"%s\"" % configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
-        except Exception, e:
+        except Exception as e:
             logging.error(e)
             logging.error("could not import the LRMS class stated in LRMS_CLASS (%s) from the clues2.cfg file" % configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
             exit(-1)
@@ -523,7 +527,7 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
             try:
                 POWERMANAGER_CLASS=importlib.import_module(configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
                 _LOGGER.info("activating powermanager: \"%s\"" % configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
-            except Exception, e:
+            except Exception as e:
                 logging.error(e)
                 logging.error("could not import the POWERMANAGER class stated in POWERMANAGER_CLASS (%s) from the clues2.cfg file" % configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
                 exit(-1)
@@ -534,7 +538,7 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
     if custom_lrms is None:
         try:
             LRMS=LRMS_CLASS.lrms()
-        except Exception, e:
+        except Exception as e:
             logging.error(e)
             logging.error("cannot use %s as a plugin for LRMS in CLUES, because the 'lrms' class is not defined" % configserver._CONFIGURATION_GENERAL.LRMS_CLASS)
             exit(-1)
@@ -548,7 +552,7 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
         if configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS is not None:
             try:
                 POW_MGR=POWERMANAGER_CLASS.powermanager()
-            except Exception, e:
+            except Exception as e:
                 logging.error(e)
                 logging.error("cannot use %s as a plugin for POWERMANAGER in CLUES, because the 'powermanager' class is not defined" % configserver._CONFIGURATION_GENERAL.POWERMANAGER_CLASS)
                 exit(-1)
@@ -556,7 +560,8 @@ def main_loop(custom_lrms = None, custom_power_mgr = None, callback_before_loop 
         POW_MGR = custom_power_mgr
     
     import clueslib.platform
-    server = cpyutils.rpcweb.XMLRPCServer("localhost", configserver._CONFIGURATION_GENERAL.CLUES_PORT, web_class = clues_web_server)
+    # server = cpyutils.rpcweb.XMLRPCServer("localhost", configserver._CONFIGURATION_GENERAL.CLUES_PORT, web_class = clues_web_server)
+    server = cpyutils.rpcweb.XMLRPCServer(configserver._CONFIGURATION_GENERAL.CLUES_HOST, configserver._CONFIGURATION_GENERAL.CLUES_PORT, web_class = clues_web_server)
     
     '''
     server.register_function(qsub)

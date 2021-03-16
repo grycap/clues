@@ -76,11 +76,14 @@ def get_requests_data(connection_string, FROM, TO):
 
 	# We'll get the max and min timestamp, and so check whether we have access to the db or not
 	max_timestamp = 0
+	min_timestamp = 0
 	result, row_count, rows = db.sql_query("select max(timestamp_created),min(timestamp_created) from requests")
 
 	if result:
 		max_timestamp = rows[0][0]
 		min_timestamp = rows[0][1]
+		if max_timestamp is None: max_timestamp = 0
+		if min_timestamp is None: min_timestamp = 0
 	else:
 		raise Exception("failed to read from the database")
 
@@ -169,15 +172,15 @@ def get_reports_data(connection_string, FROM, TO):
 		for (name, timestamp_state, slots_count, slots_free, memory_total, memory_free, state, timestamp, x) in rows:
 			timestamp_state = int(timestamp)
 			s = Stats(slots_count, slots_free, memory_total, memory_free, state, timestamp)
-			if timestamp_state not in timeline.keys():
+			if timestamp_state not in list(timeline.keys()):
 				timeline[timestamp_state] = {}
-			if name not in timeline[timestamp_state].keys():
+			if name not in list(timeline[timestamp_state].keys()):
 				timeline[timestamp_state][name] = s
 			if name not in hostnames:
 				hostnames.append(name)
 
 		# Get the timestamp sorted
-		timesteps = timeline.keys()
+		timesteps = list(timeline.keys())
 		timesteps.sort()
 
 		# Now we are filling the data blanks for each host (to get data for every host at each timestamp)
@@ -189,7 +192,7 @@ def get_reports_data(connection_string, FROM, TO):
 
 			for t in timesteps:
 				for nname in hostnames:
-					if nname not in timeline[t].keys():
+					if nname not in list(timeline[t].keys()):
 						timeline[t][nname] = current_values[nname].clone(t)
 					current_values[nname] = timeline[t][nname]
 

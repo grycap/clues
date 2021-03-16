@@ -128,19 +128,22 @@ class lrms(LRMS):
         used_mem = 0
         used_cpus = 0.0
         used_pods = 0
+        system_pods = 0
 
         if pods_data:
             for pod in pods_data["items"]:
                 if "nodeName" in pod["spec"] and nodename == pod["spec"]["nodeName"]:
+                    # do not count the number of pods in case finished jobs
                     if pod["status"]["phase"] not in ["Succeeded", "Failed"]:
                         # do not count the number of pods in case of system ones
-                        if pod["metadata"]["namespace"] != "kube-system":
-                            used_pods += 1
+                        if pod["metadata"]["namespace"] == "kube-system":
+                            system_pods += 1
+                        used_pods += 1
                         cpus, memory = self._get_pod_cpus_and_memory(pod)
                         used_mem += memory
                         used_cpus += cpus
 
-        return used_mem, used_cpus, used_pods
+        return used_mem, used_cpus, used_pods, system_pods
 
     def get_nodeinfolist(self):
         nodeinfolist = collections.OrderedDict()
@@ -166,7 +169,7 @@ class lrms(LRMS):
                             _LOGGER.debug("Node %s is tainted with %s, skiping." % (name, taint['effect']))
 
                 if not skip_node:
-                    used_mem, used_cpus, used_pods = self._get_node_used_resources(name, pods_data)
+                    used_mem, used_cpus, used_pods, system_pods = self._get_node_used_resources(name, pods_data)
 
                     memory_free = memory_total - used_mem
                     slots_free = slots_total - used_cpus
@@ -181,13 +184,13 @@ class lrms(LRMS):
                     keywords = {'pods_free': TypedNumber(pods_free),
                                 'nodeName': TypedClass(name, TypedClass.STRING)}
                     # Add labels as keywords
-                    for key, value in node["metadata"]["labels"].items():
+                    for key, value in list(node["metadata"]["labels"].items()):
                         keywords[key] = TypedClass(value, TypedClass.STRING)
 
                     nodeinfolist[name] = NodeInfo(name, slots_total, slots_free, memory_total, memory_free, keywords)
                     if is_ready:
                         nodeinfolist[name].state = NodeInfo.IDLE
-                        if used_pods > 0:
+                        if (used_pods - system_pods) > 0:
                             nodeinfolist[name].state = NodeInfo.USED
                     else:
                         nodeinfolist[name].state = NodeInfo.OFF
@@ -281,7 +284,7 @@ class lrms(LRMS):
 
                     # Add node selector labels
                     if 'nodeSelector' in pod['spec'] and pod['spec']['nodeSelector']:
-                        for key, value in pod['spec']['nodeSelector'].items():
+                        for key, value in list(pod['spec']['nodeSelector'].items()):
                             req_str += ' && (%s == "%s")' % (key, value)
                     resources = ResourcesNeeded(cpus, memory, [req_str], 1)
                     job_info = JobInfo(resources, job_id, 1)

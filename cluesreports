@@ -30,12 +30,12 @@ if __name__ == "__main__":
 	options = parser.parse_args()
 
 	if options.DATABASE is None:
-		print "you need to specify a database file (option -d)"
+		print("you need to specify a database file (option -d)")
 		sys.exit(1)
 
 	import os.path
 	if not os.path.isfile(options.DATABASE):
-		print "cannot find file %s" % options.DATABASE
+		print("cannot find file %s" % options.DATABASE)
 		sys.exit(1) 
 
 	import time
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 		requests, _, _ = clueslib.reports.get_requests_data(connection_string, options.FROM, options.TO)
 		result = {"hostevents":hostdata,"requests":requests, "mintime_avail": min_t, "maxtime_avail": max_t}
 		if options.PREPAREJS:
-			print "var cluesdata=%s;" % json.dumps(result)
+			print("var cluesdata=%s;" % json.dumps(result))
 		else:
 			# Dump in JSON format
-			print json.dumps(result)
+			print(json.dumps(result))

@@ -424,13 +424,13 @@ class lrms(LRMS):
                         _LOGGER.warning("Nomad Client with name '%s' founded using Nomad Server API but not exists this node in the configuration file %s" % (info_client['name'] , self._nodes_info_file) )
         
         # Add nodes from nomad_info file to the list
-        for namenode, node_info in default_node_info.items():
+        for namenode, node_info in list(default_node_info.items()):
             if namenode not in nodeinfolist: 
                 nodeinfolist[ namenode ] = NodeInfo(namenode, node_info['cpus'], node_info['cpus'], node_info['memory'], node_info['memory'], node_info['keywords'])
                 nodeinfolist[ namenode ].state = node_info['state']
                 
         # Print all nodes in log with keywords
-        for key, value in nodeinfolist.items():
+        for key, value in list(nodeinfolist.items()):
             string = "%s + keywords={ " % (str(value) ) 
             for key2 in value.keywords:
                 string += key2 + ":" + str(value.keywords[key2]) +","
@@ -451,7 +451,7 @@ class lrms(LRMS):
                 jobs[ job['ID'] ]['job_id'] = job['ID']
                 jobs[ job['ID'] ]['name'] = job['Name'] 
                 jobs[ job['ID'] ]['TaskGroups'] = {}
-                for taskgroup_id, tasks_info in job['JobSummary']['Summary'].items():
+                for taskgroup_id, tasks_info in list(job['JobSummary']['Summary'].items()):
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id] = {}
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['name'] = job['ID'] + '-' + taskgroup_id
                     jobs[ job['ID'] ]['TaskGroups'][taskgroup_id]['cpu'] = 0.0
@@ -500,7 +500,7 @@ class lrms(LRMS):
             else:
                 _LOGGER.error("Error getting job information with job_id = %s from Server node with URL = %s: %s: %s" % (job_id, server_node, response['status_code'], response['text']))  
                 # Default values
-                for taskgroup_id in jobs[job_id]['TaskGroups'].keys():
+                for taskgroup_id in list(jobs[job_id]['TaskGroups'].keys()):
                     jobs[job_id]['TaskGroups'][taskgroup_id]['cpu'] = 0.0
                     jobs[job_id]['TaskGroups'][taskgroup_id]['memory'] = 0.0
                     jobs[job_id]['TaskGroups'][taskgroup_id]['queue'] = 'no_queue'

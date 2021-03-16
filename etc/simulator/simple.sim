@@ -1,0 +1,8 @@
+# The basic syntax for this file is:
+#   timestamp;operation;<operation field 1>;<operation field 2>;...
+# It accepts comments (using #) and blank lines
+
+# Example of node creation ()
+;node;node;1;4096;4
+10;job;1;512;10;;norequest
+12;job;1;1024;20

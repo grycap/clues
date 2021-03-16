@@ -147,20 +147,24 @@ def get_partition(self, node_name):
     if exit:
         for key in exit:
             nodes = str(key["Nodes"])
-            #nodes is like wnone-[0-1]
-            pos1 = nodes.find("[")
-            pos2 = nodes.find("]")
-            pos3 = nodes.find("-", pos1)
-            if pos1 > -1 and pos2 > -1 and pos3 > -1:
-                num1 = int(nodes[pos1+1:pos3])
-                num2 = int(nodes[pos3+1:pos2])
-                name = nodes[:pos1]
-                while num1 <= num2:
-                    nodename = name + str(num1)
-                    if nodename == node_name:
-                        res_queue.append(key["PartitionName"])
-                        break;
-                    num1 = num1 + 1
+            if nodes == node_name:
+                #nodes is like wn1
+                res_queue.append(key["PartitionName"])
+            else:
+                #nodes is like wnone-[0-1]
+                pos1 = nodes.find("[")
+                pos2 = nodes.find("]")
+                pos3 = nodes.find("-", pos1)
+                if pos1 > -1 and pos2 > -1 and pos3 > -1:
+                    num1 = int(nodes[pos1+1:pos3])
+                    num2 = int(nodes[pos3+1:pos2])
+                    name = nodes[:pos1]
+                    while num1 <= num2:
+                        nodename = name + str(num1)
+                        if nodename == node_name:
+                            res_queue.append(key["PartitionName"])
+                            break;
+                        num1 = num1 + 1
 
     return res_queue
 
