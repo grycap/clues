@@ -19,11 +19,11 @@ from clueslib.configlib import _CONFIGURATION_MONITORING
 import logging
 import time
 import threading
-from request import Resources
+from clueslib.request import Resources
 from cpyutils.xmlobject import XMLObject
 import cpyutils.evaluate
 import sys
-import helpers
+import clueslib.helpers as helpers
 import cpyutils.eventloop
 import collections
 import hooks

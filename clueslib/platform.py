@@ -18,7 +18,7 @@
 import logging
 import subprocess
 import clueslib.node as node
-import helpers
+import clueslib.helpers as helpers
 import cpyutils.runcommand
 import clueslib.configlib as configlib
 import collections
