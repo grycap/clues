@@ -18,10 +18,10 @@
 import cpyutils.config
 import cpyutils.eventloop
 import logging
-from node import Node
-import request
-import schedulers
-from schedulers import CLUES_Scheduler
+from clueslib.node import Node
+import clueslib.request as request
+import clueslib.schedulers as schedulers
+from clueslib.schedulers import CLUES_Scheduler
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("SCHED")

@@ -18,7 +18,7 @@
 import cpyutils.log
 import cpyutils.runcommand
 import os.path
-from configlib import _CONFIGURATION_HOOKS
+from clueslib.configlib import _CONFIGURATION_HOOKS
 
 cpyutils.log.Log.setup()
 _LOGGER = cpyutils.log.Log("HOOKS")

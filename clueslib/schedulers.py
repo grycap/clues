@@ -18,7 +18,7 @@
 import cpyutils.config
 import cpyutils.eventloop
 import logging
-from node import Node
+from clueslib.node import Node
 import request
 from request import Request
 import math

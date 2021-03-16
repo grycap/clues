@@ -17,10 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import subprocess
-import node
+import clueslib.node as node
 import helpers
 import cpyutils.runcommand
-import configlib
+import clueslib.configlib as configlib
 import collections
 
 import cpyutils.log

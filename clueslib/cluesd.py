@@ -20,7 +20,7 @@ import cpyutils.db
 import cpyutils.eventloop
 import logging
 import time
-import schedulers
+import clueslib.schedulers as schedulers
 import helpers
 import collections
 import hooks
