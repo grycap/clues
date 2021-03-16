@@ -30,7 +30,7 @@ if __name__ == "__main__":
 	options = parser.parse_args()
 
 	if options.DATABASE is None:
-		print("you need to specify a database file")
+		print("you need to specify a database file (option -d)")
 		sys.exit(1)
 
 	import os.path

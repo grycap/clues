@@ -18,7 +18,7 @@
 
 import clues.configcli
 import sys, os, os.path, stat, pwd, grp, time, string, tempfile
-import re, logging, xmlrpc.client
+import re, logging
 import subprocess
 import cpyutils
 import platform

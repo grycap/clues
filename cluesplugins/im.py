@@ -21,7 +21,10 @@ Created on 26/1/2015
 @author: micafer
 '''
 
-import xmlrpclib
+try:
+	from xmlrpclib import ServerProxy
+except ImportError:
+	from xmlrpc.client import ServerProxy
 from uuid import uuid1
 import re
 
@@ -190,7 +193,7 @@ class powermanager(PowerManager):
 			from springpython.remoting.xmlrpc import SSLClient
 			return SSLClient(self._IM_VIRTUAL_CLUSTER_XMLRPC, self._IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS)
 		else:
-			return xmlrpclib.ServerProxy(self._IM_VIRTUAL_CLUSTER_XMLRPC,allow_none=True)
+			return ServerProxy(self._IM_VIRTUAL_CLUSTER_XMLRPC,allow_none=True)
 
 	# From IM.auth
 	@staticmethod

@@ -36,9 +36,9 @@ except:
     config_client.maploglevel("LOG_LEVEL")
     import logging
     try:
-      from xmlrpclib import ServerProxy
-    except:
-      from xmlrpc.client import ServerProxy
+        from xmlrpclib import ServerProxy
+    except ImportError:
+        from xmlrpc.client import ServerProxy
     logging.basicConfig(filename=config_client.LOG_FILE, level=config_client.LOG_LEVEL, format='%(asctime)-15s %(message)s')
     
 def get_clues_proxy_from_config():
