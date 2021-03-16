@@ -15,18 +15,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from configlib import _CONFIGURATION_MONITORING
+from .configlib import _CONFIGURATION_MONITORING
 import logging
 import time
 import threading
-from request import Resources
+from .request import Resources
 from cpyutils.xmlobject import XMLObject
 import cpyutils.evaluate
 import sys
-import helpers
+from . import helpers
 import cpyutils.eventloop
 import collections
-import hooks
+from . import hooks
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("NODE")
@@ -416,13 +416,13 @@ class NodeList():
         self._nodenames = []
 
         if nodelist is not None:
-            for n_id, node in nodelist.items():
+            for n_id, node in list(nodelist.items()):
                 self._nodeinfo[n_id] = node.copy()
 
     # These next functions are used to create an iterator to be used in a "for" construction, for example
     def begin_iterating(self):
         self._current_node = -1
-        self._nodenames = self._nodeinfo.keys()
+        self._nodenames = list(self._nodeinfo.keys())
 
     def next(self):
         if self._current_node >= len(self._nodenames)-1: raise StopIteration
@@ -458,7 +458,7 @@ class NodeList():
     # Returns the string representation of the objects contained in lines
     def __str__(self):
         retval = ""
-        for n_id, node in self._nodeinfo.items():
+        for n_id, node in list(self._nodeinfo.items()):
             retval = "%s%s\n" % (retval, str(node))
         return retval
     
@@ -471,7 +471,7 @@ class NodeList():
 
     def FILTER_reset(self):
         self._filtered_nodeinfo = collections.OrderedDict()
-        for n_id, node in self._nodeinfo.items():
+        for n_id, node in list(self._nodeinfo.items()):
             self._filtered_nodeinfo[n_id] = node
         
     def FILTER_basic(self, resources = None, enabled = None, states = None):
@@ -480,7 +480,7 @@ class NodeList():
             filtered_nodeinfo = self._nodeinfo
             
         self._filtered_nodeinfo = collections.OrderedDict()
-        for n_id, node in filtered_nodeinfo.items():
+        for n_id, node in list(filtered_nodeinfo.items()):
             # Let's perform the filtering using first the criteria that cost less
             if (enabled is not None) and (node.enabled != enabled): continue
             if (states is not None) and (node.state not in states): continue

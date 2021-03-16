@@ -236,14 +236,14 @@ class CluesData {
         this._slots = {
             hosts: max_slots,
             max: slots_v.pop(),
-            total: slots_v.reduce((t, c) => t + c)
+            total: slots_v.reduce((t, c) => t + c, 0)
         }
 
         let memory_v = Object.values(max_memory).sort();
         this._memory = {
             hosts: max_memory,
             max: memory_v.pop(),
-            total: memory_v.reduce((t, c) => t + c)
+            total: memory_v.reduce((t, c) => t + c, 0)
         }
 
         let states_stats = this.calc_states_stats();
@@ -687,7 +687,9 @@ class CluesGraphs {
         chartMemory.options.scales.yAxes[1].ticks.max = this._cluesdata._total_memory;
         chartMemory.update();
 
-        var minmax_memory = minmax(chartMemory.data.datasets[chartMemory.data.datasets.length - 1].data);
+        var minmax_memory = { min: undefined, max: undefined }
+        if (chartMemory.data.datasets[chartMemory.data.datasets.length - 1] !== undefined) 
+            minmax_memory = minmax(chartMemory.data.datasets[chartMemory.data.datasets.length - 1].data);
         $("#chartMemorySlider").slider({
             range: true,
             min: minmax_memory.min,
@@ -753,7 +755,9 @@ class CluesGraphs {
         chartSlots.options.scales.yAxes[1].ticks.max = this._cluesdata._total_slots;
         chartSlots.update();
 
-        var minmax_slots = minmax(chartSlots.data.datasets[chartSlots.data.datasets.length-1].data);
+        var minmax_slots = { min: undefined, max: undefined }
+        if (chartSlots.data.datasets[chartSlots.data.datasets.length-1] !== undefined) 
+        minmax_slots = minmax(chartSlots.data.datasets[chartSlots.data.datasets.length-1].data);
         $("#chartSlotsSlider").slider({
             range: true,
             min: minmax_slots.min,

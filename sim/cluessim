@@ -536,13 +536,13 @@ class JobLauncher():
 
 def create_random_jobs(count):
     jobs = []
-    print "["
+    print("[")
     for i in range(0, count):
         j = Job(random.choice([1,2,4]),random.choice([512,1024,2048,4096]),random.randint(50,100))
         t = random.randint(5,50)
         jobs.append((t,j))
-        print "(%s, Job(%s, %s, %s, %s))," % (t, j.cores, j.memory, j.seconds, j.nodecount)
-    print "]"
+        print("(%s, Job(%s, %s, %s, %s))," % (t, j.cores, j.memory, j.seconds, j.nodecount))
+    print("]")
     return jobs
 
 def queue_jobs(lrms):
@@ -653,10 +653,10 @@ if __name__ == '__main__':
     #np['node01'].power_off()
     
     # cpyutils.eventloop.get_eventloop().add_control_event(100)
-    print "-"*100, "\n", cpyutils.eventloop.get_eventloop()
+    print("-"*100, "\n", cpyutils.eventloop.get_eventloop())
     
     cluesserver.main_loop(LRMS, POW_MGR, queue_jobs, [LRMS])
-    print np
-    print LRMS.summary()
+    print(np)
+    print(LRMS.summary())
 
     sys.exit()    

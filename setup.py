@@ -101,6 +101,10 @@ setup(name='CLUES',
             'etc/reports/piechart.js',
             'etc/reports/randomColor.js',
             'etc/reports/index.html']),
+        ('/etc/clues2/simulator', [
+            'etc/simulator/simple.sim',
+            'etc/simulator/platform.sim'
+        ]),
         ('/etc/logrotate.d/', [
             'etc/clues-logrotate'
             ]),
@@ -116,6 +120,6 @@ setup(name='CLUES',
             ])
         ],
       scripts = [ 'clues', 'cluesserver', 'cluesreports', 'addons/pbs/clues-pbs-wrapper', 'addons/one/clues-one-wrapper', 'addons/sge/clues-sge-wrapper', 'addons/slurm/clues-slurm-wrapper' ],
-      requires = [ 'cpyutils (>= 0.24)' ],
+      requires = [ 'cpyutils (>= 0.40)' ],
       cmdclass={'install': my_install}
 )

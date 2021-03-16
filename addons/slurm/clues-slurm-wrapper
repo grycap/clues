@@ -18,7 +18,7 @@
 
 import clues.configcli
 import sys, os, os.path, stat, pwd, grp, time, string, tempfile
-import re, logging, xmlrpclib
+import re, logging
 import subprocess
 import cpyutils
 import platform
@@ -45,8 +45,8 @@ def validate_command(cmd_ln_args):
     command.insert(1, '--test-only')
     try:
         run_command(command)
-    except Exception,e:
-        print "ERROR validating sbatch parameters %s" % e
+    except Exception as e:
+        print("ERROR validating sbatch parameters %s" % e)
 
 def parse_num_nodes(nodes):
     #nodes can be a single number or it can have the format "min_num-max_num"
@@ -194,7 +194,7 @@ def new_job(cpus_per_task, mem, nodes, queue):
     try:
         version = clues_server.version()
     except:
-        print "Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC
+        print("Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC)
         sys.exit()
 
     if queue is not " ":
@@ -228,7 +228,7 @@ if __name__=='__main__':
             command = cl_args[:]
             command.insert(0, SBATCH_COMMAND)
             #print command
-            print run_command(command)
+            print(run_command(command))
             sys.exit(1)
 
         # validate the parameters received
@@ -242,8 +242,8 @@ if __name__=='__main__':
         command = cl_args[:]
         command.insert(0, SBATCH_COMMAND)
         #print command
-        print run_command(command)
+        print(run_command(command))
 
-    except StandardError,e:
+    except Exception as e:
         if len(sys.argv) > 1:
-            print "Error in sbatch wrapper: %s" % e
+            print("Error in sbatch wrapper: %s" % e)
