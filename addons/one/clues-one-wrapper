@@ -19,7 +19,7 @@ import clues.configcli
 import base64
 import sys
 import cpyutils.oneconnect
-import xmlrpclib
+import xmlrpc.client
 import time
 import logging
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     try:
         version = clues_server.version()
     except:
-        print "Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC
+        print("Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC)
         sys.exit()
 
     encoded = sys.argv[1]
@@ -47,7 +47,7 @@ if __name__ == '__main__':
         success = one.vm_hold(vm.ID)
         if not success:
             logging.warn("could not hold the VM... will make the request anyway")
-    except Exception, e:
+    except Exception as e:
         logging.error(str(e))
         logging.error("could not process the VM information, so there will be no request for nodes to CLUES daemon")
         vm = None

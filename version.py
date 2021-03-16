@@ -15,4 +15,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-VERSION="2.2.0b"
+VERSION="2.3.0"
+
+'''
+CHANGELOG:
+2.3.0    -   2020-05-15
+    Migration to Python 3 (while still compatible with Python 2)
+    Store the requests that appear as a result of the scheduling process
+    Enhancing reports
+    Add a working simulator
+'''

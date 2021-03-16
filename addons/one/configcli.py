@@ -35,12 +35,12 @@ except:
     )
     config_client.maploglevel("LOG_LEVEL")
     import logging
-    import xmlrpclib
+    import xmlrpc.client
     logging.basicConfig(filename=config_client.LOG_FILE, level=config_client.LOG_LEVEL, format='%(asctime)-15s %(message)s')
     
 def get_clues_proxy_from_config():
     global config_client
-    return xmlrpclib.ServerProxy(config_client.CLUES_XMLRPC)
+    return xmlrpc.client.ServerProxy(config_client.CLUES_XMLRPC)
 
 try:
     config_general

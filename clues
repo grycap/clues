@@ -15,7 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import xmlrpclib
 import sys
 import getpass
 import logging
@@ -53,7 +52,7 @@ class CluesParameters(cpyutils.parameters.CmdLineParser):
             succeed, text = self._proxy.enable_node(self._sec_info, node, True)
             if not succeed:
                 failed = True
-            print text
+            print(text)
         sys.exit(-1)
 
     def disable(self, r, error):
@@ -176,7 +175,7 @@ def main_function():
     try:
         proxy.version()
     except:
-        print "Could not connect to CLUES server %s (please, check if it is running)" % configcli.config_client.CLUES_XMLRPC
+        print("Could not connect to CLUES server %s (please, check if it is running)" % configcli.config_client.CLUES_XMLRPC)
         sys.exit()
 
     p = CluesParameters(proxy, "clues", desc = "The CLUES command line utility", arguments = [

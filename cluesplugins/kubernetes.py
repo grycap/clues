@@ -181,7 +181,7 @@ class lrms(LRMS):
                     keywords = {'pods_free': TypedNumber(pods_free),
                                 'nodeName': TypedClass(name, TypedClass.STRING)}
                     # Add labels as keywords
-                    for key, value in node["metadata"]["labels"].items():
+                    for key, value in list(node["metadata"]["labels"].items()):
                         keywords[key] = TypedClass(value, TypedClass.STRING)
 
                     nodeinfolist[name] = NodeInfo(name, slots_total, slots_free, memory_total, memory_free, keywords)
@@ -281,7 +281,7 @@ class lrms(LRMS):
 
                     # Add node selector labels
                     if 'nodeSelector' in pod['spec'] and pod['spec']['nodeSelector']:
-                        for key, value in pod['spec']['nodeSelector'].items():
+                        for key, value in list(pod['spec']['nodeSelector'].items()):
                             req_str += ' && (%s == "%s")' % (key, value)
                     resources = ResourcesNeeded(cpus, memory, [req_str], 1)
                     job_info = JobInfo(resources, job_id, 1)
