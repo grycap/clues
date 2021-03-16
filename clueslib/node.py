@@ -26,7 +26,7 @@ import sys
 import clueslib.helpers as helpers
 import cpyutils.eventloop
 import collections
-import hooks
+import clueslib.hooks as hooks
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("NODE")
