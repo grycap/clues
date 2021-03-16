@@ -22,7 +22,6 @@ import sys, os
 import re
 import logging
 import time
-import xmlrpclib
 import cpyutils.runcommand
 
 def translate_mem_value(memval):

@@ -19,7 +19,6 @@ import clues.configcli
 import base64
 import sys
 import cpyutils.oneconnect
-import xmlrpclib
 import time
 import logging
 

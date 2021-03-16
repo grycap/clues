@@ -85,17 +85,20 @@ def merge_dicts_of_lists(dict1, dict2):
             result[n_id] = dict2[n_id]
     return result
 
-class CommentlessFile(file):
-    def readline(self):
-        line = super(CommentlessFile, self).readline()
-        if line:
-            line = line.split('#', 1)[0].strip()
-            return line + '\n'
-        else:
-            return ''
+#class CommentlessFile(file):
+#    def readline(self):
+#        line = super(CommentlessFile, self).readline()
+#        if line:
+#            line = line.split('#', 1)[0].strip()
+#            return line + '\n'
+#        else:
+#            return ''
 
 def get_server_proxy_from_cmdline(config_general):
-    import xmlrpclib
+    try:
+        from xmlrpclib import ServerProxy
+    except ImportError:
+        from xmlrpc.client import ServerProxy
     
     XMLRPC_SERVER = 'http://%s:%s/RPC2' %(config_general.CLUES_REMOTE_SERVER_HOST, config_general.CLUES_REMOTE_SERVER_PORT)
     
@@ -116,7 +119,7 @@ def get_server_proxy_from_cmdline(config_general):
     if options.INSECURE is None:
         options.INSECURE = config_general.CLUES_REMOTE_SERVER_INSECURE
 
-    proxy = xmlrpclib.ServerProxy(options.XMLRPC_SERVER)
+    proxy = ServerProxy(options.XMLRPC_SERVER)
 
     try:
         version = proxy.version()
@@ -132,9 +135,12 @@ def get_server_proxy_from_cmdline(config_general):
     return success, sec_info, proxy, args
 
 def get_server_proxy_from_config(config_client):
-    import xmlrpclib
+    try:
+        from xmlrpclib import ServerProxy
+    except ImportError:
+        from xmlrpc.client import ServerProxy
     XMLRPC_SERVER = 'http://%s:%s/RPC2' %(config_client.CLUES_REMOTE_SERVER_HOST, config_client.CLUES_REMOTE_SERVER_PORT)
-    proxy = xmlrpclib.ServerProxy(XMLRPC_SERVER)
+    proxy = ServerProxy(XMLRPC_SERVER)
 
     try:
         version = proxy.version()

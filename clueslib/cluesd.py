@@ -21,7 +21,7 @@ import cpyutils.eventloop
 import logging
 import time
 import clueslib.schedulers as schedulers
-import helpers
+import clueslib.helpers as helpers
 import collections
 import hooks
 from configlib import _CONFIGURATION_MONITORING, _CONFIGURATION_CLUES
