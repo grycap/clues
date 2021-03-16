@@ -23,10 +23,10 @@ import time
 import clueslib.schedulers as schedulers
 import clueslib.helpers as helpers
 import collections
-import hooks
-from configlib import _CONFIGURATION_MONITORING, _CONFIGURATION_CLUES
-from node import Node, NodeList, NodeInfo
-from request import JobList, RequestList, Request
+import clueslib.hooks as hooks
+from clueslib.configlib import _CONFIGURATION_MONITORING, _CONFIGURATION_CLUES
+from clueslib.node import Node, NodeList, NodeInfo
+from clueslib.request import JobList, RequestList, Request
 
 import cpyutils.log
 _LOGGER = cpyutils.log.Log("CLUES")

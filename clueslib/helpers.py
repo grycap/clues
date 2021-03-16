@@ -211,6 +211,6 @@ def str_to_class(field):
         identifier = getattr(module, class_name)
     except AttributeError:
         raise NameError("%s doesn't exist." % field)
-    if isinstance(identifier, (types.ClassType, types.TypeType)):
+    if isinstance(identifier, type):
         return identifier
     raise TypeError("%s is not a class." % field)

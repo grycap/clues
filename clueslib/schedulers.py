@@ -296,7 +296,7 @@ def get_booking_system():
     try:
         BOOKING_SYSTEM
     except:
-        import configlib
+        import clueslib.configlib as configlib
         BOOKING_SYSTEM = BookingSystem(configlib._CONFIGURATION_MONITORING.COOLDOWN_SERVED_REQUESTS)
     return BOOKING_SYSTEM
 
