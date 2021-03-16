@@ -354,6 +354,9 @@ class powermanager(PowerManager):
 					if success:
 						radl = radl_parse.parse_radl(radl_data)
 						clues_node_name = radl.systems[0].getValue('net_interface.0.dns_name')
+						# In case that the name is not set, use the default value
+						if clues_node_name is None:
+							clues_node_name = "vnode-#N#"
 						if '#N#' in clues_node_name:
 							clues_node_name = clues_node_name.replace('#N#', vm_id)
 						ec3_additional_vm = radl.systems[0].getValue('ec3_additional_vm')
@@ -601,7 +604,8 @@ class powermanager(PowerManager):
 			# This is a strange case but we assure not to have uncontrolled VMs
 			for name in vms:
 				vm = vms[name]
-				if name not in node_names and not vm.ec3_additional_vm:
+				full_name = name + ".localdomain"
+				if name not in node_names and full_name not in node_names and not vm.ec3_additional_vm:
 					_LOGGER.warning("VM with name %s is detected by the IM but it does not exist in the monitoring system... (%s) recovering it.)" % (name, node_names))
 					vm.recovered()
 					recover.append(name)
