@@ -62,6 +62,7 @@ def _translate_mem_value(memval):
 
 # This function facilitates the parsing of the scontrol command exit
 def parse_scontrol(out):
+    out = out.decode()
     if out.find("=") < 0: return []
     r = []
     for line in out.split("\n"):
@@ -178,12 +179,9 @@ class lrms(clueslib.platform.LRMS):
         )
         
         self._server_ip = clueslib.helpers.val_default(SLURM_SERVER, config_slurm.SLURM_SERVER)
-        _partition_cmd = clueslib.helpers.val_default(SLURM_PARTITION_COMMAND, config_slurm.SLURM_PARTITION_COMMAND)
-        self._partition = _partition_cmd.split(" ")
-        _nodes_cmd = clueslib.helpers.val_default(SLURM_NODES_COMMAND, config_slurm.SLURM_NODES_COMMAND)
-        self._nodes = _nodes_cmd.split(" ")
-        _jobs_cmd = clueslib.helpers.val_default(SLURM_JOBS_COMMAND, config_slurm.SLURM_JOBS_COMMAND)
-        self._jobs = _jobs_cmd.split(" ")
+        self._partition  = clueslib.helpers.val_default(SLURM_PARTITION_COMMAND, config_slurm.SLURM_PARTITION_COMMAND)
+        self._nodes = clueslib.helpers.val_default(SLURM_NODES_COMMAND, config_slurm.SLURM_NODES_COMMAND)
+        self._jobs = clueslib.helpers.val_default(SLURM_JOBS_COMMAND, config_slurm.SLURM_JOBS_COMMAND)
         clueslib.platform.LRMS.__init__(self, "SLURM_%s" % self._server_ip)
 
     def get_nodeinfolist(self):      
