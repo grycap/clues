@@ -18,8 +18,7 @@
 import clueslib.configlib
 import logging
 import clueslib.helpers
-import cpyutils.runcommand
-import subprocess
+from cpyutils.runcommand import runcommand
 
 from clueslib.node import NodeInfo
 from cpyutils.evaluate import TypedClass, TypedList
@@ -60,15 +59,6 @@ def _translate_mem_value(memval):
             
     return value * multiplier
 
-def run_command(command):
-    try:
-        p=subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (out, err) = p.communicate()
-        if p.returncode != 0:
-            raise Exception("return code: %d\nError output: %s" % (p.returncode, err))
-        return out
-    except Exception as e:
-        raise Exception("Error executing '%s': %s" % (" ".join(command), str(e)))
 
 # This function facilitates the parsing of the scontrol command exit
 def parse_scontrol(out):
@@ -139,7 +129,12 @@ def get_partition(self, node_name):
     exit = ""
 
     try:
-        exit = parse_scontrol(run_command(self._partition))
+        success, out = runcommand(self._partition)
+        if not success:
+            _LOGGER.error("could not obtain information about SLURM partitions %s (command rc != 0)" % self._server_ip)
+            return None
+        else:
+            exit = parse_scontrol(out)
     except:
         _LOGGER.error("could not obtain information about SLURM partitions %s (%s)" % (self._server_ip, exit))
         return None
@@ -207,7 +202,12 @@ class lrms(clueslib.platform.LRMS):
 
         exit = " "
         try:
-            exit = parse_scontrol(run_command(self._nodes))
+            success, out = runcommand(self._nodes)
+            if not success:
+                _LOGGER.error("could not obtain information about SLURM nodes %s (command rc != 0)" % self._server_ip)
+                return None
+            else:
+                exit = parse_scontrol(out)
         except:
             _LOGGER.error("could not obtain information about SLURM nodes %s (%s)" % (self._server_ip, exit))
             return None
@@ -267,7 +267,12 @@ class lrms(clueslib.platform.LRMS):
         jobinfolist = []
 
         try:
-            exit = parse_scontrol(run_command(self._jobs))
+            success, out = runcommand(self._jobs)
+            if not success:
+                _LOGGER.error("could not obtain information about SLURM jobs %s (command rc != 0)" % self._server_ip)
+                return None
+            else:
+                exit = parse_scontrol(out)
         except:
             _LOGGER.error("could not obtain information about SLURM jobs %s (%s)" % (self._server_ip, exit))
             return None
