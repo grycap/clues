@@ -324,10 +324,17 @@ class powermanager(PowerManager):
 					system_orig.setValue("disk.0.os.credentials.password", password)
 			new_radl += str(system_orig) + "\n"
 
+			node_configure = None
 			for configure in radl_all.configures:
+				if not node_configure and configure.name == 'wn':
+					node_configure = configure
 				if configure.name == current_system:
-					configure.name = nname
-					new_radl += str(configure) + "\n"
+					node_configure = configure
+					break
+
+			if node_configure:
+				node_configure.name = nname
+				new_radl += str(node_configure) + "\n"
 
 			new_radl += "deploy " + nname + " 1"
 
