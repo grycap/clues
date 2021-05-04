@@ -89,7 +89,7 @@ class powermanager(PowerManager):
                 "IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS": 30,
                 "IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS": 30,
                 "IM_VIRTUAL_CLUSTER_DB_CONNECTION_STRING": "sqlite:///var/lib/clues2/clues.db",
-                "_IM_VIRTUAL_CLUSTER_INF_ID": None
+                "IM_VIRTUAL_CLUSTER_INF_ID": None
             }
         )
 
@@ -100,7 +100,6 @@ class powermanager(PowerManager):
         self._IM_VIRTUAL_CLUSTER_REST_SSL = config_im.IM_VIRTUAL_CLUSTER_REST_SSL
         self._IM_VIRTUAL_CLUSTER_REST_API = config_im.IM_VIRTUAL_CLUSTER_REST_API
         self._IM_VIRTUAL_CLUSTER_REST_SSL_CA_CERTS = config_im.IM_VIRTUAL_CLUSTER_REST_SSL_CA_CERTS
-        self._IM_VIRTUAL_CLUSTER_INF_ID = config_im.IM_VIRTUAL_CLUSTER_INF_ID
 
         self._db = cpyutils.db.DB.create_from_string(config_im.IM_VIRTUAL_CLUSTER_DB_CONNECTION_STRING)
         self._create_db()
@@ -109,7 +108,7 @@ class powermanager(PowerManager):
         self._mvs_seen = {}
         self._golden_images = self._load_golden_images()
         self._stopped_vms = self._load_stopped_vms()
-        self._inf_id = self._IM_VIRTUAL_CLUSTER_INF_ID
+        self._inf_id = config_im.IM_VIRTUAL_CLUSTER_INF_ID
 
     def _create_db(self):
         try:
