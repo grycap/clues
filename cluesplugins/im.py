@@ -457,7 +457,8 @@ class powermanager(PowerManager):
                         #_LOGGER.debug("Node %s with VM with id %s is stopped." % (clues_node_name, vm_id))
 
         # from the nodes that we have powered on, check which of them are still running
-        for nname, node in self._mvs_seen.items():
+        vms = dict(self._mvs_seen)
+        for nname, node in vms.items():
             if (now - node.timestamp_seen) > self._IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS:
                 _LOGGER.debug("vm %s is not seen for a while... let's forget it" % nname)
                 del self._mvs_seen[nname]
