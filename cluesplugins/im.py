@@ -109,6 +109,9 @@ class powermanager(PowerManager):
         self._golden_images = self._load_golden_images()
         self._stopped_vms = self._load_stopped_vms()
         self._inf_id = config_im.IM_VIRTUAL_CLUSTER_INF_ID
+		# If the ID is not the whoule URL, complete it
+        if self._inf_id and not self._inf_id.startswith("http"):
+            self._inf_id = "%s/infrastructures/%s" % (self._IM_VIRTUAL_CLUSTER_REST_API, self._inf_id)
 
     def _create_db(self):
         try:
