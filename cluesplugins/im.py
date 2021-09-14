@@ -27,6 +27,7 @@ import re
 import yaml
 
 from radl import radl_parse
+from radl.radl import contextualize, contextualize_item
 
 import cpyutils.db
 import cpyutils.config
@@ -336,10 +337,31 @@ class powermanager(PowerManager):
                     system_orig.setValue("disk.0.os.credentials.password", password)
             new_radl += str(system_orig) + "\n"
 
-            for configure in radl_all.configures:
-                if configure.name == current_system:
-                    configure.name = nname
-                    new_radl += str(configure) + "\n"
+            if radl_all.contextualize:
+                node_citems = []
+                node_configures = []
+                for citem in radl_all.contextualize.items.values():
+                    if citem.system == current_system:
+                        node_configures.append(citem.configure)
+                        node_citems.append(contextualize_item(nname,
+                                                                citem.configure,
+                                                                citem.num))
+                for configure in radl_all.configures:
+                    if configure.name in node_configures:
+                        new_radl += str(configure) + "\n"
+                new_radl += str(contextualize(node_citems)) + "\n"
+            else:
+                node_configure = None
+                for configure in radl_all.configures:
+                    if not node_configure and configure.name == 'wn':
+                        node_configure = configure
+                    if configure.name == current_system:
+                        node_configure = configure
+                        break
+
+                if node_configure:
+                    node_configure.name = nname
+                    new_radl += str(node_configure) + "\n"
 
             new_radl += "deploy " + nname + " 1"
 
