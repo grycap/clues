@@ -590,6 +590,8 @@ class powermanager(PowerManager):
                         self._store_stopped_vm(nname, vm.vm_id)
                         if not success: 
                             _LOGGER.error("ERROR stopping node %s: %s. %s." % (nname, resp.reason, resp.text))
+                        else:
+                            _LOGGER.debug("Node %s successfully stopped." % nname)
                     else:
                         if nname in self._stopped_vms:
                             self._delete_stopped_vm(nname)
@@ -599,6 +601,8 @@ class powermanager(PowerManager):
                         success = resp.status_code == 200
                         if not success: 
                             _LOGGER.error("ERROR deleting node %s: %s. %s." % (nname, resp.reason, resp.text))
+                        else:
+                            _LOGGER.debug("Node %s successfully deleted." % nname)
                 else:
                     _LOGGER.debug("Not powering off/stopping node %s" % nname)
                     success = False
@@ -648,7 +652,7 @@ class powermanager(PowerManager):
                         if self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS > 0:
                             if node.name in vms:
                                 vm = vms[node.name]
-                                time_off = now - node.timestamp_state
+                                time_off = now - max(node.timestamp_state, vm.timestamp_created)
                                 time_recovered = now - vm.timestamp_recovered
                                 _LOGGER.warning("node %s has a VM running but it is OFF or UNKNOWN in the monitoring system since %d seconds" % (node.name, time_off))
                                 if time_off > self._IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS:
