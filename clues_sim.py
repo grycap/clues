@@ -177,19 +177,7 @@ def parse_command(t, fields):
   else:
     print("do not know what to do with command %s" % command)
   
-if __name__ == "__main__":
-  from optparse import OptionParser
-  parser = OptionParser()
-  parser.add_option("-f", "--simulation-file", dest="SIM_FILE", default=None, help="file to load simulation data")
-  parser.add_option("-d", "--database-file", dest="OUT_FILE", default=None, help="the database to use (in which the simulation is stored)")
-  parser.add_option("-s", "--simmulated-time", dest="RT_MODE", action="store_false", default=True, help="runs app in real time")
-  parser.add_option("-r", "--random-seed", dest="RANDOM_SEED", default=None, help="the seed to initialize the random number generator")
-  parser.add_option("-t", "--truncate-database", dest="TRUNCATE", default=False, action="store_true", help="WARNING: truncates the database file (for simulation purposes only)")
-  parser.add_option("-F", "--force-truncate", dest="FORCETRUNCATE", default=False, action="store_true", help="force confirmation for -t flag")
-  parser.add_option("-n", "--no-end", dest="END", default=True, action="store_false", help="do not end simulation (useful to have a running platform to monitor)")
-
-  (options, args) = parser.parse_args()
-
+def main(options):
   if options.SIM_FILE is None:
     print("nothing to do")
     sys.exit(0)
@@ -274,10 +262,24 @@ if __name__ == "__main__":
         event.schedule(lrms, powermanager, nodepool)
 
   print(nodepool)
-  print("-"*100, "\n", cpyutils.eventloop.get_eventloop())
+  print("-"*100 + "\n" + str(cpyutils.eventloop.get_eventloop()))
   
   configserver._CONFIGURATION_CLUES.DB_CONNECTION_STRING = "sqlite://%s" % options.OUT_FILE
   clueslib.configlib._CONFIGURATION_MONITORING.PERIOD_MONITORING_JOBS = 10
   clueslib.configlib._CONFIGURATION_MONITORING.COOLDOWN_SERVED_REQUESTS = 30
   configserver.config_scheduling.SCHEDULER_CLASSES = "clueslib.schedulers.CLUES_Scheduler_PowOn_Requests,clueslib.schedulers.CLUES_Scheduler_Reconsider_Jobs, clueslib.schedulers.CLUES_Scheduler_PowOff_IDLE"
   cluesserver.main_loop(lrms, powermanager, queue_jobs, [lrms])
+
+if __name__ == "__main__":
+  from optparse import OptionParser
+  parser = OptionParser()
+  parser.add_option("-f", "--simulation-file", dest="SIM_FILE", default=None, help="file to load simulation data")
+  parser.add_option("-d", "--database-file", dest="OUT_FILE", default=None, help="the database to use (in which the simulation is stored)")
+  parser.add_option("-s", "--simmulated-time", dest="RT_MODE", action="store_false", default=True, help="runs app in real time")
+  parser.add_option("-r", "--random-seed", dest="RANDOM_SEED", default=None, help="the seed to initialize the random number generator")
+  parser.add_option("-t", "--truncate-database", dest="TRUNCATE", default=False, action="store_true", help="WARNING: truncates the database file (for simulation purposes only)")
+  parser.add_option("-F", "--force-truncate", dest="FORCETRUNCATE", default=False, action="store_true", help="force confirmation for -t flag")
+  parser.add_option("-n", "--no-end", dest="END", default=True, action="store_false", help="do not end simulation (useful to have a running platform to monitor)")
+
+  (options, args) = parser.parse_args()
+  main(options)
