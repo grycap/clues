@@ -9,6 +9,7 @@ sys.path.append(".")
 
 from clues_sim import main
 
+
 class TestCLUES(unittest.TestCase):
     """ Class to test CLUES using the simulator """
     def __init__(self, *args):
@@ -18,7 +19,7 @@ class TestCLUES(unittest.TestCase):
     def test_clues(self):
         tests_path = os.path.dirname(os.path.abspath(__file__))
         sys.argv = ["test_clues.py", "-s"]
-        options = MagicMock() 
+        options = MagicMock()
         options.SIM_FILE = os.path.join(tests_path, '../etc/simulator/simple.sim')
         options.OUT_FILE = "./cluessim.db"
         options.TRUNCATE = True
