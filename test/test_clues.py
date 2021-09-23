@@ -19,7 +19,7 @@ class TestCLUES(unittest.TestCase):
         sys.argv = ["test_clues.py", "-s"]
         options = MagicMock() 
         options.SIM_FILE = os.path.join(tests_path, '../etc/simulator/simple.sim')
-        options.OUT_FILE = "/tmp/cluessim.db"
+        options.OUT_FILE = "./cluessim.db"
         options.TRUNCATE = True
         options.RT_MODE = False
         options.RANDOM_SEED = 10402
