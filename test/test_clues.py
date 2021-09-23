@@ -10,6 +10,7 @@ sys.path.append(".")
 from clues_sim import main
 
 class TestCLUES(unittest.TestCase):
+    """ Class to test CLUES using the simulator """
     def __init__(self, *args):
         """Init test class."""
         unittest.TestCase.__init__(self, *args)
