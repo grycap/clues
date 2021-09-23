@@ -7,7 +7,7 @@ import os.path
 sys.path.append("..")
 sys.path.append(".")
 
-from clues_sim import main, _LOGGER
+from clues_sim import main
 
 class TestCLUES(unittest.TestCase):
     def __init__(self, *args):
@@ -33,7 +33,11 @@ class TestCLUES(unittest.TestCase):
         cur.execute('SELECT * FROM requests')
         rows = cur.fetchall()
         con.close()
-        res = [('1', 12, 12, 0, 1, 1024, '[""]', 1, 1, 'null', '[]', 1)]
+        if sys.version_info.major == 3:
+            res = [('2', 12, 25, 2, 1, 1024, '[""]', 1, 1, 'null', '[]', 1)]
+        else:
+            res = [('1', 12, 12, 0, 1, 1024, '[""]', 1, 1, 'null', '[]', 1)]
+
         self.assertEqual(rows, res)
 
 
