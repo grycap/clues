@@ -1,0 +1,8 @@
+node,test2,success,idle
+node,Infinite2,fresh,idle
+node,SAMPLE_JOB1,fresh,queued
+node,hostings_earnings_summary,failure,idle
+node,Infinite,fresh,running
+node,test,success,idle
+link,test,hostings_earnings_summary
+link,test2,hostings_earnings_summary
