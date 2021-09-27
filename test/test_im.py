@@ -204,6 +204,50 @@ class TestIM(unittest.TestCase):
         res, nname = test_im.power_on('node-2')
         self.assertTrue(res)
 
+    @patch("cluesplugins.im.powermanager._get_inf_id")
+    @patch("cluesplugins.im.powermanager._get_server")
+    @patch("cluesplugins.im.powermanager._read_auth_data")
+    @patch("cpyutils.db.DB.create_from_string")
+    @patch("cpyutils.eventloop.now")
+    def test_power_off(self, now, createdb, read_auth, get_server, get_inf_id):
+        get_inf_id.return_value = "infid"
+        read_auth.return_value = {'type': 'InfrastructureManager', 'username': 'user', 'password': 'pass'}
+        now.return_value = 100
+
+        server = MagicMock()
+        server.StopVM.return_value = (True, ['2'])
+        server.RemoveResource.return_value = (True, ['2'])
+        get_server.return_value = server
+
+        db = MagicMock()
+        db.sql_query.return_value = True, "", []
+        createdb.return_value = db
+
+        test_im = powermanager()
+        vm = MagicMock()
+        vm.vm_id = "vmid"
+        radl = """system node-1 (
+            net_interface.0.dns_name = 'node-#N#'
+        )"""
+        vm.radl = parse_radl(radl)
+        test_im._mvs_seen = {'node-1': vm}
+        res, nname = test_im.power_off('node-1')
+        self.assertTrue(res)
+        self.assertEqual(nname, 'node-1')
+        self.assertEqual(server.RemoveResource.call_count, 1)
+        self.assertEqual(server.StopVM.call_count, 0)
+
+        radl = """system node-1 (
+            net_interface.0.dns_name = 'node-#N#' and
+            ec3_reuse_nodes = 'true'
+        )"""
+        vm.radl = parse_radl(radl)
+        res, nname = test_im.power_off('node-1')
+        self.assertTrue(res)
+        self.assertEqual(nname, 'node-1')
+        self.assertEqual(server.StopVM.call_count, 1)
+        self.assertEqual(server.RemoveResource.call_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()
