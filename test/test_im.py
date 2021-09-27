@@ -19,6 +19,7 @@ import unittest
 import sys
 import os
 from mock.mock import MagicMock, patch
+from radl.radl_parse import parse_radl
 
 sys.path.append("..")
 sys.path.append(".")
@@ -163,13 +164,13 @@ class TestIM(unittest.TestCase):
 
         test_im = powermanager()
         res = test_im._get_radl('node-2')
-        res_radl = """system node-2 (
-net_interface.0.dns_name = 'node-2' and
-ec3_class = 'wn'
-)
 
-deploy node-2 1"""
-        self.assertEqual(res, res_radl)
+        radl_res = parse_radl(res)
+        self.assertEqual(radl_res.systems[0].name, 'node-2')
+        self.assertEqual(radl_res.systems[0].getValue('net_interface.0.dns_name'), 'node-2')
+        self.assertEqual(radl_res.systems[0].getValue('ec3_class'), 'wn')
+        self.assertEqual(radl_res.deploys[0].id, 'node-2')
+        self.assertEqual(radl_res.deploys[0].vm_number, 1)
 
     @patch("cluesplugins.im.powermanager._get_radl")
     @patch("cluesplugins.im.powermanager._get_vms")
