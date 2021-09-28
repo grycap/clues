@@ -265,6 +265,7 @@ class TestIM(unittest.TestCase):
             state = 'configured'
         )"""
         vm.radl = parse_radl(radl)
+        vm.timestamp_recovered = 0
         get_vms.return_value = {'node-1': vm}
 
         db = MagicMock()
@@ -286,7 +287,14 @@ class TestIM(unittest.TestCase):
         test_im.lifecycle()
         self.assertEqual(vm.recovered.call_count, 0)
 
-        # 2nd case: golden image
+        # 2nd case: node is OFF in clues
+        node.state = Node.OFF
+        node.timestamp_state = 60
+        test_im.lifecycle()
+        self.assertEqual(vm.recovered.call_count, 1)
+
+        # 3rd case: golden image
+        node.state = Node.IDLE
         radl = """system node-1 (
             net_interface.0.dns_name = 'node-#N#' and
             state = 'configured' and
@@ -306,7 +314,7 @@ class TestIM(unittest.TestCase):
         test_im._store_golden_image = MagicMock()
 
         test_im.lifecycle()
-        self.assertEqual(vm.recovered.call_count, 0)
+        self.assertEqual(vm.recovered.call_count, 1)
         self.assertEqual(server.CreateDiskSnapshot.call_count, 1)
         self.assertEqual(server.CreateDiskSnapshot.call_args_list[0][0], ('infid', 'vmid', 0, 'im-uuid', True, auth))
         self.assertEqual(test_im._store_golden_image.call_args_list[0][0], ('wn', 'image', 'pass'))
