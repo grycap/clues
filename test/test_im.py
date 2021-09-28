@@ -172,6 +172,18 @@ class TestIM(unittest.TestCase):
         self.assertEqual(radl_res.deploys[0].id, 'node-2')
         self.assertEqual(radl_res.deploys[0].vm_number, 1)
 
+        infra_radl = """system wn (
+            net_interface.0.dns_name = 'node-#N#'
+        )
+        contextualize (
+            system wn configure wn
+        )"""
+        server.GetInfrastructureRADL.return_value = (True, infra_radl)
+        res = test_im._get_radl('node-2')
+        radl_res = parse_radl(res)
+        self.assertEqual(radl_res.contextualize.items[('node-2', 'wn')].system, 'node-2')
+        self.assertEqual(radl_res.contextualize.items[('node-2', 'wn')].configure, 'wn')
+
     @patch("cluesplugins.im.powermanager._get_radl")
     @patch("cluesplugins.im.powermanager._get_vms")
     @patch("cluesplugins.im.powermanager._read_auth_data")
