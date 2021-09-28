@@ -248,6 +248,69 @@ class TestIM(unittest.TestCase):
         self.assertEqual(server.StopVM.call_count, 1)
         self.assertEqual(server.RemoveResource.call_count, 1)
 
+    @patch("cluesplugins.im.uuid1")
+    @patch("cluesplugins.im.powermanager._get_inf_id")
+    @patch("cluesplugins.im.powermanager._get_server")
+    @patch("cluesplugins.im.powermanager._read_auth_data")
+    @patch("cluesplugins.im.powermanager._get_vms")
+    @patch("cpyutils.db.DB.create_from_string")
+    @patch("cpyutils.eventloop.now")
+    def test_lifecycle(self, now, createdb, get_vms, read_auth, get_server, get_inf_id, uuid1):
+        now.return_value = 100
+
+        vm = MagicMock()
+        vm.vm_id = "vmid"
+        radl = """system node-1 (
+            net_interface.0.dns_name = 'node-#N#' and
+            state = 'configured'
+        )"""
+        vm.radl = parse_radl(radl)
+        get_vms.return_value = {'node-1': vm}
+
+        db = MagicMock()
+        db.sql_query.return_value = True, "", []
+        createdb.return_value = db
+
+        test_im = powermanager()
+        test_im._clues_daemon = MagicMock()
+        monit = MagicMock()
+        node = MagicMock()
+        node.name = "node-1"
+        node.state = Node.IDLE
+        node.enabled = True
+        node.timestamp_state = 100
+        monit.nodelist = [node]
+        test_im._clues_daemon.get_monitoring_info.return_value = monit
+
+        # 1st case: all ok
+        test_im.lifecycle()
+        self.assertEqual(vm.recovered.call_count, 0)
+
+        # 2nd case: golden image
+        radl = """system node-1 (
+            net_interface.0.dns_name = 'node-#N#' and
+            state = 'configured' and
+            ec3_golden_images = 1 and
+            ec3_class = 'wn' and
+            disk.0.os.credentials.password = 'pass'
+        )"""
+        vm.radl = parse_radl(radl)
+        auth = {'type': 'InfrastructureManager', 'username': 'user', 'password': 'pass'}
+        read_auth.return_value = auth
+        get_inf_id.return_value = "infid"
+        server = MagicMock()
+        server.CreateDiskSnapshot.return_value = (True, 'image')
+        get_server.return_value = server
+        uuid1.return_value = "uuid"
+
+        test_im._store_golden_image = MagicMock()
+
+        test_im.lifecycle()
+        self.assertEqual(vm.recovered.call_count, 0)
+        self.assertEqual(server.CreateDiskSnapshot.call_count, 1)
+        self.assertEqual(server.CreateDiskSnapshot.call_args_list[0][0], ('infid', 'vmid', 0, 'im-uuid', True, auth))
+        self.assertEqual(test_im._store_golden_image.call_args_list[0][0], ('wn', 'image', 'pass'))
+
 
 if __name__ == "__main__":
     unittest.main()
