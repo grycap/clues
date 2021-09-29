@@ -1,0 +1,51 @@
+{
+	"apps": [{
+		"id": "/babbo",
+		"cmd": "sleep 100",
+		"args": null,
+		"user": null,
+		"env": {},
+		"instances": 1,
+		"cpus": 0,
+		"mem": 16.0,
+		"disk": 0.0,
+		"executor": "",
+		"constraints": [],
+		"uris": [],
+		"storeUrls": [],
+		"ports": [10000],
+		"requirePorts": false,
+		"backoffSeconds": 1,
+		"backoffFactor": 1.15,
+		"maxLaunchDelaySeconds": 3600,
+		"container": null,
+		"healthChecks": [],
+		"dependencies": [],
+		"upgradeStrategy": {
+			"minimumHealthCapacity": 1.0,
+			"maximumOverCapacity": 1.0
+		},
+		"labels": {},
+		"acceptedResourceRoles": null,
+		"version": "2015-11-30T12:39:12.106Z",
+		"versionInfo": {
+			"lastScalingAt": "2015-11-30T12:39:12.106Z",
+			"lastConfigChangeAt": "2015-11-30T12:19:19.399Z"
+		},
+		"tasksStaged": 0,
+		"tasksRunning": 1,
+		"tasksHealthy": 0,
+		"tasksUnhealthy": 0,
+		"deployments": [],
+		"tasks": [{
+			"id": "babbo.5bcff254-975f-11e5-aac5-02422a2a3da3",
+			"host": "vnode1",
+			"ports": [31901],
+			"startedAt": "2015-11-30T12:39:12.409Z",
+			"stagedAt": "2015-11-30T12:39:12.271Z",
+			"version": "2015-11-30T12:39:12.106Z",
+			"slaveId": "f62af091-22d9-45ac-b19f-1d5fd808b9a1-S0",
+			"appId": "/babbo"
+		}]
+	}]
+}

@@ -1,0 +1,40 @@
+[
+    {
+        "name": "dockerjob",
+        "command": "sleep 10; date -u +%T;",
+        "shell": true,
+        "epsilon": "PT60S",
+        "executor": "",
+        "executorFlags": "",
+        "retries": 2,
+        "owner": "",
+        "ownerName": "",
+        "description": "",
+        "async": false,
+        "successCount": 0,
+        "errorCount": 0,
+        "lastSuccess": "",
+        "lastError": "",
+        "cpus": 0.5,
+        "disk": 256,
+        "mem": 256,
+        "disabled": false,
+        "softError": false,
+        "dataProcessingJobType": false,
+        "errorsSinceLastSuccess": 0,
+        "uris": [],
+        "environmentVariables": [],
+        "arguments": [],
+        "highPriority": false,
+        "runAsUser": "root",
+        "container": {
+            "type": "docker",
+            "image": "libmesos/ubuntu",
+            "network": "HOST",
+            "volumes": []
+        },
+        "constraints": [],
+        "schedule": "R/2015-07-28T13:58:00.000Z/PT2M",
+        "scheduleTimeZone": ""
+    }
+]

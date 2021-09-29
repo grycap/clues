@@ -1,0 +1,220 @@
+{
+    "activated_slaves": 1,
+    "build_date": "2015-05-05 06:15:50",
+    "build_time": 1430806550,
+    "build_user": "root",
+    "completed_frameworks": [
+        {
+            "active": true,
+            "checkpoint": false,
+            "completed_tasks": [
+                {
+                    "executor_id": "",
+                    "framework_id": "20150925-075030-1063856798-5050-3482-0000",
+                    "id": "sleep",
+                    "labels": [],
+                    "name": "sleep",
+                    "resources": {
+                        "cpus": 1,
+                        "disk": 0,
+                        "mem": 128
+                    },
+                    "slave_id": "20150925-075030-1063856798-5050-3482-S0",
+                    "state": "TASK_KILLED",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1445943616.53209
+                        },
+                        {
+                            "state": "TASK_FINISHED",
+                            "timestamp": 1445943626.58114
+                        },
+                        {
+                            "state": "TASK_KILLED",
+                            "timestamp": 1445943627.02328
+                        }
+                    ]
+                }
+            ],
+            "failover_timeout": 0,
+            "hostname": "mesosserverpublic.localdomain",
+            "id": "20150925-075030-1063856798-5050-3482-0000",
+            "name": "",
+            "offered_resources": {
+                "cpus": 0,
+                "disk": 0,
+                "mem": 0
+            },
+            "offers": [],
+            "registered_time": 1445943616.44061,
+            "resources": {
+                "cpus": 0,
+                "disk": 0,
+                "mem": 0
+            },
+            "role": "*",
+            "tasks": [],
+            "unregistered_time": 1445943627.02617,
+            "used_resources": {
+                "cpus": 0,
+                "disk": 0,
+                "mem": 0
+            },
+            "user": "ubuntu",
+            "webui_url": ""
+        }
+    ],
+    "deactivated_slaves": 0,
+    "elected_time": 1443160230.22108,
+    "failed_tasks": 0,
+    "finished_tasks": 1,
+    "flags": {
+        "allocation_interval": "1secs",
+        "authenticate": "false",
+        "authenticate_slaves": "false",
+        "authenticators": "crammd5",
+        "framework_sorter": "drf",
+        "help": "false",
+        "hostname": "158.42.105.63",
+        "initialize_driver_logging": "true",
+        "ip": "158.42.105.63",
+        "log_auto_initialize": "true",
+        "log_dir": "/var/log/mesos",
+        "logbufsecs": "0",
+        "logging_level": "INFO",
+        "port": "5050",
+        "quiet": "false",
+        "quorum": "1",
+        "recovery_slave_removal_limit": "100%",
+        "registry": "replicated_log",
+        "registry_fetch_timeout": "1mins",
+        "registry_store_timeout": "5secs",
+        "registry_strict": "false",
+        "root_submissions": "true",
+        "slave_reregister_timeout": "10mins",
+        "user_sorter": "drf",
+        "version": "false",
+        "webui_dir": "/usr/share/mesos/webui",
+        "work_dir": "/var/lib/mesos",
+        "zk": "zk://158.42.105.63:2181/mesos",
+        "zk_session_timeout": "10secs"
+    },
+    "frameworks": [
+        {
+            "active": true,
+            "checkpoint": false,
+            "completed_tasks": [],
+            "failover_timeout": 0,
+            "hostname": "mesosserverpublic.localdomain",
+            "id": "20150925-075030-1063856798-5050-3482-0001",
+            "name": "",
+            "offered_resources": {
+                "cpus": 0,
+                "disk": 0,
+                "mem": 0
+            },
+            "offers": [],
+            "registered_time": 1445943722.71564,
+            "resources": {
+                "cpus": 1,
+                "disk": 0,
+                "mem": 128
+            },
+            "role": "*",
+            "tasks": [
+                {
+                    "executor_id": "",
+                    "framework_id": "20150925-075030-1063856798-5050-3482-0001",
+                    "id": "sleep",
+                    "labels": [],
+                    "name": "sleep",
+                    "resources": {
+                        "cpus": 1,
+                        "disk": 0,
+                        "mem": 128
+                    },
+                    "slave_id": "20150925-075030-1063856798-5050-3482-S0",
+                    "state": "TASK_RUNNING",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1445943722.36714
+                        }
+                    ]
+                }
+            ],
+            "unregistered_time": 0,
+            "used_resources": {
+                "cpus": 1,
+                "disk": 0,
+                "mem": 128
+            },
+            "user": "ubuntu",
+            "webui_url": ""
+        },
+        {
+            "active": true,
+            "checkpoint": true,
+            "completed_tasks": [],
+            "failover_timeout": 604800,
+            "hostname": "mesosserverpublic.localdomain",
+            "id": "20150716-115932-1063856798-5050-14165-0000",
+            "name": "chronos-2.3.4",
+            "offered_resources": {
+                "cpus": 0,
+                "disk": 0,
+                "mem": 0
+            },
+            "offers": [],
+            "registered_time": 1443160230.99658,
+            "reregistered_time": 1443160230.99664,
+            "resources": {
+                "cpus": 0,
+                "disk": 0,
+                "mem": 0
+            },
+            "role": "*",
+            "tasks": [],
+            "unregistered_time": 0,
+            "used_resources": {
+                "cpus": 0,
+                "disk": 0,
+                "mem": 0
+            },
+            "user": "root",
+            "webui_url": "http://mesosserverpublic.localdomain:4400"
+        }
+    ],
+    "git_sha": "d6309f92a7f9af3ab61a878403e3d9c284ea87e0",
+    "git_tag": "0.22.1",
+    "hostname": "158.42.105.63",
+    "id": "20150925-075030-1063856798-5050-3482",
+    "killed_tasks": 1,
+    "leader": "master@158.42.105.63:5050",
+    "log_dir": "/var/log/mesos",
+    "lost_tasks": 0,
+    "orphan_tasks": [],
+    "pid": "master@158.42.105.63:5050",
+    "slaves": [
+        {
+            "active": true,
+            "attributes": {},
+            "hostname": "10.0.0.84",
+            "id": "20150925-075030-1063856798-5050-3482-S0",
+            "pid": "slave(1)@10.0.0.84:5051",
+            "registered_time": 1443621986.53287,
+            "resources": {
+                "cpus": 1,
+                "disk": 13438,
+                "mem": 623,
+                "ports": "[31000-32000]"
+            }
+        }
+    ],
+    "staged_tasks": 2,
+    "start_time": 1443160230.20115,
+    "started_tasks": 0,
+    "unregistered_frameworks": [],
+    "version": "0.22.1"
+}
