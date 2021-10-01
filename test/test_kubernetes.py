@@ -67,6 +67,8 @@ class TestKubernetes(unittest.TestCase):
         self.assertEqual(nodes['wn4.localdomain'].state, Node.OFF)
         self.assertEqual(nodes['wn4.localdomain'].keywords["nvidia.com/gpu"].value, 1)
 
+        os.unlink(kube.VNODE_FILE)
+
     @patch("requests.request")
     def test_get_jobinfolist(self, request):
         kube = lrms()
