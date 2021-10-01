@@ -1,0 +1,628 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "creationTimestamp": "2021-09-17T06:38:34Z",
+                "generateName": "im-b74468dcd-",
+                "labels": {
+                    "pod-template-hash": "b74468dcd",
+                    "run": "im"
+                },
+                "name": "im-b74468dcd-qg7lg",
+                "namespace": "im-devel",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "apps/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "ReplicaSet",
+                        "name": "im-b74468dcd",
+                        "uid": "1392ff2d-7f9d-4fdc-acaf-ba27b1f55202"
+                    }
+                ],
+                "resourceVersion": "182337602",
+                "uid": "0fb09d9f-74be-4c2a-9c4a-505c4af980ff"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "command": [
+                            "/bin/bash"
+                        ],
+                        "env": [
+                            {
+                                "name": "IM_DATA_DB",
+                                "value": "/data/inf.dat"
+                            },
+                            {
+                                "name": "ANSIBLE_VERSION",
+                                "value": "2.9.15"
+                            }
+                        ],
+                        "image": "grycap/im:1.10.5-dev",
+                        "imagePullPolicy": "Always",
+                        "livenessProbe": {
+                            "failureThreshold": 3,
+                            "httpGet": {
+                                "path": "/version",
+                                "port": 8800,
+                                "scheme": "HTTP"
+                            },
+                            "initialDelaySeconds": 10,
+                            "periodSeconds": 10,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 2
+                        },
+                        "name": "im",
+                        "ports": [
+                            {
+                                "containerPort": 8800,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "resources": {
+                            "requests": {
+                                "cpu": "250m",
+                                "memory": "250Mi"
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/etc/im/logging.conf",
+                                "name": "im",
+                                "subPath": "logging.conf"
+                            },
+                            {
+                                "mountPath": "/etc/im/im.cfg",
+                                "name": "im",
+                                "subPath": "im.cfg"
+                            },
+                            {
+                                "mountPath": "/data",
+                                "name": "im-db"
+                            },
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "default-token-fntlb",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "wn-1.localdomain",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "configMap": {
+                            "defaultMode": 420,
+                            "name": "im"
+                        },
+                        "name": "im"
+                    },
+                    {
+                        "name": "im-db",
+                        "persistentVolumeClaim": {
+                            "claimName": "imdb"
+                        }
+                    },
+                    {
+                        "name": "default-token-fntlb",
+                        "secret": {
+                            "defaultMode": 420,
+                            "secretName": "default-token-fntlb"
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-09-17T06:38:34Z",
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-09-17T06:38:55Z",
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-09-17T06:38:55Z",
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-09-17T06:38:34Z",
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "containerID": "docker://5fb3d78a1ae9f7160dee0258c55e6c3573897dcbdcc1dc21b7a0c6a2016a7951",
+                        "image": "grycap/im:1.10.5-dev",
+                        "imageID": "docker-pullable://grycap/im@sha256:c406a9fc261e6f47aeb41b80cda6cc08c48a6ec735b5a27ebd0f7a3ad2895a10",
+                        "lastState": {},
+                        "name": "im",
+                        "ready": true,
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2021-09-17T06:38:55Z"
+                            }
+                        }
+                    }
+                ],
+                "hostIP": "10.10.1.3",
+                "phase": "Running",
+                "podIP": "10.244.1.142",
+                "podIPs": [
+                    {
+                        "ip": "10.244.1.142"
+                    }
+                ],
+                "qosClass": "Burstable",
+                "startTime": "2021-09-17T06:38:34Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "creationTimestamp": "2021-09-29T11:12:43Z",
+                "generateName": "im-dashboard-65889c645b-",
+                "labels": {
+                    "name": "im-dashboard",
+                    "pod-template-hash": "65889c645b"
+                },
+                "name": "im-dashboard-65889c645b-rblrs",
+                "namespace": "im-devel",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "apps/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "ReplicaSet",
+                        "name": "im-dashboard-65889c645b",
+                        "uid": "63a2e7b4-c8c6-4b76-8051-14a5f4ee93c1"
+                    }
+                ],
+                "resourceVersion": "184190964",
+                "uid": "643ed2c4-8a98-4648-97e4-55aa856b984d"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "command": [
+                            "/bin/sh"
+                        ],
+                        "env": [
+                            {
+                                "name": "ENABLE_HTTPS",
+                                "value": "False"
+                            },
+                            {
+                                "name": "WORKERS",
+                                "value": "4"
+                            },
+                            {
+                                "name": "CREDS_KEY",
+                                "valueFrom": {
+                                    "secretKeyRef": {
+                                        "key": "key",
+                                        "name": "creds-key"
+                                    }
+                                }
+                            }
+                        ],
+                        "image": "grycap/im-dashboard:devel",
+                        "imagePullPolicy": "Always",
+                        "livenessProbe": {
+                            "failureThreshold": 3,
+                            "httpGet": {
+                                "path": "/",
+                                "port": 5001,
+                                "scheme": "HTTP"
+                            },
+                            "initialDelaySeconds": 10,
+                            "periodSeconds": 10,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 2
+                        },
+                        "name": "im-dashboard",
+                        "ports": [
+                            {
+                                "containerPort": 5001,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "resources": {
+                            "requests": {
+                                "cpu": "250m",
+                                "memory": "128Mi",
+                                "nvidia.com/gpu": 1
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/app/app/config.json",
+                                "name": "im-dashboard",
+                                "subPath": "config.json"
+                            },
+                            {
+                                "mountPath": "/data",
+                                "name": "imdb"
+                            },
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "default-token-fntlb",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "wn-2.localdomain",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "configMap": {
+                            "defaultMode": 420,
+                            "name": "im-dashboard"
+                        },
+                        "name": "im-dashboard"
+                    },
+                    {
+                        "name": "imdb",
+                        "persistentVolumeClaim": {
+                            "claimName": "imdb"
+                        }
+                    },
+                    {
+                        "name": "default-token-fntlb",
+                        "secret": {
+                            "defaultMode": 420,
+                            "secretName": "default-token-fntlb"
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-09-29T11:12:43Z",
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-09-29T11:13:09Z",
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-09-29T11:13:09Z",
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-09-29T11:12:43Z",
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "containerID": "docker://7db082e1d5da111e01a8996b0117ce195582adc0b7959c1feb6006e290cf1721",
+                        "image": "grycap/im-dashboard:devel",
+                        "imageID": "docker-pullable://grycap/im-dashboard@sha256:504bf608c70b32a212e7c5c08f9fecc78efd63d27eb9eb105179838259a4cf3b",
+                        "lastState": {
+                            "terminated": {
+                                "containerID": "docker://33fc52acc5e522271b372f6ce4826e67d55126008d80bf109bf122dac6875907",
+                                "exitCode": 0,
+                                "finishedAt": "2021-09-30T04:25:47Z",
+                                "reason": "Completed",
+                                "startedAt": "2021-09-29T11:13:09Z"
+                            }
+                        },
+                        "name": "im-dashboard",
+                        "ready": true,
+                        "restartCount": 1,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2021-09-30T04:25:53Z"
+                            }
+                        }
+                    }
+                ],
+                "hostIP": "10.10.1.4",
+                "phase": "Running",
+                "podIP": "10.244.2.193",
+                "podIPs": [
+                    {
+                        "ip": "10.244.2.193"
+                    }
+                ],
+                "qosClass": "Burstable",
+                "startTime": "2021-09-29T11:12:43Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "creationTimestamp": "2021-07-27T07:14:24Z",
+                "generateName": "im-web-6d74c5d9bd-",
+                "labels": {
+                    "app": "im",
+                    "name": "im-web",
+                    "pod-template-hash": "6d74c5d9bd",
+                    "tier": "im-web"
+                },
+                "name": "im-web-6d74c5d9bd-gm9qf",
+                "namespace": "im-devel",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "apps/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "ReplicaSet",
+                        "name": "im-web-6d74c5d9bd",
+                        "uid": "dc0ba737-ca56-4537-abe8-ddecdb1a6c06"
+                    }
+                ],
+                "resourceVersion": "182795829",
+                "uid": "6a7f054a-b6b8-4809-9f56-e2c0a775f5ec"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "env": [
+                            {
+                                "name": "im_use_rest",
+                                "value": "true"
+                            },
+                            {
+                                "name": "im_host",
+                                "value": "appsgrycap.i3m.upv.es"
+                            },
+                            {
+                                "name": "im_port",
+                                "value": "31443"
+                            },
+                            {
+                                "name": "im_use_ssl",
+                                "value": "true"
+                            },
+                            {
+                                "name": "im_path",
+                                "value": "/im-dev/"
+                            },
+                            {
+                                "name": "im_db",
+                                "value": "/data/im.db"
+                            }
+                        ],
+                        "image": "grycap/im-web:1.6.1",
+                        "imagePullPolicy": "Always",
+                        "livenessProbe": {
+                            "failureThreshold": 3,
+                            "httpGet": {
+                                "path": "/im-web/",
+                                "port": 80,
+                                "scheme": "HTTP"
+                            },
+                            "initialDelaySeconds": 30,
+                            "periodSeconds": 20,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 2
+                        },
+                        "name": "im-web",
+                        "ports": [
+                            {
+                                "containerPort": 80,
+                                "name": "http",
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "resources": {},
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/www/html/im-web/analyticstracking.php",
+                                "name": "im-web",
+                                "subPath": "analyticstracking.php"
+                            },
+                            {
+                                "mountPath": "/data",
+                                "name": "imdb"
+                            },
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "default-token-fntlb",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "wn-2.localdomain",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "imdb",
+                        "persistentVolumeClaim": {
+                            "claimName": "imdb"
+                        }
+                    },
+                    {
+                        "configMap": {
+                            "defaultMode": 420,
+                            "name": "im-web"
+                        },
+                        "name": "im-web"
+                    },
+                    {
+                        "name": "default-token-fntlb",
+                        "secret": {
+                            "defaultMode": 420,
+                            "secretName": "default-token-fntlb"
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-07-27T07:14:24Z",
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-08-26T06:33:26Z",
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-08-26T06:33:26Z",
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2021-07-27T07:14:24Z",
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "containerID": "docker://7c1604adbb19ff6ab6b96361ff81c36ac19a4db5cecbde27a545717800e4991c",
+                        "image": "grycap/im-web:1.6.1",
+                        "imageID": "docker-pullable://grycap/im-web@sha256:cd9f259ab172eadad3972acb07f24f23b09443b31a5e959ed3e481fa2738fbb1",
+                        "lastState": {
+                            "terminated": {
+                                "containerID": "docker://c61786641bdf85227833af151eb1f7241ab7a58658a68529ab1ab6b663dc8f69",
+                                "exitCode": 0,
+                                "finishedAt": "2021-09-20T10:37:23Z",
+                                "reason": "Completed",
+                                "startedAt": "2021-08-26T06:33:25Z"
+                            }
+                        },
+                        "name": "im-web",
+                        "ready": true,
+                        "restartCount": 4,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2021-09-20T10:37:27Z"
+                            }
+                        }
+                    }
+                ],
+                "hostIP": "10.10.1.4",
+                "phase": "Running",
+                "podIP": "10.244.2.125",
+                "podIPs": [
+                    {
+                        "ip": "10.244.2.125"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2021-07-27T07:14:24Z"
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": "",
+        "selfLink": ""
+    }
+}
