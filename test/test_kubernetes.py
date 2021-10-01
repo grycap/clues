@@ -19,6 +19,7 @@ import unittest
 import sys
 import os
 import json
+from shutil import copyfile
 from mock.mock import MagicMock, patch
 
 
@@ -42,13 +43,15 @@ class TestKubernetes(unittest.TestCase):
     @patch("requests.request")
     def test_get_nodeinfolist(self, request):
         kube = lrms()
+        kube.VNODE_FILE = "/tmp/kubernetes_vnodes.info"
+        copyfile(os.path.join(self.TESTS_PATH, 'test-files/kubernetes_vnodes.info'), kube.VNODE_FILE)
 
         resp = MagicMock()
         resp.status_code = 200
         resp.json.return_value = json.load(open(os.path.join(self.TESTS_PATH, 'test-files/nodes.json')))
         request.return_value = resp
         nodes = kube.get_nodeinfolist()
-        self.assertEqual(len(nodes), 3)
+        self.assertEqual(len(nodes), 5)
         self.assertEqual(nodes['gpuwn-1.localdomain'].slots_count, 8)
         self.assertEqual(nodes['gpuwn-1.localdomain'].slots_free, 8.0)
         self.assertEqual(nodes['gpuwn-1.localdomain'].memory_total, 16713633792)
@@ -58,6 +61,11 @@ class TestKubernetes(unittest.TestCase):
         self.assertEqual(nodes['gpuwn-1.localdomain'].keywords["pods_free"].value, 110)
         self.assertEqual(nodes['gpuwn-1.localdomain'].keywords["nodeName"].value, 'gpuwn-1.localdomain')
         self.assertEqual(nodes['gpuwn-1.localdomain'].keywords["nvidia.com/gpu"].value, 2)
+
+        self.assertEqual(nodes['wn4.localdomain'].slots_count, 2)
+        self.assertEqual(nodes['wn4.localdomain'].memory_total, 1024)
+        self.assertEqual(nodes['wn4.localdomain'].state, Node.OFF)
+        self.assertEqual(nodes['wn4.localdomain'].keywords["nvidia.com/gpu"].value, 1)
 
     @patch("requests.request")
     def test_get_jobinfolist(self, request):

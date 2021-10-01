@@ -35,6 +35,8 @@ _LOGGER = Log("PLUGIN-KUBERNETES")
 
 class lrms(LRMS):
 
+    VNODE_FILE = '/etc/clues2/kubernetes_vnodes.info'
+
     def _get_auth_header(self, auth):
         """
         Generate the auth header needed to contact with the Kubernetes API server.
@@ -218,7 +220,7 @@ class lrms(LRMS):
 
         # Add the "virtual" nodes
         try:
-            vnodes = json.load(open('/etc/clues2/kubernetes_vnodes.info', 'r'))
+            vnodes = json.load(open(self.VNODE_FILE, 'r'))
             for vnode in vnodes:
                 name = vnode["name"]
                 if name not in nodeinfolist:
@@ -254,7 +256,7 @@ class lrms(LRMS):
                     nodeinfolist[name] = NodeInfo(name, cpus, cpus, memory, memory, keywords)
                     nodeinfolist[name].state = NodeInfo.OFF
         except Exception as ex:
-            _LOGGER.error("Error processing file /etc/clues2/kubernetes_vnodes.info: %s" % str(ex))
+            _LOGGER.error("Error processing file %s: %s" % (self.VNODE_FILE, str(ex)))
 
         return nodeinfolist
 
