@@ -308,11 +308,15 @@ class lrms(LRMS):
                     elif state in ["Running", "Succeeded", "Failed"]:
                         job_state = Request.SERVED
 
-                    cpus, memory, gpus, agpus = self._get_pod_cpus_and_memory(pod)
+                    cpus, memory, ngpus, agpus = self._get_pod_cpus_and_memory(pod)
 
                     req_str = '(pods_free > 0)'
                     if 'nodeName' in pod["spec"] and pod["spec"]["nodeName"]:
                         req_str += ' && (nodeName = "%s")' % pod["spec"]["nodeName"]
+                    if ngpus:
+                        req_str += ' && (nvidia.com/gpu = %d)' % ngpus
+                    if agpus:
+                        req_str += ' && (amd.com/gpu = %d)' % agpus
 
                     # Add node selector labels
                     if 'nodeSelector' in pod['spec'] and pod['spec']['nodeSelector']:
