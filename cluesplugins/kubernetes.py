@@ -58,7 +58,7 @@ class lrms(LRMS):
             auth_header = self._get_auth_header(auth_data)
             if auth_header:
                 headers.update(auth_header)
-    
+
             url = "%s%s" % (self._server_url, url)
             resp = requests.request(method, url, verify=False, headers=headers, data=body)
             if resp.status_code == 200:
@@ -129,7 +129,8 @@ class lrms(LRMS):
         used_cpus = 0.0
         used_pods = 0
         system_pods = 0
-
+        used_agpus = 0
+        used_ngpus = 0
         if pods_data:
             for pod in pods_data["items"]:
                 if "nodeName" in pod["spec"] and nodename == pod["spec"]["nodeName"]:
@@ -139,11 +140,13 @@ class lrms(LRMS):
                         if pod["metadata"]["namespace"] == "kube-system":
                             system_pods += 1
                         used_pods += 1
-                        cpus, memory = self._get_pod_cpus_and_memory(pod)
+                        cpus, memory, agpus, ngpus = self._get_pod_cpus_and_memory(pod)
                         used_mem += memory
                         used_cpus += cpus
+                        used_agpus += agpus
+                        used_ngpus += ngpus
 
-        return used_mem, used_cpus, used_pods, system_pods
+        return used_mem, used_cpus, used_agpus, used_ngpus, used_pods, system_pods
 
     def get_nodeinfolist(self):
         nodeinfolist = collections.OrderedDict()
@@ -160,6 +163,13 @@ class lrms(LRMS):
                 slots_total = int(node["status"]["allocatable"]["cpu"])
                 pods_total = int(node["status"]["allocatable"]["pods"])
 
+                ngpus_total = 0
+                agpus_total = 0
+                if 'nvidia.com/gpu' in node["status"]["allocatable"]:
+                    ngpus_total = int(node["status"]["allocatable"]["nvidia.com/gpu"])
+                elif 'amd.com/gpu' in node["status"]["allocatable"]:
+                    agpus_total = int(node["status"]["allocatable"]["amd.com/gpu"])
+
                 skip_node = False
                 # Get Taints
                 if 'taints' in node["spec"] and node["spec"]['taints']:
@@ -169,11 +179,14 @@ class lrms(LRMS):
                             _LOGGER.debug("Node %s is tainted with %s, skiping." % (name, taint['effect']))
 
                 if not skip_node:
-                    used_mem, used_cpus, used_pods, system_pods = self._get_node_used_resources(name, pods_data)
+                    used_mem, used_cpus, used_agpus, used_ngpus, used_pods, system_pods = \
+                        self._get_node_used_resources(name, pods_data)
 
                     memory_free = memory_total - used_mem
                     slots_free = slots_total - used_cpus
                     pods_free = pods_total - used_pods
+                    ngpus_free = ngpus_total - used_ngpus
+                    agpus_free = agpus_total - used_agpus
 
                     is_ready = True
                     for conditions in node["status"]["conditions"]:
@@ -182,7 +195,9 @@ class lrms(LRMS):
                                 is_ready = False
 
                     keywords = {'pods_free': TypedNumber(pods_free),
-                                'nodeName': TypedClass(name, TypedClass.STRING)}
+                                'nodeName': TypedClass(name, TypedClass.STRING),
+                                'amd.com/gpu': TypedNumber(agpus_free),
+                                'nvidia.com/gpu': TypedNumber(ngpus_free)}
                     # Add labels as keywords
                     for key, value in list(node["metadata"]["labels"].items()):
                         keywords[key] = TypedClass(value, TypedClass.STRING)
@@ -214,6 +229,14 @@ class lrms(LRMS):
                     if "memory" in vnode:
                         memory = self._get_memory_in_bytes(vnode["memory"])
 
+                    gpu_vendor = "nvidia"
+                    if "gpu_vendor" in vnode:
+                        gpu_vendor = vnode["gpu_vendor"].lower()
+
+                    if "gpu" in vnode:
+                        gpus = int(vnode["gpu"])
+                        keywords['%s.com/gpu' % gpu_vendor] = TypedNumber(gpus)
+
                     if "queues" in vnode:
                         queues = vnode["queues"].split(",")
                         if queues:
@@ -240,6 +263,7 @@ class lrms(LRMS):
     def _get_pod_cpus_and_memory(self, pod):
         cpus = 0.0
         memory = 0
+        ngpus = agpus = 0
         for cont in pod["spec"]["containers"]:
             if "resources" in cont:
                 if "requests" in cont["resources"]:
@@ -247,8 +271,12 @@ class lrms(LRMS):
                         cpus += self._get_cpu_float(cont["resources"]["requests"]["cpu"])
                     if "memory" in cont["resources"]["requests"]:
                         memory += self._get_memory_in_bytes(cont["resources"]["requests"]["memory"])
+                    if "amd.com/gpu" in cont["resources"]["requests"]:
+                        agpus += cont["resources"]["requests"]["amd.com/gpu"]
+                    if "nvidia.com/gpu" in cont["resources"]["requests"]:
+                        ngpus += cont["resources"]["requests"]["nvidia.com/gpu"]
 
-        return cpus, memory
+        return cpus, memory, ngpus, agpus
 
     def get_jobinfolist(self):
         '''Method in charge of monitoring the job queue of Mesos plus Marathon
@@ -276,7 +304,7 @@ class lrms(LRMS):
                     elif state in ["Running", "Succeeded", "Failed"]:
                         job_state = Request.SERVED
 
-                    cpus, memory = self._get_pod_cpus_and_memory(pod)
+                    cpus, memory, gpus, agpus = self._get_pod_cpus_and_memory(pod)
 
                     req_str = '(pods_free > 0)'
                     if 'nodeName' in pod["spec"] and pod["spec"]["nodeName"]:
@@ -294,6 +322,7 @@ class lrms(LRMS):
             _LOGGER.error("Error getting Kubernetes pod list")
 
         return jobinfolist
+
 
 if __name__ == '__main__':
     pass
