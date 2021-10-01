@@ -195,9 +195,13 @@ class lrms(LRMS):
                                 is_ready = False
 
                     keywords = {'pods_free': TypedNumber(pods_free),
-                                'nodeName': TypedClass(name, TypedClass.STRING),
-                                'amd.com/gpu': TypedNumber(agpus_free),
-                                'nvidia.com/gpu': TypedNumber(ngpus_free)}
+                                'nodeName': TypedClass(name, TypedClass.STRING)}
+
+                    if agpus_free:
+                        keywords['amd.com/gpu'] = TypedNumber(agpus_free)
+                    if ngpus_free:
+                        keywords['nvidia.com/gpu'] = TypedNumber(ngpus_free)
+
                     # Add labels as keywords
                     for key, value in list(node["metadata"]["labels"].items()):
                         keywords[key] = TypedClass(value, TypedClass.STRING)
