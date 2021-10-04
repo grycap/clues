@@ -278,9 +278,9 @@ class lrms(LRMS):
                     if "memory" in cont["resources"]["requests"]:
                         memory += self._get_memory_in_bytes(cont["resources"]["requests"]["memory"])
                     if "amd.com/gpu" in cont["resources"]["requests"]:
-                        agpus += cont["resources"]["requests"]["amd.com/gpu"]
+                        agpus += int(cont["resources"]["requests"]["amd.com/gpu"])
                     if "nvidia.com/gpu" in cont["resources"]["requests"]:
-                        ngpus += cont["resources"]["requests"]["nvidia.com/gpu"]
+                        ngpus += int(cont["resources"]["requests"]["nvidia.com/gpu"])
 
         return cpus, memory, ngpus, agpus
 
