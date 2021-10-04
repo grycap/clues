@@ -142,7 +142,7 @@ class lrms(LRMS):
                         if pod["metadata"]["namespace"] == "kube-system":
                             system_pods += 1
                         used_pods += 1
-                        cpus, memory, agpus, ngpus = self._get_pod_cpus_and_memory(pod)
+                        cpus, memory, ngpus, agpus = self._get_pod_cpus_and_memory(pod)
                         used_mem += memory
                         used_cpus += cpus
                         used_agpus += agpus
