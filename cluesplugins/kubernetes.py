@@ -200,9 +200,9 @@ class lrms(LRMS):
                                 'nodeName': TypedClass(name, TypedClass.STRING)}
 
                     if agpus_free:
-                        keywords['amd.com/gpu'] = TypedNumber(agpus_free)
+                        keywords['amd_gpu'] = TypedNumber(agpus_free)
                     if ngpus_free:
-                        keywords['nvidia.com/gpu'] = TypedNumber(ngpus_free)
+                        keywords['nvidia_gpu'] = TypedNumber(ngpus_free)
 
                     # Add labels as keywords
                     for key, value in list(node["metadata"]["labels"].items()):
@@ -316,9 +316,9 @@ class lrms(LRMS):
                     if 'nodeName' in pod["spec"] and pod["spec"]["nodeName"]:
                         req_str += ' && (nodeName = "%s")' % pod["spec"]["nodeName"]
                     if ngpus:
-                        req_str += ' && (nvidia.com/gpu >= %d)' % ngpus
+                        req_str += ' && (nvidia_gpu >= %d)' % ngpus
                     if agpus:
-                        req_str += ' && (amd.com/gpu >= %d)' % agpus
+                        req_str += ' && (amd_gpu >= %d)' % agpus
 
                     # Add node selector labels
                     if 'nodeSelector' in pod['spec'] and pod['spec']['nodeSelector']:
