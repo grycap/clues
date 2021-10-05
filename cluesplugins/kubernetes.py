@@ -316,9 +316,9 @@ class lrms(LRMS):
                     if 'nodeName' in pod["spec"] and pod["spec"]["nodeName"]:
                         req_str += ' && (nodeName = "%s")' % pod["spec"]["nodeName"]
                     if ngpus:
-                        req_str += ' && (nvidia.com/gpu = %d)' % ngpus
+                        req_str += ' && (nvidia.com/gpu >= %d)' % ngpus
                     if agpus:
-                        req_str += ' && (amd.com/gpu = %d)' % agpus
+                        req_str += ' && (amd.com/gpu >= %d)' % agpus
 
                     # Add node selector labels
                     if 'nodeSelector' in pod['spec'] and pod['spec']['nodeSelector']:
