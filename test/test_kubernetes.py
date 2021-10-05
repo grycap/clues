@@ -60,12 +60,12 @@ class TestKubernetes(unittest.TestCase):
         self.assertEqual(len(nodes['gpuwn-1.localdomain'].keywords), 8)
         self.assertEqual(nodes['gpuwn-1.localdomain'].keywords["pods_free"].value, 110)
         self.assertEqual(nodes['gpuwn-1.localdomain'].keywords["nodeName"].value, 'gpuwn-1.localdomain')
-        self.assertEqual(nodes['gpuwn-1.localdomain'].keywords["nvidia.com/gpu"].value, 2)
+        self.assertEqual(nodes['gpuwn-1.localdomain'].keywords["nvidia_gpu"].value, 2)
 
         self.assertEqual(nodes['wn4.localdomain'].slots_count, 2)
         self.assertEqual(nodes['wn4.localdomain'].memory_total, 1024)
         self.assertEqual(nodes['wn4.localdomain'].state, Node.OFF)
-        self.assertEqual(nodes['wn4.localdomain'].keywords["nvidia.com/gpu"].value, 1)
+        self.assertEqual(nodes['wn4.localdomain'].keywords["nvidia_gpu"].value, 1)
 
         os.unlink(kube.VNODE_FILE)
 
@@ -84,7 +84,7 @@ class TestKubernetes(unittest.TestCase):
         self.assertEqual(jobs[1].resources.resources.slots, 0.25)
         self.assertEqual(jobs[1].resources.resources.memory, 134217728)
         self.assertEqual(jobs[1].resources.resources.requests, [('(pods_free > 0) && (nodeName = "wn-2.localdomain")' +
-                                                                 ' && (nvidia.com/gpu = 1)')])
+                                                                 ' && (nvidia_gpu >= 1)')])
 
 
 if __name__ == "__main__":
