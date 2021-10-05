@@ -241,7 +241,7 @@ class lrms(LRMS):
 
                     if "gpu" in vnode:
                         gpus = int(vnode["gpu"])
-                        keywords['%s.com/gpu' % gpu_vendor] = TypedNumber(gpus)
+                        keywords['%s_gpu' % gpu_vendor] = TypedNumber(gpus)
 
                     if "queues" in vnode:
                         queues = vnode["queues"].split(",")
