@@ -358,7 +358,8 @@
                     "hugepages-1Gi": "0",
                     "hugepages-2Mi": "0",
                     "memory": "16321900Ki",
-                    "pods": "110"
+                    "pods": "110",
+                    "sgx.k8s.io/sgx": "1"
                 },
                 "capacity": {
                     "cpu": "8",
@@ -366,7 +367,8 @@
                     "hugepages-1Gi": "0",
                     "hugepages-2Mi": "0",
                     "memory": "16424300Ki",
-                    "pods": "110"
+                    "pods": "110",
+                    "sgx.k8s.io/sgx": "1"
                 },
                 "conditions": [
                     {

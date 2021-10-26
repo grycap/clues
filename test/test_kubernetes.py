@@ -67,6 +67,11 @@ class TestKubernetes(unittest.TestCase):
         self.assertEqual(nodes['wn4.localdomain'].state, Node.OFF)
         self.assertEqual(nodes['wn4.localdomain'].keywords["nvidia_gpu"].value, 1)
 
+        self.assertEqual(nodes['wn5.localdomain'].keywords["sgx"].value, 1)
+        self.assertEqual(nodes['wn5.localdomain'].keywords["sgx_epc_size"].value, 128)
+
+        self.assertEqual(nodes['wn-3.localdomain'].keywords["sgx"].value, 1)
+
         os.unlink(kube.VNODE_FILE)
 
     @patch("requests.request")
@@ -84,7 +89,7 @@ class TestKubernetes(unittest.TestCase):
         self.assertEqual(jobs[1].resources.resources.slots, 0.25)
         self.assertEqual(jobs[1].resources.resources.memory, 134217728)
         self.assertEqual(jobs[1].resources.resources.requests, [('(pods_free > 0) && (nodeName = "wn-2.localdomain")' +
-                                                                 ' && (nvidia_gpu >= 1)')])
+                                                                 ' && (nvidia_gpu >= 1) && (sgx >= 1)')])
 
 
 if __name__ == "__main__":

@@ -8,6 +8,8 @@
         "keywords": "label=1;labe2=2"
     },
     {
-        "name": "wn5.localdomain"
+        "name": "wn5.localdomain",
+        "sgx": "yes",
+        "sgx_epc_size": "128"
     }
 ]

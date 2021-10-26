@@ -274,6 +274,9 @@
                                 "cpu": "250m",
                                 "memory": "128Mi",
                                 "nvidia.com/gpu": 1
+                            },
+                            "limits": {
+                                "sgx.k8s.io/sgx": 1
                             }
                         },
                         "terminationMessagePath": "/dev/termination-log",
