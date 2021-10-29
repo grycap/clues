@@ -303,9 +303,6 @@ class lrms(LRMS):
                         ngpus += int(cont["resources"]["requests"]["nvidia.com/gpu"])
                     if "sgx.k8s.io/sgx" in cont["resources"]["requests"]:
                         sgx += int(cont["resources"]["requests"]["sgx.k8s.io/sgx"])
-                if "limits" in cont["resources"]:
-                    if "sgx.k8s.io/sgx" in cont["resources"]["limits"]:
-                        sgx += int(cont["resources"]["limits"]["sgx.k8s.io/sgx"])
 
         return cpus, memory, ngpus, agpus, sgx
 

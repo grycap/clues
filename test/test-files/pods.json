@@ -273,9 +273,7 @@
                             "requests": {
                                 "cpu": "250m",
                                 "memory": "128Mi",
-                                "nvidia.com/gpu": 1
-                            },
-                            "limits": {
+                                "nvidia.com/gpu": 1,
                                 "sgx.k8s.io/sgx": 1
                             }
                         },
