@@ -4,6 +4,7 @@ from setuptools import setup
 from setuptools.command.install import install
 import distutils.archive_util
 import os
+import sys
 
 # apt-get install python-mysqldb
 # tar xfz cluesonebindings-0.28.tar.gz
