@@ -1,0 +1,19 @@
+{
+    "slaves": [
+        {
+            "active": true,
+            "attributes": {},
+            "hostname": "10.0.0.84",
+            "id": "20150925-075030-1063856798-5050-3482-S0",
+            "pid": "slave(1)@10.0.0.84:5051",
+            "registered_time": 1437487335.75923,
+            "reregistered_time": 1437487335.75927,
+            "resources": {
+                "cpus": 1,
+                "disk": 13438,
+                "mem": 623,
+                "ports": "[31000-32000]"
+            }
+        }
+    ]
+}

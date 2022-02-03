@@ -1,0 +1,432 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "v1",
+            "kind": "Node",
+            "metadata": {
+                "creationTimestamp": "2021-03-10T08:41:08Z",
+                "labels": {
+                    "beta.kubernetes.io/arch": "amd64",
+                    "beta.kubernetes.io/os": "linux",
+                    "kubernetes.io/arch": "amd64",
+                    "kubernetes.io/hostname": "gpuwn-1.localdomain",
+                    "kubernetes.io/os": "linux"
+                },
+                "name": "gpuwn-1.localdomain",
+                "resourceVersion": "46142146",
+                "uid": "d9f08f46-ac90-4081-8653-82c3b2a5093b"
+            },
+            "spec": {
+                "podCIDR": "10.244.3.0/24",
+                "podCIDRs": [
+                    "10.244.3.0/24"
+                ]
+            },
+            "status": {
+                "addresses": [
+                    {
+                        "address": "192.168.4.3",
+                        "type": "InternalIP"
+                    },
+                    {
+                        "address": "gpuwn-1.localdomain",
+                        "type": "Hostname"
+                    }
+                ],
+                "allocatable": {
+                    "cpu": "8",
+                    "ephemeral-storage": "12946861649",
+                    "hugepages-1Gi": "0",
+                    "hugepages-2Mi": "0",
+                    "memory": "16321908Ki",
+                    "nvidia.com/gpu": "2",
+                    "pods": "110"
+                },
+                "capacity": {
+                    "cpu": "8",
+                    "ephemeral-storage": "14048244Ki",
+                    "hugepages-1Gi": "0",
+                    "hugepages-2Mi": "0",
+                    "memory": "16424308Ki",
+                    "nvidia.com/gpu": "2",
+                    "pods": "110"
+                },
+                "conditions": [
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:11:32Z",
+                        "lastTransitionTime": "2021-05-05T08:26:21Z",
+                        "message": "kubelet has sufficient memory available",
+                        "reason": "KubeletHasSufficientMemory",
+                        "status": "False",
+                        "type": "MemoryPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:11:32Z",
+                        "lastTransitionTime": "2021-05-10T09:43:16Z",
+                        "message": "kubelet has no disk pressure",
+                        "reason": "KubeletHasNoDiskPressure",
+                        "status": "False",
+                        "type": "DiskPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:11:32Z",
+                        "lastTransitionTime": "2021-05-05T08:26:21Z",
+                        "message": "kubelet has sufficient PID available",
+                        "reason": "KubeletHasSufficientPID",
+                        "status": "False",
+                        "type": "PIDPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:11:32Z",
+                        "lastTransitionTime": "2021-05-05T08:26:21Z",
+                        "message": "kubelet is posting ready status. AppArmor enabled",
+                        "reason": "KubeletReady",
+                        "status": "True",
+                        "type": "Ready"
+                    }
+                ],
+                "daemonEndpoints": {
+                    "kubeletEndpoint": {
+                        "Port": 10250
+                    }
+                },
+                "nodeInfo": {
+                    "architecture": "amd64",
+                    "bootID": "076e077d-3265-46b7-8209-ea729fc9129e",
+                    "containerRuntimeVersion": "docker://19.3.11",
+                    "kernelVersion": "4.15.0-154-generic",
+                    "kubeProxyVersion": "v1.20.4",
+                    "kubeletVersion": "v1.20.4",
+                    "machineID": "ccdf14537b1f42ab91714bd8caccd70c",
+                    "operatingSystem": "linux",
+                    "osImage": "Ubuntu 18.04.5 LTS",
+                    "systemUUID": "CCDF1453-7B1F-42AB-9171-4BD8CACCD70C"
+                }
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Node",
+            "metadata": {
+                "creationTimestamp": "2021-03-10T08:41:07Z",
+                "labels": {
+                    "beta.kubernetes.io/arch": "amd64",
+                    "beta.kubernetes.io/os": "linux",
+                    "kubernetes.io/arch": "amd64",
+                    "kubernetes.io/hostname": "gpuwn-2.localdomain",
+                    "kubernetes.io/os": "linux"
+                },
+                "name": "gpuwn-2.localdomain",
+                "resourceVersion": "46142091",
+                "uid": "08d20712-ccdd-45c8-8d45-7e12d1669e50"
+            },
+            "spec": {
+                "podCIDR": "10.244.2.0/24",
+                "podCIDRs": [
+                    "10.244.2.0/24"
+                ]
+            },
+            "status": {
+                "addresses": [
+                    {
+                        "address": "192.168.4.4",
+                        "type": "InternalIP"
+                    },
+                    {
+                        "address": "gpuwn-2.localdomain",
+                        "type": "Hostname"
+                    }
+                ],
+                "allocatable": {
+                    "cpu": "8",
+                    "ephemeral-storage": "12946861649",
+                    "hugepages-1Gi": "0",
+                    "hugepages-2Mi": "0",
+                    "memory": "16321908Ki",
+                    "nvidia.com/gpu": "2",
+                    "pods": "110"
+                },
+                "capacity": {
+                    "cpu": "8",
+                    "ephemeral-storage": "14048244Ki",
+                    "hugepages-1Gi": "0",
+                    "hugepages-2Mi": "0",
+                    "memory": "16424308Ki",
+                    "nvidia.com/gpu": "2",
+                    "pods": "110"
+                },
+                "conditions": [
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:11:10Z",
+                        "lastTransitionTime": "2021-05-05T08:27:27Z",
+                        "message": "kubelet has sufficient memory available",
+                        "reason": "KubeletHasSufficientMemory",
+                        "status": "False",
+                        "type": "MemoryPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:11:10Z",
+                        "lastTransitionTime": "2021-05-12T07:02:32Z",
+                        "message": "kubelet has no disk pressure",
+                        "reason": "KubeletHasNoDiskPressure",
+                        "status": "False",
+                        "type": "DiskPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:11:10Z",
+                        "lastTransitionTime": "2021-05-05T08:27:27Z",
+                        "message": "kubelet has sufficient PID available",
+                        "reason": "KubeletHasSufficientPID",
+                        "status": "False",
+                        "type": "PIDPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:11:10Z",
+                        "lastTransitionTime": "2021-05-05T08:27:27Z",
+                        "message": "kubelet is posting ready status. AppArmor enabled",
+                        "reason": "KubeletReady",
+                        "status": "True",
+                        "type": "Ready"
+                    }
+                ],
+                "daemonEndpoints": {
+                    "kubeletEndpoint": {
+                        "Port": 10250
+                    }
+                },
+                "nodeInfo": {
+                    "architecture": "amd64",
+                    "bootID": "4c9b6f3c-9d37-41d4-b7cc-e1be00f0036c",
+                    "containerRuntimeVersion": "docker://19.3.11",
+                    "kernelVersion": "4.15.0-154-generic",
+                    "kubeProxyVersion": "v1.20.4",
+                    "kubeletVersion": "v1.20.4",
+                    "machineID": "4e3027e3ac7643618abcd61bd384cee0",
+                    "operatingSystem": "linux",
+                    "osImage": "Ubuntu 18.04.5 LTS",
+                    "systemUUID": "4E3027E3-AC76-4361-8ABC-D61BD384CEE0"
+                }
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Node",
+            "metadata": {
+                "creationTimestamp": "2021-03-10T08:38:10Z",
+                "labels": {
+                    "beta.kubernetes.io/arch": "amd64",
+                    "beta.kubernetes.io/os": "linux",
+                    "kubernetes.io/arch": "amd64",
+                    "kubernetes.io/hostname": "kubeserver.localdomain",
+                    "kubernetes.io/os": "linux",
+                    "node-role.kubernetes.io/control-plane": "",
+                    "node-role.kubernetes.io/master": ""
+                },
+                "name": "kubeserver.localdomain",
+                "resourceVersion": "46142576",
+                "uid": "7ceca343-d4e5-43a0-9d53-ee482981184e"
+            },
+            "spec": {
+                "podCIDR": "10.244.0.0/24",
+                "podCIDRs": [
+                    "10.244.0.0/24"
+                ],
+                "taints": [
+                    {
+                        "effect": "NoSchedule",
+                        "key": "node-role.kubernetes.io/master"
+                    }
+                ]
+            },
+            "status": {
+                "addresses": [
+                    {
+                        "address": "192.168.4.9",
+                        "type": "InternalIP"
+                    },
+                    {
+                        "address": "kubeserver.localdomain",
+                        "type": "Hostname"
+                    }
+                ],
+                "allocatable": {
+                    "cpu": "4",
+                    "ephemeral-storage": "12946861649",
+                    "hugepages-1Gi": "0",
+                    "hugepages-2Mi": "0",
+                    "memory": "8065092Ki",
+                    "pods": "110"
+                },
+                "capacity": {
+                    "cpu": "4",
+                    "ephemeral-storage": "14048244Ki",
+                    "hugepages-1Gi": "0",
+                    "hugepages-2Mi": "0",
+                    "memory": "8167492Ki",
+                    "pods": "110"
+                },
+                "conditions": [
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:14:10Z",
+                        "lastTransitionTime": "2021-03-10T08:38:10Z",
+                        "message": "kubelet has sufficient memory available",
+                        "reason": "KubeletHasSufficientMemory",
+                        "status": "False",
+                        "type": "MemoryPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:14:10Z",
+                        "lastTransitionTime": "2021-07-19T07:51:42Z",
+                        "message": "kubelet has no disk pressure",
+                        "reason": "KubeletHasNoDiskPressure",
+                        "status": "False",
+                        "type": "DiskPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:14:10Z",
+                        "lastTransitionTime": "2021-03-10T08:38:10Z",
+                        "message": "kubelet has sufficient PID available",
+                        "reason": "KubeletHasSufficientPID",
+                        "status": "False",
+                        "type": "PIDPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:14:10Z",
+                        "lastTransitionTime": "2021-03-10T08:38:47Z",
+                        "message": "kubelet is posting ready status. AppArmor enabled",
+                        "reason": "KubeletReady",
+                        "status": "True",
+                        "type": "Ready"
+                    }
+                ],
+                "daemonEndpoints": {
+                    "kubeletEndpoint": {
+                        "Port": 10250
+                    }
+                },
+                "nodeInfo": {
+                    "architecture": "amd64",
+                    "bootID": "7246ad51-e597-4984-a1b1-725c88494ee0",
+                    "containerRuntimeVersion": "docker://19.3.11",
+                    "kernelVersion": "4.15.0-154-generic",
+                    "kubeProxyVersion": "v1.20.4",
+                    "kubeletVersion": "v1.20.4",
+                    "machineID": "dd772c4822144618bf8e8434d5839904",
+                    "operatingSystem": "linux",
+                    "osImage": "Ubuntu 18.04.5 LTS",
+                    "systemUUID": "DD772C48-2214-4618-BF8E-8434D5839904"
+                }
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Node",
+            "metadata": {
+                "creationTimestamp": "2021-03-10T08:41:05Z",
+                "labels": {
+                    "beta.kubernetes.io/arch": "amd64",
+                    "beta.kubernetes.io/os": "linux",
+                    "kubernetes.io/arch": "amd64",
+                    "kubernetes.io/hostname": "wn-3.localdomain",
+                    "kubernetes.io/os": "linux"
+                },
+                "name": "wn-3.localdomain",
+                "resourceVersion": "46142283",
+                "uid": "a773452e-84d0-4102-9626-fb28c7e4bd66"
+            },
+            "spec": {
+                "podCIDR": "10.244.1.0/24",
+                "podCIDRs": [
+                    "10.244.1.0/24"
+                ]
+            },
+            "status": {
+                "addresses": [
+                    {
+                        "address": "192.168.4.24",
+                        "type": "InternalIP"
+                    },
+                    {
+                        "address": "wn-3.localdomain",
+                        "type": "Hostname"
+                    }
+                ],
+                "allocatable": {
+                    "cpu": "8",
+                    "ephemeral-storage": "12946861649",
+                    "hugepages-1Gi": "0",
+                    "hugepages-2Mi": "0",
+                    "memory": "16321900Ki",
+                    "pods": "110",
+                    "sgx.k8s.io/sgx": "1"
+                },
+                "capacity": {
+                    "cpu": "8",
+                    "ephemeral-storage": "14048244Ki",
+                    "hugepages-1Gi": "0",
+                    "hugepages-2Mi": "0",
+                    "memory": "16424300Ki",
+                    "pods": "110",
+                    "sgx.k8s.io/sgx": "1"
+                },
+                "conditions": [
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:12:20Z",
+                        "lastTransitionTime": "2021-03-10T08:41:05Z",
+                        "message": "kubelet has sufficient memory available",
+                        "reason": "KubeletHasSufficientMemory",
+                        "status": "False",
+                        "type": "MemoryPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:12:20Z",
+                        "lastTransitionTime": "2021-07-20T09:59:30Z",
+                        "message": "kubelet has no disk pressure",
+                        "reason": "KubeletHasNoDiskPressure",
+                        "status": "False",
+                        "type": "DiskPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:12:20Z",
+                        "lastTransitionTime": "2021-03-10T08:41:05Z",
+                        "message": "kubelet has sufficient PID available",
+                        "reason": "KubeletHasSufficientPID",
+                        "status": "False",
+                        "type": "PIDPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2021-10-01T11:12:20Z",
+                        "lastTransitionTime": "2021-03-10T08:41:55Z",
+                        "message": "kubelet is posting ready status. AppArmor enabled",
+                        "reason": "KubeletReady",
+                        "status": "True",
+                        "type": "Ready"
+                    }
+                ],
+                "daemonEndpoints": {
+                    "kubeletEndpoint": {
+                        "Port": 10250
+                    }
+                },
+                "nodeInfo": {
+                    "architecture": "amd64",
+                    "bootID": "148b506d-b746-49e8-8b94-1b59aeec9817",
+                    "containerRuntimeVersion": "docker://19.3.11",
+                    "kernelVersion": "4.15.0-154-generic",
+                    "kubeProxyVersion": "v1.20.4",
+                    "kubeletVersion": "v1.20.4",
+                    "machineID": "314df20ce05a40fe9b01b722bd19831a",
+                    "operatingSystem": "linux",
+                    "osImage": "Ubuntu 18.04.5 LTS",
+                    "systemUUID": "314DF20C-E05A-40FE-9B01-B722BD19831A"
+                }
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": "",
+        "selfLink": ""
+    }
+}

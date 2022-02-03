@@ -24,5 +24,5 @@ cpyutils.config.set_config_filter(filter_="*.cfg")
 import logging
 
 from clueslib.schedulers import config_scheduling
-from clueslib.configlib import _CONFIGURATION_CLUES, _CONFIGURATION_MONITORING, _CONFIGURATION_GENERAL
+from clueslib.configlib import _CONFIGURATION_CLUES, _CONFIGURATION_MONITORING, _CONFIGURATION_GENERAL, _CONFIGURATION_HOOKS
     

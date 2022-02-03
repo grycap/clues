@@ -1,0 +1,15 @@
+[
+    {
+        "name": "wn4.localdomain",
+        "cpu": 2,
+        "memory": "1024",
+        "gpu_vendor": "NVidia",
+        "gpu": 1,
+        "keywords": "label=1;labe2=2"
+    },
+    {
+        "name": "wn5.localdomain",
+        "sgx": "yes",
+        "sgx_epc_size": "128"
+    }
+]
