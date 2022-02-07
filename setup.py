@@ -4,7 +4,6 @@ from setuptools import setup
 from setuptools.command.install import install
 import distutils.archive_util
 import os
-import sys
 
 # apt-get install python-mysqldb
 # tar xfz cluesonebindings-0.28.tar.gz
@@ -31,10 +30,6 @@ import sys
 # oneuser create clues cluespass
 # oneuser chgrp clues oneadmin
 # cp conf.d/plugin-one.cfg-example conf.d/plugin-ipmi.cfg-example /etc/clues2/conf.d/
-
-# Avoid using wheel as it does not copy data_files to / dir
-if 'bdist_wheel' in sys.argv:
-    raise RuntimeError("This setup.py does not support wheels")
 
 class my_install(install):
     def touch(self, fname):
