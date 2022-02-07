@@ -589,7 +589,7 @@ class CLUES_Scheduler_PowOn_Free(CLUES_Scheduler):
                     nodes_that_can_be_poweron_on.append((node_slots_free, node.name))
                 else:
                     slots_free += node_slots_free
-                    if node.state == Node.IDLE:
+                    if node.state in [Node.IDLE, Node.POW_ON]:
                         nodes_free += 1
 
             elif node.state in [ Node.OFF ]:
