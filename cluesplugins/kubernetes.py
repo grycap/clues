@@ -322,7 +322,7 @@ class lrms(LRMS):
                     state = pod["status"]["phase"]  # Pending, Running, Succeeded, Failed or Unknown
                     hostIP = None
                     if "hostIP" in pod["status"]:
-                        hostIP = pod["status"]["hostIP"]  # Pending, Running, Succeeded, Failed or Unknown
+                        hostIP = pod["status"]["hostIP"]
 
                     job_state = Request.UNKNOWN
                     if state == "Pending":
