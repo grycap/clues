@@ -20,6 +20,7 @@ import logging
 import clueslib.helpers
 from cpyutils.runcommand import runcommand
 
+from clueslib.platform import LRMS
 from clueslib.node import NodeInfo
 from cpyutils.evaluate import TypedClass, TypedList
 import collections
@@ -68,16 +69,27 @@ def parse_scontrol(out):
     for line in out.split("\n"):
         line = line.strip()
         if not line: continue
-        d = {}; r.append(d); s = False
-        for k in [ j for i in line.split("=") for j in i.rsplit(" ", 1) ]:
-            if s: d[f] = k
-            else: f = k
-            s = not s
+        d = {}
+        while line:
+            item = ""
+            while "=" not in item:
+                split_val = line.rsplit(" ", 1)
+                # in the last case split_val only has 1 elem
+                elem = split_val[-1]
+                line = split_val[0] if len(split_val) == 2 else ""
+                if "=" not in item and item:
+                    item = "%s %s" % (elem, item)
+                else:
+                    item += elem
+            k,v = item.split("=", 1)
+            d[k] = v.strip()
+        r.append(d)
     return r
+
 
 # TODO: consider states in the second line of slurm
 # Function that translates the slurm node state into a valid clues2 node state
-def infer_clues_node_state(self, state):
+def infer_clues_node_state(state):
     # SLURM node states: "NoResp", "ALLOC", "ALLOCATED", "COMPLETING", "DOWN", "DRAIN", "ERROR, "FAIL", "FAILING", "FUTURE" "IDLE", 
     #                "MAINT", "MIXED", "PERFCTRS/NPC", "RESERVED", "POWER_DOWN", "POWER_UP", "RESUME" or "UNDRAIN".
     # CLUES2 node states: ERROR, UNKNOWN, IDLE, USED, OFF
@@ -111,60 +123,7 @@ def infer_clues_job_state(state):
 
     return res_state
 
-# Function that recovers the partitions of a node
-# A node can be in several queues: SLURM has supported configuring nodes in more than one partition since version 0.7.0
-def get_partition(self, node_name):
-
-    '''Exit example of scontrol show partitions: 
-    PartitionName=wn
-    AllowGroups=ALL AllowAccounts=ALL AllowQos=ALL
-    AllocNodes=ALL Default=NO
-    DefaultTime=NONE DisableRootJobs=NO GraceTime=0 Hidden=NO
-    MaxNodes=UNLIMITED MaxTime=UNLIMITED MinNodes=1 LLN=NO MaxCPUsPerNode=UNLIMITED
-    Nodes=wn[0-4]
-    Priority=1 RootOnly=NO ReqResv=NO Shared=NO PreemptMode=OFF
-    State=UP TotalCPUs=5 TotalNodes=5 SelectTypeParameters=N/A
-    DefMemPerNode=UNLIMITED MaxMemPerNode=UNLIMITED'''
-    
-    res_queue = []
-    exit = ""
-
-    try:
-        success, out = runcommand(self._partition)
-        if not success:
-            _LOGGER.error("could not obtain information about SLURM partitions %s (command rc != 0)" % self._server_ip)
-            return None
-        else:
-            exit = parse_scontrol(out)
-    except:
-        _LOGGER.error("could not obtain information about SLURM partitions %s (%s)" % (self._server_ip, exit))
-        return None
-    
-    if exit:
-        for key in exit:
-            nodes = str(key["Nodes"])
-            if nodes == node_name:
-                #nodes is like wn1
-                res_queue.append(key["PartitionName"])
-            else:
-                #nodes is like wnone-[0-1]
-                pos1 = nodes.find("[")
-                pos2 = nodes.find("]")
-                pos3 = nodes.find("-", pos1)
-                if pos1 > -1 and pos2 > -1 and pos3 > -1:
-                    num1 = int(nodes[pos1+1:pos3])
-                    num2 = int(nodes[pos3+1:pos2])
-                    name = nodes[:pos1]
-                    while num1 <= num2:
-                        nodename = name + str(num1)
-                        if nodename == node_name:
-                            res_queue.append(key["PartitionName"])
-                            break;
-                        num1 = num1 + 1
-
-    return res_queue
-
-class lrms(clueslib.platform.LRMS):
+class lrms(LRMS):
 
     def __init__(self, SLURM_SERVER = None, SLURM_PARTITION_COMMAND = None, SLURM_NODES_COMMAND = None, SLURM_JOBS_COMMAND = None): 
         import cpyutils.config
@@ -183,6 +142,59 @@ class lrms(clueslib.platform.LRMS):
         self._nodes = clueslib.helpers.val_default(SLURM_NODES_COMMAND, config_slurm.SLURM_NODES_COMMAND)
         self._jobs = clueslib.helpers.val_default(SLURM_JOBS_COMMAND, config_slurm.SLURM_JOBS_COMMAND)
         clueslib.platform.LRMS.__init__(self, "SLURM_%s" % self._server_ip)
+
+    # Function that recovers the partitions of a node
+    # A node can be in several queues: SLURM has supported configuring nodes in more than one partition since version 0.7.0
+    def _get_partition(self, node_name):
+
+        '''Exit example of scontrol show partitions: 
+        PartitionName=wn
+        AllowGroups=ALL AllowAccounts=ALL AllowQos=ALL
+        AllocNodes=ALL Default=NO
+        DefaultTime=NONE DisableRootJobs=NO GraceTime=0 Hidden=NO
+        MaxNodes=UNLIMITED MaxTime=UNLIMITED MinNodes=1 LLN=NO MaxCPUsPerNode=UNLIMITED
+        Nodes=wn[0-4]
+        Priority=1 RootOnly=NO ReqResv=NO Shared=NO PreemptMode=OFF
+        State=UP TotalCPUs=5 TotalNodes=5 SelectTypeParameters=N/A
+        DefMemPerNode=UNLIMITED MaxMemPerNode=UNLIMITED'''
+        
+        res_queue = []
+        exit = ""
+
+        try:
+            success, out = runcommand(self._partition)
+            if not success:
+                _LOGGER.error("could not obtain information about SLURM partitions %s (command rc != 0)" % self._server_ip)
+                return None
+            else:
+                exit = parse_scontrol(out)
+        except Exception as ex:
+            _LOGGER.error("could not obtain information about SLURM partitions %s (%s)" % (self._server_ip, exit))
+            return None
+        
+        if exit:
+            for key in exit:
+                nodes = str(key["Nodes"])
+                if nodes == node_name:
+                    #nodes is like wn1
+                    res_queue.append(key["PartitionName"])
+                else:
+                    #nodes is like wnone-[0-1]
+                    pos1 = nodes.find("[")
+                    pos2 = nodes.find("]")
+                    pos3 = nodes.find("-", pos1)
+                    if pos1 > -1 and pos2 > -1 and pos3 > -1:
+                        num1 = int(nodes[pos1+1:pos3])
+                        num2 = int(nodes[pos3+1:pos2])
+                        name = nodes[:pos1]
+                        while num1 <= num2:
+                            nodename = name + str(num1)
+                            if nodename == node_name:
+                                res_queue.append(key["PartitionName"])
+                                break;
+                            num1 = num1 + 1
+
+        return res_queue
 
     def get_nodeinfolist(self):      
         nodeinfolist = collections.OrderedDict()
@@ -206,7 +218,7 @@ class lrms(clueslib.platform.LRMS):
                 return None
             else:
                 exit = parse_scontrol(out)
-        except:
+        except Exception as ex:
             _LOGGER.error("could not obtain information about SLURM nodes %s (%s)" % (self._server_ip, exit))
             return None
 
@@ -219,9 +231,9 @@ class lrms(clueslib.platform.LRMS):
                     #NOTE: memory is in GB
                     memory_total = _translate_mem_value(key["RealMemory"] + ".GB")
                     memory_free = _translate_mem_value(key["RealMemory"] + ".GB") - _translate_mem_value(key["AllocMem"] + ".GB")
-                    state = infer_clues_node_state(self, str(key["State"]))
+                    state = infer_clues_node_state(str(key["State"]))
                     keywords = {}
-                    queues = get_partition(self, name)
+                    queues = self._get_partition(name)
                     keywords['hostname'] = TypedClass.auto(name)
                     if queues:
                         keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])
