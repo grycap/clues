@@ -628,15 +628,13 @@ class CLUES_Scheduler_PowOn_Free(CLUES_Scheduler):
         # _LOGGER.debug("would poweron %s; poweroff: %s" % (str(local_poweron), str(candidates_off)))
 
         if len(local_poweron) > 0:
-            log = False
             for node in local_poweron:
                 if node in candidates_off:
                     candidates_off.remove(node)
                 else:
                     if node not in candidates_on:
                         candidates_on[node] = []
-            if log:
-                _LOGGER.debug("will power on %s; still need %d slots and %d nodes" % (str(local_poweron), extra_slotcount, extra_nodecount))
+            _LOGGER.debug("will power on %s; still need %d slots and %d nodes" % (str(local_poweron), slots_to_power_on, nodes_to_power_on))
         else:
             if (slots_to_power_on > 0) or (nodes_to_power_on > 0):
                 _LOGGER.debug("cannot power on any node but still need %d slots and %d nodes" % (slots_to_power_on, nodes_to_power_on))
