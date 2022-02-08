@@ -262,7 +262,7 @@ class powermanager(PowerManager):
             _LOGGER.error("ERROR getting infrastructure template: %s" % str(resp.text))
             return None
         else:
-            templateo = yaml.load(resp.json()["tosca"])
+            templateo = yaml.safe_load(resp.json()["tosca"])
             node_name = self._find_wn_nodetemplate_name(templateo)
             node_template = templateo['topology_template']['node_templates'][node_name]
 

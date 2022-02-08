@@ -18,6 +18,7 @@
 import unittest
 import sys
 import os
+import yaml
 from mock.mock import MagicMock, patch
 from radl.radl_parse import parse_radl
 
@@ -354,6 +355,37 @@ class TestIM(unittest.TestCase):
         self.assertEqual(vm.recovered.call_count, 1)
         self.assertEqual(request.call_args_list[0][0], ('PUT', 'http://server.com/infid/vms/1/disks/0/snapshot?image_name=im-uuid&auto_delete=1'))
         self.assertEqual(test_im._store_golden_image.call_args_list[0][0], ('wn', 'image', 'pass'))
+
+    @patch("cluesplugins.im.powermanager._read_auth_data")
+    @patch("cluesplugins.im.powermanager._get_inf_id")
+    @patch("cpyutils.db.DB.create_from_string")
+    @patch("requests.request")
+    def test_get_template(self, request, createdb, get_inf_id, read_auth):
+        get_inf_id.return_value = "http://server.com/infid"
+        read_auth.return_value = "type = InfrastructureManager; username = user; password = pass"
+
+        inf_info = MagicMock()
+        inf_info.status_code = 200
+        inf_info.json.return_value = {"uri-list": [{"uri": "http://server.com/infid/vms/0"},
+                                                   {"uri": "http://server.com/infid/vms/1"}]}
+        tosca_info = MagicMock()
+        tosca_info.status_code = 200
+        with open(os.path.join(self.TESTS_PATH, 'test-files/tosca.yml')) as f:
+            tosca_info.json.return_value = {"tosca": f.read()}
+
+        request.side_effect = [inf_info, tosca_info]
+
+        db = MagicMock()
+        db.sql_query.return_value = True, "", []
+        createdb.return_value = db
+
+        test_im = powermanager()
+        res = test_im._get_template('node-2')
+
+        tosca_res = yaml.safe_load(res)
+        node_template = tosca_res['topology_template']['node_templates']['wn']
+        self.assertEqual(node_template['capabilities']['scalable']['properties']['count'], 2)
+        self.assertEqual(node_template['capabilities']['endpoint']['properties']['dns_name'], 'node-2')
 
 
 if __name__ == "__main__":
