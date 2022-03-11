@@ -57,10 +57,11 @@ class TestKubernetes(unittest.TestCase):
         self.assertEqual(nodes['gpuwn-1.localdomain'].memory_total, 16713633792)
         self.assertEqual(nodes['gpuwn-1.localdomain'].memory_free, 16713633792)
         self.assertEqual(nodes['gpuwn-1.localdomain'].state, Node.IDLE)
-        self.assertEqual(len(nodes['gpuwn-1.localdomain'].keywords), 8)
+        self.assertEqual(len(nodes['gpuwn-1.localdomain'].keywords), 9)
         self.assertEqual(nodes['gpuwn-1.localdomain'].keywords["pods_free"].value, 110)
         self.assertEqual(nodes['gpuwn-1.localdomain'].keywords["nodeName"].value, 'gpuwn-1.localdomain')
         self.assertEqual(nodes['gpuwn-1.localdomain'].keywords["nvidia_gpu"].value, 2)
+        self.assertEqual(nodes['gpuwn-1.localdomain'].keywords["schedule"].value, 1)
 
         self.assertEqual(nodes['wn4.localdomain'].slots_count, 2)
         self.assertEqual(nodes['wn4.localdomain'].memory_total, 1024)
@@ -71,6 +72,7 @@ class TestKubernetes(unittest.TestCase):
         self.assertEqual(nodes['wn5.localdomain'].keywords["sgx_epc_size"].value, 128)
 
         self.assertEqual(nodes['wn-3.localdomain'].keywords["sgx"].value, 1)
+        self.assertEqual(nodes['wn-3.localdomain'].keywords["schedule"].value, 0)
 
         os.unlink(kube.VNODE_FILE)
 
@@ -88,8 +90,9 @@ class TestKubernetes(unittest.TestCase):
         self.assertEqual(jobs[1].state, Request.SERVED)
         self.assertEqual(jobs[1].resources.resources.slots, 0.25)
         self.assertEqual(jobs[1].resources.resources.memory, 134217728)
-        self.assertEqual(jobs[1].resources.resources.requests, [('(pods_free > 0) && (nodeName = "wn-2.localdomain")' +
-                                                                 ' && (nvidia_gpu >= 1) && (sgx >= 1)')])
+        self.assertEqual(jobs[1].resources.resources.requests, [('(pods_free > 0) && (schedule = 1) && ' +
+                                                                 '(nodeName = "wn-2.localdomain") && ' + 
+                                                                 '(nvidia_gpu >= 1) && (sgx >= 1)')])
 
 
 if __name__ == "__main__":
