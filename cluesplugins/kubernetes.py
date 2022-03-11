@@ -178,15 +178,10 @@ class lrms(LRMS):
                 if 'sgx.k8s.io/sgx' in node["status"]["allocatable"]:
                     sgx = int(node["status"]["allocatable"]["sgx.k8s.io/sgx"])
 
-                skip_node = False
-                # Get Taints
-                if 'taints' in node["spec"] and node["spec"]['taints']:
-                    for taint in node["spec"]['taints']:
-                        if taint['effect'] in ["NoSchedule", "PreferNoSchedule", "NoExecute"]:
-                            skip_node = True
-                            _LOGGER.debug("Node %s is tainted with %s, skiping." % (name, taint['effect']))
-
-                if not skip_node:
+                # Skip master node
+                if "node-role.kubernetes.io/master" in node["metadata"]["labels"]:
+                    _LOGGER.debug("Node %s seems to be master node, skiping." % name)
+                else:
                     used_mem, used_cpus, used_agpus, used_ngpus, used_sgx, used_pods, system_pods = \
                         self._get_node_used_resources(name, pods_data)
 
@@ -204,7 +199,14 @@ class lrms(LRMS):
                                 is_ready = False
 
                     keywords = {'pods_free': TypedNumber(pods_free),
-                                'nodeName': TypedClass(name, TypedClass.STRING)}
+                                'nodeName': TypedClass(name, TypedClass.STRING),
+                                'schedule': TypedNumber(1)}
+
+                    # Get Taints
+                    if 'taints' in node["spec"] and node["spec"]['taints']:
+                        for taint in node["spec"]['taints']:
+                            if taint['effect'] in ["NoSchedule", "NoExecute"]:
+                                keywords['schedule'] = TypedNumber(0)
 
                     if agpus_free:
                         keywords['amd_gpu'] = TypedNumber(agpus_free)
@@ -234,7 +236,8 @@ class lrms(LRMS):
                 name = vnode["name"]
                 if name not in nodeinfolist:
                     keywords = {'pods_free': TypedNumber(self._node_pods),
-                                'nodeName': TypedClass(name, TypedClass.STRING)}
+                                'nodeName': TypedClass(name, TypedClass.STRING),
+                                'schedule': TypedNumber(1)}
 
                     cpus = self._node_slots
                     if "cpu" in vnode:
@@ -334,7 +337,7 @@ class lrms(LRMS):
 
                     cpus, memory, ngpus, agpus, sgx = self._get_pod_cpus_and_memory(pod)
 
-                    req_str = '(pods_free > 0)'
+                    req_str = '(pods_free > 0) && (schedule = 1)'
                     if 'nodeName' in pod["spec"] and pod["spec"]["nodeName"]:
                         req_str += ' && (nodeName = "%s")' % pod["spec"]["nodeName"]
                     if ngpus:

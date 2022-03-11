@@ -339,6 +339,12 @@
                 "podCIDR": "10.244.1.0/24",
                 "podCIDRs": [
                     "10.244.1.0/24"
+                ],
+                "taints": [
+                    {
+                        "effect": "NoSchedule",
+                        "key": "wn-3"
+                    }
                 ]
             },
             "status": {
