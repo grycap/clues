@@ -46,7 +46,7 @@ def run_command(command):
         (out, err) = p.communicate()
         if p.returncode != 0:
             raise Exception("return code: %d\nError output: %s" % (p.returncode, err))
-        return out
+        return str(out).replace("\\n", "\n")
     except Exception as e:
         raise Exception("Error executing '%s': %s" % (" ".join(command), str(e)))
 
