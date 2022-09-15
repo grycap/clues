@@ -21,12 +21,23 @@ import sys, os, os.path, stat, pwd, grp, time, string, tempfile
 import re, logging
 import subprocess
 import cpyutils
-import platform
 
-if platform.linux_distribution( supported_dists=('debian', 'redhat'),full_distribution_name=0)[0] == "redhat":
-    SBATCH_COMMAND= "/usr/bin/sbatch.o"
-else:
-    SBATCH_COMMAND= "/usr/local/bin/sbatch.o"
+try:
+    import distro
+    if "rhel" in distro.like():
+        SBATCH_COMMAND= "/usr/bin/sbatch.o"
+    else:
+        SBATCH_COMMAND= "/usr/local/bin/sbatch.o"
+except:
+    try:
+        import platform
+
+        if platform.linux_distribution( supported_dists=('debian', 'redhat'),full_distribution_name=0)[0] == "redhat":
+            SBATCH_COMMAND= "/usr/bin/sbatch.o"
+        else:
+            SBATCH_COMMAND= "/usr/local/bin/sbatch.o"
+    except:
+        SBATCH_COMMAND= "/usr/local/bin/sbatch.o"
 
 # Method to execute bash commands
 def run_command(command):
@@ -35,7 +46,7 @@ def run_command(command):
         (out, err) = p.communicate()
         if p.returncode != 0:
             raise Exception("return code: %d\nError output: %s" % (p.returncode, err))
-        return out
+        return str(out).replace("\\n", "\n")
     except Exception as e:
         raise Exception("Error executing '%s': %s" % (" ".join(command), str(e)))
 
@@ -197,7 +208,7 @@ def new_job(cpus_per_task, mem, nodes, queue):
         print("Could not connect to CLUES server %s (please, check if it is running)" % clues.configcli.config_client.CLUES_XMLRPC)
         sys.exit()
 
-    if queue is not " ":
+    if queue != " ":
         req_str = '"' + queue + '" in queues'
     else:
         req_str = " "
