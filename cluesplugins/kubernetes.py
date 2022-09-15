@@ -140,7 +140,7 @@ class lrms(LRMS):
                     # do not count the number of pods in case finished jobs
                     if pod["status"]["phase"] not in ["Succeeded", "Failed"]:
                         # do not count the number of pods in case of system ones
-                        if pod["metadata"]["namespace"] == "kube-system":
+                        if pod["metadata"]["namespace"] in ["kube-system", "kube-flannel"]:
                             system_pods += 1
                         used_pods += 1
                         cpus, memory, ngpus, agpus, sgx = self._get_pod_cpus_and_memory(pod)
@@ -317,7 +317,7 @@ class lrms(LRMS):
         pods_data = self._create_request('GET', self._pods_api_url_path, self.auth_data)
         if pods_data:
             for pod in pods_data["items"]:
-                if pod["metadata"]["namespace"] != "kube-system":
+                if pod["metadata"]["namespace"] not in ["kube-system", "kube-flannel"]:
                     job_id = pod["metadata"]["uid"]
                     state = pod["status"]["phase"]  # Pending, Running, Succeeded, Failed or Unknown
                     hostIP = None
