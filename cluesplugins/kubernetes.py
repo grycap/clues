@@ -140,7 +140,9 @@ class lrms(LRMS):
                     # do not count the number of pods in case finished jobs
                     if pod["status"]["phase"] not in ["Succeeded", "Failed"]:
                         # do not count the number of pods in case of system ones
-                        if pod["metadata"]["namespace"] in ["kube-system", "kube-flannel"]:
+                        # nor in case of DaemonSets
+                        if (pod["metadata"]["namespace"] in ["kube-system", "kube-flannel"] or
+                                pod["metadata"]["ownerReferences"] and pod["metadata"]["ownerReferences"][0]["kind"] == "DaemonSet"):
                             system_pods += 1
                         used_pods += 1
                         cpus, memory, ngpus, agpus, sgx = self._get_pod_cpus_and_memory(pod)
