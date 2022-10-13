@@ -183,6 +183,7 @@ class lrms(LRMS):
                     sgx = int(node["status"]["allocatable"]["sgx.k8s.io/sgx"])
 
                 # Skip master node
+
                 if ("node-role.kubernetes.io/master" in node["metadata"]["labels"] or
                         "node-role.kubernetes.io/control-plane" in node["metadata"]["labels"]):
                     _LOGGER.debug("Node %s seems to be master node, skiping." % name)
