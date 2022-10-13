@@ -108,7 +108,7 @@ class lrms(LRMS):
         LRMS.__init__(self, "KUBERNETES_%s" % self._server_url)
 
     def _get_memory_in_bytes(self, str_memory):
-        if (isinstance(str_memory, (int, float))):
+        if isinstance(str_memory, (int, float)):
             return str_memory
         str_memory = str_memory.lower()
         if str_memory.strip()[-2:] in ['mi', 'mb', 'gi', 'gb', 'ki', 'kb', 'ti', 'tb']:
