@@ -83,7 +83,7 @@ class lrms(LRMS):
                 "KUBERNETES_PODS_API_URL_PATH": "/api/v1/pods",
                 "KUBERNETES_NODES_API_URL_PATH": "/api/v1/nodes",
                 "KUBERNETES_TOKEN": None,
-                "KUBERNETES_NODE_MEMORY": 1073741824,
+                "KUBERNETES_NODE_MEMORY": "1 GB",
                 "KUBERNETES_NODE_SLOTS": 1,
                 "KUBERNETES_NODE_PODS": 110,
             }
@@ -95,7 +95,8 @@ class lrms(LRMS):
         self._nodes_api_url_path = Helpers.val_default(KUBERNETES_NODES_API_URL_PATH,
                                                        config_kube.KUBERNETES_NODES_API_URL_PATH)
         token = Helpers.val_default(KUBERNETES_TOKEN, config_kube.KUBERNETES_TOKEN)
-        self._node_memory = Helpers.val_default(KUBERNETES_NODE_MEMORY, config_kube.KUBERNETES_NODE_MEMORY)
+        self._node_memory = self._get_memory_in_bytes(Helpers.val_default(KUBERNETES_NODE_MEMORY,
+                                                                          config_kube.KUBERNETES_NODE_MEMORY))
         self._node_slots = Helpers.val_default(KUBERNETES_NODE_SLOTS, config_kube.KUBERNETES_NODE_SLOTS)
         self._node_pods = Helpers.val_default(KUBERNETES_NODE_PODS, config_kube.KUBERNETES_NODE_PODS)
 
@@ -106,8 +107,10 @@ class lrms(LRMS):
         LRMS.__init__(self, "KUBERNETES_%s" % self._server_url)
 
     def _get_memory_in_bytes(self, str_memory):
+        if isinstance(str_memory, (int, float)):
+            return str_memory
         str_memory = str_memory.lower()
-        if str_memory.strip()[-2:] in ['mi', 'gi', 'ki', 'ti']:
+        if str_memory.strip()[-2:] in ['mi', 'mb', 'gi', 'gb', 'ki', 'kb', 'ti', 'tb']:
             unit = str_memory.strip()[-2:][0]
             memory = int(str_memory.strip()[:-2])
         elif str_memory.strip()[-1:] in ['m', 'g', 'k', 't']:
