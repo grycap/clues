@@ -142,6 +142,7 @@ class lrms(LRMS):
                 if "nodeName" in pod["spec"] and nodename == pod["spec"]["nodeName"]:
                     # do not count the number of pods in case finished jobs
                     if pod["status"]["phase"] not in ["Succeeded", "Failed"]:
+                        # do not count the number of pods in case of system ones
                         # nor in case of DaemonSets
                         if (pod["metadata"]["namespace"] in ["kube-system", "kube-flannel"] or
                                 "ownerReferences" in pod["metadata"] and pod["metadata"]["ownerReferences"] and pod["metadata"]["ownerReferences"][0]["kind"] == "DaemonSet"):
@@ -183,7 +184,6 @@ class lrms(LRMS):
                     sgx = int(node["status"]["allocatable"]["sgx.k8s.io/sgx"])
 
                 # Skip master node
-
                 if ("node-role.kubernetes.io/master" in node["metadata"]["labels"] or
                         "node-role.kubernetes.io/control-plane" in node["metadata"]["labels"]):
                     _LOGGER.debug("Node %s seems to be master node, skiping." % name)
