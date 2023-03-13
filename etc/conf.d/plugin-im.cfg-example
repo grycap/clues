@@ -7,9 +7,10 @@
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 [IM VIRTUAL CLUSTER]
 
-IM_VIRTUAL_CLUSTER_XMLRPC=http://localhost:8899
-IM_VIRTUAL_CLUSTER_XMLRCP_SSL_CA_CERTS=''
-IM_VIRTUAL_CLUSTER_XMLRCP_SSL=False
+IM_VIRTUAL_CLUSTER_TOSCA=False
+IM_VIRTUAL_CLUSTER_REST_API=http://localhost:8800
+IM_VIRTUAL_CLUSTER_REST_SSL_CA_CERTS=''
+IM_VIRTUAL_CLUSTER_REST_SSL=False
 IM_VIRTUAL_CLUSTER_AUTH_DATA_FILE=/usr/local/ec3/auth.dat
 IM_VIRTUAL_CLUSTER_DROP_FAILING_VMS=30
 IM_VIRTUAL_CLUSTER_FORGET_MISSING_VMS=30

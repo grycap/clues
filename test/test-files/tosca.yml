@@ -1,0 +1,197 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports:
+  - ec3_custom_types: https://raw.githubusercontent.com/grycap/ec3/tosca/tosca/custom_types.yaml
+
+metadata:
+  display_name: Launch a Kubernetes Virtual Cluster
+  icon: images/kubernetes.png
+  order: 5
+
+description: TOSCA template for launching a Kubernetes Virtual Cluster.
+
+topology_template:
+  inputs:
+    wn_num:
+      type: integer
+      description: Number of WNs in the cluster
+      default: 1
+      required: yes
+    fe_cpus:
+      type: integer
+      description: Number of CPUs for the front-end node
+      default: 2
+      required: yes
+      constraints:
+      - valid_values: [ 2, 4, 8, 16, 32, 64 ]
+    fe_mem:
+      type: scalar-unit.size
+      description: Amount of Memory for the front-end node
+      default: 4 GB
+      required: yes
+      constraints:
+      - valid_values: [ 4 GB, 8 GB, 16 GB, 32 GB, 64 GB, 128 GB, 256 GB, 512 GB ]
+    fe_instance_type:
+      type: string
+      description: Flavor name of the front-end node
+      default: ""
+    wn_cpus:
+      type: integer
+      description: Number of CPUs for the WNs
+      default: 2
+      required: yes
+      constraints:
+      - valid_values: [ 2, 4, 8, 16, 32, 64 ]
+    wn_mem:
+      type: scalar-unit.size
+      description: Amount of Memory for the WNs
+      default: 4 GB
+      required: yes
+      constraints:
+      - valid_values: [ 4 GB, 8 GB, 16 GB, 32 GB, 64 GB, 128 GB, 256 GB, 512 GB ]
+    wn_instance_type:
+      type: string
+      description: Flavor name for the WNs
+      default: ""
+    disk_size:
+      type: scalar-unit.size
+      description: Size of the disk to be attached to the FE instance
+      default: 10 GB
+      constraints:
+      - valid_values: [ 10 GB, 20 GB, 50 GB, 100 GB, 200 GB, 500 GB, 1 TB, 2 TB ]
+    volume_id:
+      type: string
+      description: "Or URL of the disk to be attached to the instance (format: ost://api.cloud.ifca.es/<vol_id>"
+      default: ""
+
+    admin_token:
+      type: string
+      description: Access Token for the Kubernetes admin user
+      default: not_very_secret_token
+    kube_version:
+      type: string
+      description: Version of Kubernetes to install
+      default: "1.21.9"
+      constraints:
+      - valid_values: [ "1.21.9", "1.22.6", "1.23.2", "1.20.15", "1.19.16" ]
+    cri_runtime:
+      type: string
+      description: CRI Runtime to use with Kubernetes
+      default: "docker"
+      constraints:
+      - valid_values: [ docker, containerd ]
+    install_kubeapps:
+      type: boolean
+      description: Flag to set the kubeapps UI to be installed
+      default: true
+      constraints:
+      - valid_values: [ true, false ]
+    kube_nvidia_support:
+      type: boolean
+      description: Flag to add NVIDIA support
+      default: false
+      constraints:
+      - valid_values: [ false, true ]
+    kube_cert_manager:
+      type: boolean
+      description: Flag to install Cert-Manager
+      default: false
+      constraints:
+      - valid_values: [ false, true ]
+    kube_cert_user_email:
+      type: string
+      description: Email to be used in the Let's Encrypt issuer
+      default: "jhondoe@server.com"
+
+  node_templates:
+
+    lrms_front_end:
+      type: tosca.nodes.indigo.LRMS.FrontEnd.Kubernetes
+      capabilities:
+        endpoint:
+          properties:
+            ports:
+              http_port:
+                protocol: tcp
+                source: 80
+              https_port:
+                protocol: tcp
+                source: 443
+              kube_port:
+                protocol: tcp
+                source: 6443
+      properties:
+        admin_username:  kubeuser
+        install_nfs_client: true
+        admin_token: { get_input: admin_token }
+        install_kubeapps:  { get_input: install_kubeapps }
+        version: { get_input: kube_version }
+        nvidia_support: { get_input: kube_nvidia_support }
+        cert_manager: { get_input: kube_cert_manager }
+        cert_user_email: { get_input: kube_cert_user_email }
+        cri_runtime: { get_input: cri_runtime }
+      requirements:
+        - host: front
+
+    front:
+      type: tosca.nodes.indigo.Compute
+      capabilities:
+        endpoint:
+          properties:
+            dns_name: kubeserver
+            network_name: PUBLIC
+        host:
+          properties:
+            num_cpus: { get_input: fe_cpus }
+            mem_size: { get_input: fe_mem }
+            instance_type: { get_input: fe_instance_type }
+        os:
+          properties:
+            distribution: ubuntu
+            type: linux
+      requirements:
+      - local_storage:
+          node: fe_block_storage
+          relationship:
+            type: AttachesTo
+            properties:
+              location: /pv
+
+    fe_block_storage:
+      type: tosca.nodes.BlockStorage
+      properties:
+        size: { get_input: disk_size }
+        volume_id: { get_input: volume_id }
+
+    wn_node:
+      type: tosca.nodes.indigo.LRMS.WorkerNode.Kubernetes
+      properties:
+        front_end_ip: { get_attribute: [ front, private_address, 0 ] }
+        version: { get_input: kube_version }
+        nvidia_support: { get_input: kube_nvidia_support }
+        cri_runtime: { get_input: cri_runtime }
+      requirements:
+        - host: wn
+            
+    wn:
+      type: tosca.nodes.indigo.Compute
+      capabilities:
+        scalable:
+          properties:
+            count:  1
+        host:
+          properties:
+            num_cpus: 1
+            mem_size: 2 GB
+        os:
+          properties:
+            distribution: ubuntu
+            type: linux
+
+  outputs:
+    dashboard_endpoint:
+      value: { concat: [ 'https://', get_attribute: [ front, public_address, 0 ], '/dashboard/' ] }
+    api_endpoint:
+      value: { concat: [ 'https://', get_attribute: [ front, public_address, 0 ], ':6443' ] }
+    kubeapps_endpoint:
+      value: { concat: [ 'https://', get_attribute: [ front, public_address, 0 ], '/kubeapps/' ] }

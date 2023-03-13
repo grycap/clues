@@ -18,6 +18,7 @@
 import unittest
 import sys
 import os
+import yaml
 from mock.mock import MagicMock, patch
 from radl.radl_parse import parse_radl
 
@@ -39,20 +40,18 @@ class TestIM(unittest.TestCase):
 
     def test_read_auth_data(self):
         res = powermanager._read_auth_data(os.path.join(self.TESTS_PATH, 'test-files/auth.dat'))
-        self.assertEqual(res[0], {'type': 'InfrastructureManager', 'username': 'user', 'password': 'pass'})
-        self.assertEqual(res[1], {'host': 'server:2633',
-                                  'id': 'one',
-                                  'password': 'pass',
-                                  'type': 'OpenNebula',
-                                  'username': 'user'})
+        lines = res.split('\\n')
+        self.assertEqual(lines[0], 'type = InfrastructureManager; username = user; password = pass')
+        self.assertEqual(lines[1], 'id = one; type = OpenNebula; host = server:2633; username = user; password = pass')
 
     @patch("cluesplugins.im.powermanager._read_auth_data")
-    @patch("cluesplugins.im.powermanager._get_server")
     @patch("cpyutils.db.DB.create_from_string")
-    def test_get_inf_id(self, createdb, get_server, read_auth):
-        server = MagicMock()
-        server.GetInfrastructureList.return_value = (True, ['infid1'])
-        get_server.return_value = server
+    @patch("requests.request")
+    def test_get_inf_id(self, request, createdb, read_auth):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {"uri-list": [{"uri": "http://server.com/infid1"}]}
+        request.return_value = resp
 
         read_auth.return_value = {'type': 'InfrastructureManager', 'username': 'user', 'password': 'pass'}
 
@@ -62,27 +61,54 @@ class TestIM(unittest.TestCase):
 
         test_im = powermanager()
         res = test_im._get_inf_id()
-        self.assertEqual(res, "infid1")
+        self.assertEqual(res, "http://server.com/infid1")
 
     @patch("cluesplugins.im.powermanager.recover")
     @patch("cluesplugins.im.powermanager._read_auth_data")
     @patch("cluesplugins.im.powermanager._get_inf_id")
-    @patch("cluesplugins.im.powermanager._get_server")
     @patch("cpyutils.db.DB.create_from_string")
     @patch("cpyutils.eventloop.now")
-    def test_get_vms(self, now, createdb, get_server, get_inf_id, read_auth, recover):
-        get_inf_id.return_value = "infid"
-        read_auth.return_value = {'type': 'InfrastructureManager', 'username': 'user', 'password': 'pass'}
+    @patch("requests.request")
+    def test_get_vms(self, request, now, createdb, get_inf_id, read_auth, recover):
+        get_inf_id.return_value = "http://server.com/infid"
+        read_auth.return_value = "type = InfrastructureManager; username = user; password = pass"
         now.return_value = 100
 
-        server = MagicMock()
-        server.GetInfrastructureInfo.return_value = (True, ['0', '1'])
-        radl = """system wn (
+        inf_info = MagicMock()
+        inf_info.status_code = 200
+        inf_info.json.return_value = {"uri-list": [{"uri": "http://server.com/infid/vms/0"},
+                                                   {"uri": "http://server.com/infid/vms/1"}]}
+        vm_info = MagicMock()
+        vm_info.status_code = 200
+        vm_info.text = """system wn (
             net_interface.0.dns_name = 'node-#N#' and
             state = 'configured'
         )"""
-        server.GetVMInfo.return_value = (True, radl)
-        get_server.return_value = server
+
+        vm_info2 = MagicMock()
+        vm_info2.status_code = 200
+        vm_info2.text = """system wn (
+            net_interface.0.dns_name = 'node-#N#' and
+            state = 'unconfigured'
+        )"""
+
+        ctxt_out = MagicMock()
+        ctxt_out.status_code = 200
+        ctxt_out.text = "ERROR!"
+
+        vm_info3 = MagicMock()
+        vm_info3.status_code = 200
+        vm_info3.text = """system wn (
+            net_interface.0.dns_name = 'node-#N#' and
+            state = 'unconfigured' and
+            ec3_additional_vm = 'true'
+        )"""
+
+        request.side_effect = [inf_info, vm_info,
+                               inf_info, vm_info,
+                               inf_info, vm_info2, ctxt_out,
+                               inf_info, vm_info3,
+                               inf_info, vm_info3]
 
         db = MagicMock()
         db.sql_query.return_value = True, "", []
@@ -96,8 +122,9 @@ class TestIM(unittest.TestCase):
         node.state = Node.IDLE
         test_im._clues_daemon.get_node.return_value = node
         res = test_im._get_vms()
+
         self.assertEqual(len(res), 1)
-        self.assertEqual(res['node-1'].vm_id, '1')
+        self.assertEqual(res['node-1'].vm_id, 'http://server.com/infid/vms/1')
         self.assertEqual(res['node-1'].last_state, "configured")
         self.assertEqual(res['node-1'].timestamp_seen, 100)
         self.assertEqual(res['node-1'].timestamp_created, 100)
@@ -108,12 +135,6 @@ class TestIM(unittest.TestCase):
         self.assertEqual(res2['node-1'].timestamp_seen, 200)
 
         # Test the node is unconfigured
-        radl = """system wn (
-            net_interface.0.dns_name = 'node-#N#' and
-            state = 'unconfigured'
-        )"""
-        server.GetVMInfo.return_value = (True, radl)
-        server.GetVMContMsg.return_value = (True, "ERROR!")
         res = test_im._get_vms()
         # Recover must be called
         self.assertEqual(recover.call_count, 1)
@@ -125,38 +146,49 @@ class TestIM(unittest.TestCase):
         self.assertEqual(recover.call_count, 1)
 
         node.enabled = True
-        radl = """system wn (
-            net_interface.0.dns_name = 'node-#N#' and
-            state = 'unconfigured' and
-            ec3_additional_vm = 'true'
-        )"""
-        server.GetVMInfo.return_value = (True, radl)
         res = test_im._get_vms()
         # Recover must NOT be called again in this case
         self.assertEqual(recover.call_count, 1)
 
     @patch("cluesplugins.im.powermanager._read_auth_data")
     @patch("cluesplugins.im.powermanager._get_inf_id")
-    @patch("cluesplugins.im.powermanager._get_server")
     @patch("cpyutils.db.DB.create_from_string")
     @patch("cpyutils.eventloop.now")
-    def test_get_radl(self, now, createdb, get_server, get_inf_id, read_auth):
-        get_inf_id.return_value = "infid"
-        read_auth.return_value = {'type': 'InfrastructureManager', 'username': 'user', 'password': 'pass'}
+    @patch("requests.request")
+    def test_get_radl(self, request, now, createdb, get_inf_id, read_auth):
+        get_inf_id.return_value = "http://server.com/infid"
+        read_auth.return_value = "type = InfrastructureManager; username = user; password = pass"
         now.return_value = 100
 
-        server = MagicMock()
-        server.GetInfrastructureInfo.return_value = (True, ['0', '1'])
-        radl = """system wn (
+        inf_info = MagicMock()
+        inf_info.status_code = 200
+        inf_info.json.return_value = {"uri-list": [{"uri": "http://server.com/infid/vms/0"},
+                                                   {"uri": "http://server.com/infid/vms/1"}]}
+        vm_info = MagicMock()
+        vm_info.status_code = 200
+        vm_info.text = """system wn (
             net_interface.0.dns_name = 'node-#N#' and
-            ec3_class = 'wn'
+            state = 'unconfigured' and
+            ec3_additional_vm = 'true'
         )"""
-        server.GetVMInfo.return_value = (True, radl)
-        infra_radl = """system wn (
+
+        radl_info = MagicMock()
+        radl_info.status_code = 200
+        radl_info.text = """system wn (
             net_interface.0.dns_name = 'node-#N#'
         )"""
-        server.GetInfrastructureRADL.return_value = (True, infra_radl)
-        get_server.return_value = server
+
+        radl_info2 = MagicMock()
+        radl_info2.status_code = 200
+        radl_info2.text = """system wn (
+            net_interface.0.dns_name = 'node-#N#'
+        )
+        contextualize (
+            system wn configure wn
+        )"""
+
+        request.side_effect = [inf_info, vm_info, radl_info,
+                               inf_info, vm_info, radl_info2]
 
         db = MagicMock()
         db.sql_query.return_value = True, "", []
@@ -172,13 +204,6 @@ class TestIM(unittest.TestCase):
         self.assertEqual(radl_res.deploys[0].id, 'node-2')
         self.assertEqual(radl_res.deploys[0].vm_number, 1)
 
-        infra_radl = """system wn (
-            net_interface.0.dns_name = 'node-#N#'
-        )
-        contextualize (
-            system wn configure wn
-        )"""
-        server.GetInfrastructureRADL.return_value = (True, infra_radl)
         res = test_im._get_radl('node-2')
         radl_res = parse_radl(res)
         self.assertEqual(radl_res.contextualize.items[('node-2', 'wn')].system, 'node-2')
@@ -188,15 +213,15 @@ class TestIM(unittest.TestCase):
     @patch("cluesplugins.im.powermanager._get_vms")
     @patch("cluesplugins.im.powermanager._read_auth_data")
     @patch("cluesplugins.im.powermanager._get_inf_id")
-    @patch("cluesplugins.im.powermanager._get_server")
     @patch("cpyutils.db.DB.create_from_string")
-    def test_power_on(self, createdb, get_server, get_inf_id, read_auth, get_vms, get_radl):
-        get_inf_id.return_value = "infid"
-        read_auth.return_value = {'type': 'InfrastructureManager', 'username': 'user', 'password': 'pass'}
+    @patch("requests.request")
+    def test_power_on(self, request, createdb, get_inf_id, read_auth, get_vms, get_radl):
+        get_inf_id.return_value = "http://server.com/infid"
+        read_auth.return_value = "type = InfrastructureManager; username = user; password = pass"
 
-        server = MagicMock()
-        server.AddResource.return_value = (True, ['2'])
-        get_server.return_value = server
+        resp = MagicMock()
+        resp.status_code = 200
+        request.return_value = resp
 
         db = MagicMock()
         db.sql_query.return_value = True, "", []
@@ -217,19 +242,18 @@ class TestIM(unittest.TestCase):
         self.assertTrue(res)
 
     @patch("cluesplugins.im.powermanager._get_inf_id")
-    @patch("cluesplugins.im.powermanager._get_server")
     @patch("cluesplugins.im.powermanager._read_auth_data")
     @patch("cpyutils.db.DB.create_from_string")
     @patch("cpyutils.eventloop.now")
-    def test_power_off(self, now, createdb, read_auth, get_server, get_inf_id):
-        get_inf_id.return_value = "infid"
-        read_auth.return_value = {'type': 'InfrastructureManager', 'username': 'user', 'password': 'pass'}
+    @patch("requests.request")
+    def test_power_off(self, request, now, createdb, read_auth, get_inf_id):
+        get_inf_id.return_value = "http://server.com/infid"
+        read_auth.return_value = "type = InfrastructureManager; username = user; password = pass"
         now.return_value = 100
 
-        server = MagicMock()
-        server.StopVM.return_value = (True, ['2'])
-        server.RemoveResource.return_value = (True, ['2'])
-        get_server.return_value = server
+        resp = MagicMock()
+        resp.status_code = 200
+        request.side_effect = [resp, resp, resp, resp]
 
         db = MagicMock()
         db.sql_query.return_value = True, "", []
@@ -237,7 +261,7 @@ class TestIM(unittest.TestCase):
 
         test_im = powermanager()
         vm = MagicMock()
-        vm.vm_id = "vmid"
+        vm.vm_id = "http://server.com/infid/vms/1"
         radl = """system node-1 (
             net_interface.0.dns_name = 'node-#N#'
         )"""
@@ -246,8 +270,7 @@ class TestIM(unittest.TestCase):
         res, nname = test_im.power_off('node-1')
         self.assertTrue(res)
         self.assertEqual(nname, 'node-1')
-        self.assertEqual(server.RemoveResource.call_count, 1)
-        self.assertEqual(server.StopVM.call_count, 0)
+        self.assertEqual(request.call_args_list[0][0], ('DELETE', 'http://server.com/infid/vms/1'))
 
         radl = """system node-1 (
             net_interface.0.dns_name = 'node-#N#' and
@@ -257,27 +280,27 @@ class TestIM(unittest.TestCase):
         res, nname = test_im.power_off('node-1')
         self.assertTrue(res)
         self.assertEqual(nname, 'node-1')
-        self.assertEqual(server.StopVM.call_count, 1)
-        self.assertEqual(server.RemoveResource.call_count, 1)
+        self.assertEqual(request.call_args_list[1][0], ('PUT', 'http://server.com/infid/vms/1/stop'))
 
     @patch("cluesplugins.im.uuid1")
     @patch("cluesplugins.im.powermanager._get_inf_id")
-    @patch("cluesplugins.im.powermanager._get_server")
     @patch("cluesplugins.im.powermanager._read_auth_data")
     @patch("cluesplugins.im.powermanager._get_vms")
     @patch("cpyutils.db.DB.create_from_string")
     @patch("cpyutils.eventloop.now")
-    def test_lifecycle(self, now, createdb, get_vms, read_auth, get_server, get_inf_id, uuid1):
+    @patch("requests.request")
+    def test_lifecycle(self, request, now, createdb, get_vms, read_auth, get_inf_id, uuid1):
         now.return_value = 100
 
         vm = MagicMock()
-        vm.vm_id = "vmid"
+        vm.vm_id = "http://server.com/infid/vms/1"
         radl = """system node-1 (
             net_interface.0.dns_name = 'node-#N#' and
             state = 'configured'
         )"""
         vm.radl = parse_radl(radl)
         vm.timestamp_recovered = 0
+        vm.timestamp_created = 0
         get_vms.return_value = {'node-1': vm}
 
         db = MagicMock()
@@ -318,18 +341,51 @@ class TestIM(unittest.TestCase):
         auth = {'type': 'InfrastructureManager', 'username': 'user', 'password': 'pass'}
         read_auth.return_value = auth
         get_inf_id.return_value = "infid"
-        server = MagicMock()
-        server.CreateDiskSnapshot.return_value = (True, 'image')
-        get_server.return_value = server
+
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.text = "image"
+        request.return_value = resp
+
         uuid1.return_value = "uuid"
 
         test_im._store_golden_image = MagicMock()
 
         test_im.lifecycle()
         self.assertEqual(vm.recovered.call_count, 1)
-        self.assertEqual(server.CreateDiskSnapshot.call_count, 1)
-        self.assertEqual(server.CreateDiskSnapshot.call_args_list[0][0], ('infid', 'vmid', 0, 'im-uuid', True, auth))
+        self.assertEqual(request.call_args_list[0][0], ('PUT', 'http://server.com/infid/vms/1/disks/0/snapshot?image_name=im-uuid&auto_delete=1'))
         self.assertEqual(test_im._store_golden_image.call_args_list[0][0], ('wn', 'image', 'pass'))
+
+    @patch("cluesplugins.im.powermanager._read_auth_data")
+    @patch("cluesplugins.im.powermanager._get_inf_id")
+    @patch("cpyutils.db.DB.create_from_string")
+    @patch("requests.request")
+    def test_get_template(self, request, createdb, get_inf_id, read_auth):
+        get_inf_id.return_value = "http://server.com/infid"
+        read_auth.return_value = "type = InfrastructureManager; username = user; password = pass"
+
+        inf_info = MagicMock()
+        inf_info.status_code = 200
+        inf_info.json.return_value = {"uri-list": [{"uri": "http://server.com/infid/vms/0"},
+                                                   {"uri": "http://server.com/infid/vms/1"}]}
+        tosca_info = MagicMock()
+        tosca_info.status_code = 200
+        with open(os.path.join(self.TESTS_PATH, 'test-files/tosca.yml')) as f:
+            tosca_info.json.return_value = {"tosca": f.read()}
+
+        request.side_effect = [inf_info, tosca_info]
+
+        db = MagicMock()
+        db.sql_query.return_value = True, "", []
+        createdb.return_value = db
+
+        test_im = powermanager()
+        res = test_im._get_template('node-2')
+
+        tosca_res = yaml.safe_load(res)
+        node_template = tosca_res['topology_template']['node_templates']['wn']
+        self.assertEqual(node_template['capabilities']['scalable']['properties']['count'], 2)
+        self.assertEqual(node_template['capabilities']['endpoint']['properties']['dns_name'], 'node-2')
 
 
 if __name__ == "__main__":

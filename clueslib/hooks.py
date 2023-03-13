@@ -21,6 +21,7 @@ import os.path
 from .configlib import _CONFIGURATION_HOOKS
 
 # cpyutils.log.Log.setup()
+
 _LOGGER = cpyutils.log.Log("HOOKS")
 
 class HookSystem:
