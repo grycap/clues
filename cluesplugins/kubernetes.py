@@ -343,9 +343,9 @@ class lrms(LRMS):
 
                     cpus, memory, ngpus, agpus, sgx = self._get_pod_cpus_and_memory(pod)
 
-                    req_str = '(pods_free > 0) && (schedule = 1)'
+                    req_str = '(pods_free > 0) && (schedule == 1)'
                     if 'nodeName' in pod["spec"] and pod["spec"]["nodeName"]:
-                        req_str += ' && (nodeName = "%s")' % pod["spec"]["nodeName"]
+                        req_str += ' && (nodeName == "%s")' % pod["spec"]["nodeName"]
                     if ngpus:
                         req_str += ' && (nvidia_gpu >= %d)' % ngpus
                     if agpus:
