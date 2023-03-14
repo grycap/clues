@@ -90,8 +90,8 @@ class TestKubernetes(unittest.TestCase):
         self.assertEqual(jobs[1].state, Request.SERVED)
         self.assertEqual(jobs[1].resources.resources.slots, 0.25)
         self.assertEqual(jobs[1].resources.resources.memory, 134217728)
-        self.assertEqual(jobs[1].resources.resources.requests, [('(pods_free > 0) && (schedule = 1) && ' +
-                                                                 '(nodeName = "wn-2.localdomain") && ' + 
+        self.assertEqual(jobs[1].resources.resources.requests, [('(pods_free > 0) && (schedule == 1) && ' +
+                                                                 '(nodeName == "wn-2.localdomain") && ' + 
                                                                  '(nvidia_gpu >= 1) && (sgx >= 1)')])
 
 
