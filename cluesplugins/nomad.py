@@ -242,11 +242,11 @@ class lrms(LRMS):
 
 
     # AUX FUNCTIONS    
-    def _get_NodeInfo (self, info_node, default_info_node):
+    def _get_NodeInfo(self, info_node, default_info_node):
                 
         # Check queues 
-        keywords = default_info_node['keywords'] 
-        queues = default_info_node['keywords']['queues'] 
+        keywords = default_info_node.get('keywords', {})
+        queues = keywords.get('queues', [])
         q = info_node['node_class']
         if not (q in self._queues or q == '') :
             _LOGGER.error(" '%s' (node_class of Nomad Client) is not a valid queue, queue is set to queue of file %s." % (q, self._nodes_info_file))
@@ -255,10 +255,10 @@ class lrms(LRMS):
             keywords['queues'] = TypedList([TypedClass.auto(q) for q in queues])  
         
         # Illustrative values for Clues, since the node is not running, we cannot know the real values
-        slots_count = default_info_node['cpus'] 
-        slots_free = default_info_node['cpus'] 
-        memory_total = default_info_node['memory'] 
-        memory_free = default_info_node['memory'] 
+        slots_count = default_info_node.get('cpus', self._default_cpu_node)
+        slots_free = slots_count
+        memory_total = default_info_node.get('memory', self._default_memory_node)
+        memory_free = memory_total
 
         # Information obtained from queries
         if 'slots_count' in info_node['resources']: 
@@ -421,7 +421,7 @@ class lrms(LRMS):
                     if info_client['name'] in default_node_info: # Valid node for CLUES and IM
                         nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client, default_node_info[ info_client['name'] ])
                     else:
-                        _LOGGER.warning("Nomad Client with name '%s' founded using Nomad Server API but not exists this node in the configuration file %s" % (info_client['name'] , self._nodes_info_file) )
+                        nodeinfolist[ info_client['name'] ] = self._get_NodeInfo(info_client, {})
         
         # Add nodes from nomad_info file to the list
         for namenode, node_info in list(default_node_info.items()):
