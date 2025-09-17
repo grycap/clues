@@ -110,7 +110,10 @@ class lrms(LRMS):
         if isinstance(str_memory, (int, float)):
             return str_memory
         str_memory = str_memory.lower()
-        if str_memory.strip()[-2:] in ['mi', 'mb', 'gi', 'gb', 'ki', 'kb', 'ti', 'tb']:
+        if str_memory.strip()[-3:] in ['mib', 'gib', 'kib', 'tib']:
+            unit = str_memory.strip()[-3:][0]
+            memory = int(str_memory.strip()[:-3])
+        elif str_memory.strip()[-2:] in ['mi', 'mb', 'gi', 'gb', 'ki', 'kb', 'ti', 'tb']:
             unit = str_memory.strip()[-2:][0]
             memory = int(str_memory.strip()[:-2])
         elif str_memory.strip()[-1:] in ['m', 'g', 'k', 't']:
