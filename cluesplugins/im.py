@@ -209,12 +209,11 @@ class powermanager(PowerManager):
         return res
     
     def _get_system(self, vm_info, radl_all, nname):
-
         # First try to check if the user has specified the ec3_node_pattern
         # it must be a regular expression to match with nname
         # for example: vnode-[1,2,3,4,5]
         for system in radl_all.systems:
-            if system.getValue("ec3_node_pattern"):
+            if system.getValue("ec3_node_pattern") and not system.getValue("ec3_class"):
                 if re.match(system.getValue("ec3_node_pattern"), nname):
                     return system.name
 
